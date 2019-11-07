@@ -1,0 +1,4 @@
+.idea
+.pio
+cmake-build-teensy40
+CMakeListsPrivate.txt

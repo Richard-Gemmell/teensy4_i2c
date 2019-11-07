@@ -1,0 +1,3 @@
+# Make tests visible to CLion.
+# Use CLion's "Mark directory as" option to mark the "test" directory as a source folder.
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test/test_register_i2c)
