@@ -1,5 +1,4 @@
-#teensy4_i2c
-
+# teensy4_i2c
 An I2C library for the [Teensy 4](https://www.pjrc.com/store/teensy40.html)
 microcontroller.
 
@@ -15,7 +14,7 @@ no dependencies on Arduino itself and relatively few dependencies on the
 Teensy code. This means that is should be possible to use the drivers with
 other tool sets without having to change too much.
 
-##Usage
+## Usage
 
 ### Use I2C Register Wrappers
 I2CDevice and I2CRegisterSlave classes make it very simple to follow
@@ -38,7 +37,7 @@ library. The key classes are I2CMaster and I2CSlave.
 1. &#35;include "imx_rt1060_i2c_driver.h"
 1. See the examples in the examples/raw directory
 
-###Replacing Wire.h
+### Replacing Wire.h
 Follow these instructions if you have already written code to
 use Wire.h and don't want to change it. I don't recommend using
 the Wire API unless you have to. See below for alternatives.
@@ -48,7 +47,7 @@ the Wire API unless you have to. See below for alternatives.
 modify them to use i2c_driver_wire.h instead.
 1. See the examples in the examples/wire directory
 
-##Features
+## Features
 * Supports all features that are required by the I2C specification
 for master, multi-master and slave devices.
 * Drop in replacement for the Wire library
