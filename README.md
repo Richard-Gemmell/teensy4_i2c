@@ -1,4 +1,5 @@
 #teensy4_i2c
+
 An I2C library for the [Teensy 4](https://www.pjrc.com/store/teensy40.html)
 microcontroller.
 
@@ -15,6 +16,7 @@ Teensy code. This means that is should be possible to use the drivers with
 other tool sets without having to change too much.
 
 ##Usage
+
 ### Use I2C Register Wrappers
 I2CDevice and I2CRegisterSlave classes make it very simple to follow
 the standard I2C pattern of reading or writing to "registers".
