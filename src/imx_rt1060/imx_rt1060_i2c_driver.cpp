@@ -307,7 +307,9 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
     // Send a stop if haven't already done so and still control the bus
     uint32_t msr = port->MSR;
     if ((msr & LPI2C_MSR_MBF) && !(msr & LPI2C_MSR_SDF)) {
+        #ifdef DEBUG_I2C
         Serial.println("  sending STOP");
+        #endif
         port->MTDR = LPI2C_MTDR_CMD_STOP;
     }
 }
