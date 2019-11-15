@@ -281,6 +281,9 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
     log_master_status_register(port->MSR);
     #endif
 
+    // Don't handle anymore TDF interrupts
+    port->MIER &= ~LPI2C_MIER_TDIE;
+
     // Clear out any commands that haven't been sent
     port->MCR |= LPI2C_MCR_RTF;
     port->MCR |= LPI2C_MCR_RRF;
