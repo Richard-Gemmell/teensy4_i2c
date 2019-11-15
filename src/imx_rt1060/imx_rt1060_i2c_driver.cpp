@@ -242,7 +242,10 @@ bool IMX_RT1060_I2CMaster::start(uint16_t address, uint32_t direction) {
         Serial.print("Master: Cannot start. Transaction still in progress. Status: ");
         Serial.println((int)_error);
         #endif
+
+        abort_transaction_async();
         _error = I2CError::master_not_ready;
+        state = State::idle;
         return false;
     }
 
@@ -288,8 +291,10 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
     port->MCR |= LPI2C_MCR_RTF;
     port->MCR |= LPI2C_MCR_RRF;
 
-    // Send a stop if we haven't already done so
-    if (!(port->MSR & (LPI2C_MSR_SDF))) {
+    // Send a stop if haven't already done so and still control the bus
+    uint32_t msr = port->MSR;
+    if ((msr & LPI2C_MSR_MBF) && !(msr & LPI2C_MSR_SDF)) {
+        Serial.println("  sending STOP");
         port->MTDR = LPI2C_MTDR_CMD_STOP;
     }
 }
