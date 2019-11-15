@@ -251,6 +251,7 @@ bool IMX_RT1060_I2CMaster::start(uint16_t address, uint32_t direction) {
 
     // Start a new transaction
     is_read = direction;
+    _error = I2CError::ok;
     state = State::starting;
 
     // Make sure the FIFOs are empty before we start.
