@@ -86,7 +86,7 @@ void IMX_RT1060_I2CMaster::begin(uint32_t frequency) {
     port->MIER = LPI2C_MIER_RDIE | LPI2C_MIER_SDIE | LPI2C_MIER_NDIE | LPI2C_MIER_ALIE | LPI2C_MIER_FEIE | LPI2C_MIER_PLTIE;
     NVIC_ENABLE_IRQ(config.irq);
     // Enable master
-    port->MCR = LPI2C_MCR_MEN;
+//    port->MCR = LPI2C_MCR_MEN;
 }
 
 void IMX_RT1060_I2CMaster::end() {
@@ -141,6 +141,9 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             }
         }
         if (msr & LPI2C_MSR_ALF) {
+            #ifdef DEBUG_I2C
+            Serial.println("Master: Arbitration lost");
+            #endif
             port->MSR = LPI2C_MSR_ALF;
             _error = I2CError::arbitration_lost;
         }
@@ -152,6 +155,9 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             // else FEF was triggered by another error. Ignore it.
         }
         if (msr & LPI2C_MSR_PLTF) {
+            #ifdef DEBUG_I2C
+            Serial.println("Master: Pin low timeout (PLTF)");
+            #endif
             port->MSR = LPI2C_MSR_PLTF;
             _error = I2CError::master_pin_low_timeout;
         }
@@ -239,11 +245,14 @@ bool IMX_RT1060_I2CMaster::start(uint16_t address, uint32_t direction) {
     if (!finished()) {
         // We haven't completed the previous transaction yet
         #ifdef DEBUG_I2C
-        Serial.print("Master: Cannot start. Transaction still in progress. Status: ");
+        Serial.print("Master: Cannot start. Transaction still in progress. State: ");
+        Serial.print((int)state);
+        Serial.print(". Error code: ");
         Serial.println((int)_error);
         #endif
 
         abort_transaction_async();
+
         _error = I2CError::master_not_ready;
         state = State::idle;
         return false;
@@ -258,7 +267,10 @@ bool IMX_RT1060_I2CMaster::start(uint16_t address, uint32_t direction) {
     if (tx_fifo_count() > 0 || rx_fifo_count() > 0) {
         // This should never happen.
         #ifdef DEBUG_I2C
-        Serial.println("Master: FIFOs not empty in start().");
+        Serial.print("Master: FIFOs not empty in start(). TX: ");
+        Serial.print(tx_fifo_count());
+        Serial.print(" RX: ");
+        Serial.println(rx_fifo_count());
         #endif
         _error = I2CError::master_fifos_not_empty;
         abort_transaction_async();
