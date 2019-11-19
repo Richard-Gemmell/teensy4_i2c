@@ -28,7 +28,7 @@ public:
 
     // Add a callback to be notified when the master has written to a
     // register.
-    virtual void after_write(std::function<void(uint8_t the_register)> callback) = 0;
+    virtual void after_write(std::function<void(uint8_t the_register, size_t num_bytes)> callback) = 0;
 };
 
 // Wraps I2CSlave to make it easy to implement an I2C slave who's interface
@@ -69,7 +69,7 @@ public:
 
     // Add a callback to be notified when the master has written to a
     // register.
-    inline void after_write(std::function<void(uint8_t the_register)> callback) override {
+    inline void after_write(std::function<void(uint8_t the_register, size_t num_bytes)> callback) override {
         after_write_callback = std::move(callback);
     }
 
@@ -82,7 +82,7 @@ private:
     uint8_t* const read_only_buffer;
     const size_t read_only_buffer_size;
     std::function<void(uint8_t the_register)> after_read_callback = nullptr;
-    std::function<void(uint8_t the_register)> after_write_callback = nullptr;
+    std::function<void(uint8_t the_register, size_t num_bytes)> after_write_callback = nullptr;
 
     void after_receive(int len);
 

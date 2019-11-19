@@ -400,8 +400,10 @@ void test_app_receives_callback_after_write() {
     reg_slave.listen(address);
 
     uint8_t callback_reg_num = 0;
-    auto callback = [&callback_reg_num](uint8_t the_register) {
+    size_t callback_num_bytes = 0;
+    auto callback = [&callback_reg_num, &callback_num_bytes](uint8_t the_register, size_t num_bytes) {
         callback_reg_num = the_register;
+        callback_num_bytes = num_bytes;
     };
     reg_slave.after_write(callback);
 
@@ -412,6 +414,26 @@ void test_app_receives_callback_after_write() {
     uint16_t value = 0xFF;
     dummy.write_value((uint8_t*)&value, sizeof(value));
     TEST_ASSERT_EQUAL(reg, callback_reg_num);
+    TEST_ASSERT_EQUAL(sizeof(value), callback_num_bytes);
+}
+
+void test_app_receives_callback_after_write_with_register() {
+    I2CRegisterSlave reg_slave = I2CRegisterSlave(dummy, settings, sizeof(settings), read_only, sizeof(read_only));
+    reg_slave.listen(address);
+
+    uint8_t callback_reg_num = 0;
+    size_t callback_num_bytes = 0;
+    auto callback = [&callback_reg_num, &callback_num_bytes](uint8_t the_register, size_t num_bytes) {
+        callback_reg_num = the_register;
+        callback_num_bytes = num_bytes;
+    };
+    reg_slave.after_write(callback);
+
+    uint8_t reg = 0x0A;
+    uint16_t value = 0xFF;
+    dummy.write(reg, (uint8_t*)&value, sizeof(value));
+    TEST_ASSERT_EQUAL(reg, callback_reg_num);
+    TEST_ASSERT_EQUAL(sizeof(value), callback_num_bytes);
 }
 
 void setup() {
@@ -447,6 +469,7 @@ void setup() {
 
     RUN_TEST(test_app_receives_callback_after_read);
     RUN_TEST(test_app_receives_callback_after_write);
+    RUN_TEST(test_app_receives_callback_after_write_with_register);
 
     UNITY_END();
 }

@@ -12,6 +12,7 @@ void I2CRegisterSlave::listen(uint16_t address) {
 };
 
 void I2CRegisterSlave::after_receive(int len) {
+    uint8_t num_bytes = len;
     got_reg_num = !got_reg_num;
     if (got_reg_num) {
         uint8_t reg_num = rx_buffer[0];
@@ -26,6 +27,7 @@ void I2CRegisterSlave::after_receive(int len) {
                 }
                 memcpy(buffer, rx_buffer + 1, copy_len);
             }
+            num_bytes = len - 1;
             // else it's not a valid registry. Ignore it.
             got_reg_num = false;
         } else {
@@ -51,7 +53,7 @@ void I2CRegisterSlave::after_receive(int len) {
     }
     if (!got_reg_num) {
         if (after_write_callback) {
-            after_write_callback(rx_buffer[0]);
+            after_write_callback(rx_buffer[0], num_bytes);
         }
         wait_for_reg_num();
     }
