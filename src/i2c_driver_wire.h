@@ -11,6 +11,12 @@
 #include "imx_rt1060/imx_rt1060_i2c_driver.h"
 #endif
 
+// An implementation of the Wire library as defined at
+//   https://www.arduino.cc/en/reference/wire
+// This header also defines TwoWire as an alias for I2CDriverWire
+// for better compatibility with Teensy libraries.
+// WARNING. This implementation does not include extensions to
+// Wire that were part of the Teensy 3 implementation. e.g. setSDA()
 class I2CDriverWire : public Stream {
 public:
     // Size of RX and TX buffers. Feel free to change sizes if necessary.
@@ -23,90 +29,44 @@ public:
     // Indicates that there is no more data to read.
     static const int no_more_bytes = -1;
 
-    I2CDriverWire(I2CMaster& master, I2CSlave& slave)
-            : Stream(), master(master), slave(slave) {
-    }
+    I2CDriverWire(I2CMaster& master, I2CSlave& slave);
 
-    void begin() {
-        end();
-        master.begin(master_frequency);
-    }
+    // Call setClock() before calling begin() to set the I2C frequency.
+    // Although you can pass any frequency, it will be converted to one
+    // of the standard values of 100_000, 400_000 or 1_000_000.
+    // The default is 100000.
+    void setClock(uint32_t frequency);
 
-    void begin(int address) {
-        end();
-        slave.set_receive_buffer(rxBuffer, rx_buffer_length);
-        slave.after_receive(std::bind(&I2CDriverWire::on_receive_wrapper, this, std::placeholders::_1));
-        slave.before_transmit(std::bind(&I2CDriverWire::before_transmit, this));
-        slave.listen((uint16_t)address);
-    }
+    // Use this version of begin() to initialise a master.
+    void begin();
 
-    void end() {
-        master.end();
-        slave.stop_listening();
-    }
+    // Use this version of begin() to initialise a slave.
+    void begin(int address);
 
-    void setClock(uint32_t frequency) {
-        master_frequency = frequency;
-    }
+    void end();
 
-    void beginTransmission(int address) {
-        write_address = (uint16_t)address;
-        tx_next_byte_to_write = 0;
-    }
+    void beginTransmission(int address);
 
-    uint8_t endTransmission(int stop = true) {
-        if (tx_next_byte_to_write > 0) {
-            master.write_async(write_address, tx_buffer, tx_next_byte_to_write, stop);
-            finish();
-        }
-        return toWireResult(master.error());
-    }
+    uint8_t endTransmission(int stop = true);
 
-    size_t write(uint8_t data) override {
-        if (tx_next_byte_to_write < tx_buffer_length) {
-            tx_buffer[tx_next_byte_to_write++] = data;
-            return 1;
-        }
-        return 0;
-    }
+    size_t write(uint8_t data) override;
 
-    size_t write(const uint8_t* data, size_t length) override {
-        size_t avail = tx_buffer_length - tx_next_byte_to_write;
-        if (avail >= length) {
-            uint8_t* dest = tx_buffer + tx_next_byte_to_write;
-            memcpy(dest, data, length);
-            tx_next_byte_to_write += length;
-            return length;
-        }
-        return 0;
-    }
+    size_t write(const uint8_t* data, size_t length) override;
 
-    uint8_t requestFrom(int address, int quantity, int stop = true) {
-        rx_bytes_available = quantity;
-        rx_next_byte_to_read = 0;
-        master.read_async(address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
-        finish();
-        return 0;
-    }
+    uint8_t requestFrom(int address, int quantity, int stop = true);
 
     inline int available() override {
         return (int)(rx_bytes_available - rx_next_byte_to_read);
     }
 
-    int read() override {
-        if (rx_next_byte_to_read < rx_bytes_available) {
-            return rxBuffer[rx_next_byte_to_read++];
-        }
-        return no_more_bytes;
-    }
+    int read() override;
 
-    int peek() override {
-        if (rx_next_byte_to_read < rx_bytes_available) {
-            return rxBuffer[rx_next_byte_to_read];
-        }
-        return no_more_bytes;
-    }
+    int peek() override;
 
+    // A callback that's called by the I2C driver's interrupt
+    // service routine (ISR).
+    // WARNING: This method is called inside an ISR so it must be
+    // very, very fast. Avoid using it if at all possible.
     inline void onReceive(void (* function)(int len)) {
         on_receive = function;
     }
@@ -140,45 +100,16 @@ private:
     size_t rx_bytes_available = 0;
     size_t rx_next_byte_to_read = 0;
 
-    static int toWireResult(I2CError status) {
-        if (status == I2CError::ok) return 0;
-        if (status == I2CError::buffer_overflow) return 1;
-        if (status == I2CError::address_nak) return 2;
-        if (status == I2CError::data_nak) return 3;
-        return 4;
-    }
-
-    // Gives the application a chance to set up the transmit buffer
-    // during the ISR.
-    void before_transmit() {
-        tx_next_byte_to_write = 0;
-        if (on_request) {
-            on_request();
-        }
-        slave.set_transmit_buffer(tx_buffer, tx_next_byte_to_write);
-    }
-
-    void finish() {
-        elapsedMillis timeout;
-        while (timeout < timeout_millis) {
-            if (master.finished()) {
-                return;
-            }
-        }
-        Serial.println("Timed out waiting for transfer to finish.");
-    }
-
-    inline void on_receive_wrapper(size_t num_bytes) {
-        rx_bytes_available = num_bytes;
-        rx_next_byte_to_read = 0;
-        if (on_receive) {
-            on_receive(num_bytes);
-        }
-    }
+    void before_transmit();
+    void finish();
+    void on_receive_wrapper(size_t num_bytes);
 };
 
-I2CDriverWire Wire(Master, Slave);
-I2CDriverWire Wire1(Master1, Slave1);
-I2CDriverWire Wire2(Master2, Slave2);
+extern I2CDriverWire Wire;
+extern I2CDriverWire Wire1;
+extern I2CDriverWire Wire2;
+
+// Alias for backwards compatibility with Wire.h
+using TwoWire = I2CDriverWire;
 
 #endif //I2C_DRIVER_WIRE_H
