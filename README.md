@@ -41,11 +41,22 @@ library. The key classes are I2CMaster and I2CSlave.
 Follow these instructions if you have already written code to
 use Wire.h and don't want to change it. I don't recommend using
 the Wire API unless you have to. See below for alternatives.
+
 1. Download the code and put it in your include path.
 1. Change all #includes from Wire.h to i2c_driver_wire.h.
 1. If any of your dependencies use Wire.h you'll have to
 modify them to use i2c_driver_wire.h instead.
 1. See the examples in the examples/wire directory
+
+## Common Problems
+Here are some of the common problems that will can break the I2C
+connection or just make it very unreliable.
+* the slave and the master must share a common ground
+* you _must_ use external pullup resistors with the Teensy unless
+these are provided by the slave. I recommend 2.2 kOhm or 1 kOhm.
+* make sure the master and the slave agree on how many bytes to
+send and what order they're in. Data alignment, padding and endianness
+may cause issues.
 
 ## Features
 * Supports all features that are required by the I2C specification
@@ -88,4 +99,6 @@ Please contact me if you need any of these features.
 ## Version History
 | Version | Release Date      | Comment         |
 | ------- |-------------------| ----------------|
-| v0.9.0  | 7th November 2019 | Initial Version | 
+| v0.9.0  | 7th November 2019 | Initial Version |
+| v0.9.1  | 7th January 2020  | Fixed bug in i2c_driver_wire.h |
+| v0.9.2  | 9th January 2020 | Can now probe for active slaves. |

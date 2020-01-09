@@ -64,13 +64,15 @@ public:
 
     // Transmits the contents of buffer to the slave at the given address.
     // The caller must not modify the buffer until the read is complete.
-    // Call finished() to see if the call has finished.
+    // Set 'num_bytes' to 0 to find out if there's a slave listening on this address.
     // Set 'send_stop' to true if this is the last transfer in the transaction.
     // Set 'send_stop' to false if are going to make another transfer.
+    // Call finished() to see if the call has finished.
     virtual void write_async(uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) = 0;
 
     // Reads the specified number of bytes and copies them into the supplied buffer.
     // The caller must not modify the buffer until the read is complete.
+    // Set 'num_bytes' to 0 to find out if there's a slave listening on this address.
     // Set 'send_stop' to true if this is the last transfer in the transaction.
     // Set 'send_stop' to false if are going to make another transfer.
     // Call finished() to see if the call has finished.

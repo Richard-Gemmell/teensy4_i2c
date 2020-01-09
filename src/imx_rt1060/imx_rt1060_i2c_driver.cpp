@@ -65,8 +65,7 @@ static void stop(IMXRT_LPI2C_Registers* port, IRQ_NUMBER_t irq) {
     attachInterruptVector(irq, nullptr);
 }
 
-IMX_RT1060_I2CMaster::IMX_RT1060_I2CMaster(IMXRT_LPI2C_Registers* port, IMX_RT1060_I2CBase::Config& config,
-                                           void (* isr)())
+IMX_RT1060_I2CMaster::IMX_RT1060_I2CMaster(IMXRT_LPI2C_Registers* port, IMX_RT1060_I2CBase::Config& config, void (* isr)())
         : port(port), config(config), isr(isr) {
 }
 
@@ -101,6 +100,13 @@ void IMX_RT1060_I2CMaster::write_async(uint16_t address, uint8_t* buffer, size_t
     if (!start(address, MASTER_WRITE)) {
         return;
     }
+    if (num_bytes == 0) {
+        // The caller is probably probing addresses to find slaves.
+        // Don't try to transmit anything.
+        ignore_tdf = true;
+        port->MTDR = LPI2C_MTDR_CMD_STOP;
+        return;
+    }
 
     buff.initialise(buffer, num_bytes);
     stop_on_completion = send_stop;
@@ -116,6 +122,12 @@ void IMX_RT1060_I2CMaster::read_async(uint16_t address, uint8_t* buffer, size_t 
     if (!start(address, MASTER_READ)) {
         return;
     }
+    if (num_bytes == 0) {
+        // The caller is probably probing addresses to find slaves.
+        // Don't try to read anything.
+        port->MTDR = LPI2C_MTDR_CMD_STOP;
+        return;
+    }
 
     buff.initialise(buffer, num_bytes);
     port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (num_bytes - 1);
@@ -128,8 +140,10 @@ void IMX_RT1060_I2CMaster::read_async(uint16_t address, uint8_t* buffer, size_t 
 // Do not call this method directly
 void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     uint32_t msr = port->MSR;
-//    Serial.print("ISR: enter: ");
-//    log_master_status_register(msr);
+    #ifdef DEBUG_I2C
+    Serial.print("ISR: enter: ");
+    log_master_status_register(msr);
+    #endif
 
     if (msr & (LPI2C_MSR_NDF | LPI2C_MSR_ALF | LPI2C_MSR_FEF | LPI2C_MSR_PLTF)) {
         if (msr & LPI2C_MSR_NDF) {
@@ -175,7 +189,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     }
 
     if (msr & LPI2C_MSR_RDF) {
-        if (is_read) {
+        if (ignore_tdf) {
             if (buff.not_stated_reading()) {
                 _error = I2CError::ok;
                 state = State::transferring;
@@ -200,8 +214,8 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
         }
     }
 
-    if (!is_read && (msr & LPI2C_MSR_TDF)) {
-        if (buff.not_stated_writing()) {
+    if (!ignore_tdf && (msr & LPI2C_MSR_TDF)) {
+        if (buff.not_started_writing()) {
             _error = I2CError::ok;
             state = State::transferring;
         }
@@ -259,7 +273,7 @@ bool IMX_RT1060_I2CMaster::start(uint16_t address, uint32_t direction) {
     }
 
     // Start a new transaction
-    is_read = direction;
+    ignore_tdf = direction;
     _error = I2CError::ok;
     state = State::starting;
 

@@ -54,7 +54,7 @@ public:
         return buffer[next_index++];
     }
 
-    inline bool not_stated_writing() {
+    inline bool not_started_writing() {
         return next_index == 0;
     }
 
@@ -142,7 +142,7 @@ private:
     IMX_RT1060_I2CBase::Config& config;
     I2CBuffer buff = I2CBuffer();
     volatile State state = State::idle;
-    volatile uint32_t is_read = false;          // True for a receivve transfer
+    volatile uint32_t ignore_tdf = false;          // True for a receivve transfer
     volatile bool stop_on_completion = false;   // True if the transmit transfer requires a stop.
 
     void (* isr)();

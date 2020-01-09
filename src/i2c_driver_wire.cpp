@@ -3,11 +3,11 @@
 
 #include "i2c_driver_wire.h"
 
-static int toWireResult(I2CError status) {
-    if (status == I2CError::ok) return 0;
-    if (status == I2CError::buffer_overflow) return 1;
-    if (status == I2CError::address_nak) return 2;
-    if (status == I2CError::data_nak) return 3;
+static int toWireResult(I2CError error) {
+    if (error == I2CError::ok) return 0;
+    if (error == I2CError::buffer_overflow) return 1;
+    if (error == I2CError::address_nak) return 2;
+    if (error == I2CError::data_nak) return 3;
     return 4;
 }
 
@@ -43,10 +43,8 @@ void I2CDriverWire::beginTransmission(int address) {
 }
 
 uint8_t I2CDriverWire::endTransmission(int stop) {
-    if (tx_next_byte_to_write > 0) {
-        master.write_async(write_address, tx_buffer, tx_next_byte_to_write, stop);
-        finish();
-    }
+    master.write_async(write_address, tx_buffer, tx_next_byte_to_write, stop);
+    finish();
     return toWireResult(master.error());
 }
 
