@@ -62,6 +62,10 @@ public:
     // True when it's Ok to do another read or write
     virtual bool finished() = 0;
 
+    // Returns the number of bytes transferred by the last call to
+    // write_async or read_async.
+    virtual size_t get_bytes_transferred() = 0;
+
     // Transmits the contents of buffer to the slave at the given address.
     // The caller must not modify the buffer until the read is complete.
     // Set 'num_bytes' to 0 to find out if there's a slave listening on this address.

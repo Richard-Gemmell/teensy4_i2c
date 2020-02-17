@@ -68,11 +68,12 @@ size_t I2CDriverWire::write(const uint8_t* data, size_t length) {
 }
 
 uint8_t I2CDriverWire::requestFrom(int address, int quantity, int stop) {
-    rx_bytes_available = quantity;
+    rx_bytes_available = 0;
     rx_next_byte_to_read = 0;
     master.read_async(address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
     finish();
-    return 0;
+    rx_bytes_available = master.get_bytes_transferred();
+    return rx_bytes_available;
 }
 
 int I2CDriverWire::read() {

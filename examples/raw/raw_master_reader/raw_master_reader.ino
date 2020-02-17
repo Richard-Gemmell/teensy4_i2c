@@ -24,7 +24,7 @@ void blink_isr();
 const uint16_t slave_address = 0x40;
 const uint8_t manufacturer_id_register = 0xFE;
 const uint8_t die_id_register = 0xFF;
-I2CMaster& master = Master1;
+I2CMaster& master = Master;
 
 // Create a buffer to receive data from the slave.
 uint8_t rx_buffer[2] = {};
@@ -54,10 +54,18 @@ void loop() {
     // Request the Manufacturer ID
     master.write_async(slave_address, (uint8_t*)&manufacturer_id_register, sizeof(manufacturer_id_register), false);
     finish();
+    if (master.get_bytes_transferred() != sizeof(manufacturer_id_register)) {
+        // Show that we can count bytes transmitted
+        Serial.printf("Transmitted %d bytes but expected to send %d.\n", master.get_bytes_transferred(), sizeof(manufacturer_id_register));
+    }
     if(ok("Failed to send manufacture id register value")) {
         master.read_async(slave_address, rx_buffer, sizeof(rx_buffer), true);
         finish();
         if (ok("Failed to read manufacture ID.")) {
+            if (master.get_bytes_transferred() != 2) {
+                // Show that we can count bytes received
+                Serial.println("Expected to receive 2 bytes");
+            }
             uint16_t manufacturerID = get_int_from_buffer();
             const uint16_t expected = 0x5449;
             if (manufacturerID == expected) {

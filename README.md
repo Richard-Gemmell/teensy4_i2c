@@ -102,3 +102,4 @@ Please contact me if you need any of these features.
 | v0.9.0  | 7th November 2019 | Initial Version |
 | v0.9.1  | 7th January 2020  | Fixed bug in i2c_driver_wire.h |
 | v0.9.2  | 9th January 2020 | Can now probe for active slaves. |
+| v0.9.3  | 17th February 2020 | I2CDriverWire::requestFrom() now reports correct number of bytes. |

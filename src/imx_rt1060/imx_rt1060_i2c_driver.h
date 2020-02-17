@@ -45,7 +45,7 @@ public:
         }
     }
 
-    inline size_t get_bytes_written() {
+    inline size_t get_bytes_transferred() {
         return next_index;
     }
 
@@ -62,7 +62,7 @@ public:
         return next_index == size;
     }
 
-    inline bool not_stated_reading() {
+    inline bool not_started_reading() {
         return next_index == 0;
     }
 
@@ -117,6 +117,8 @@ public:
     void end() override;
 
     bool finished() override;
+
+    size_t get_bytes_transferred() override;
 
     void write_async(uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
 

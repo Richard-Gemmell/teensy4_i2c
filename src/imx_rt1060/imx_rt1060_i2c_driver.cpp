@@ -96,6 +96,10 @@ inline bool IMX_RT1060_I2CMaster::finished() {
     return state >= State::idle;
 }
 
+size_t IMX_RT1060_I2CMaster::get_bytes_transferred() {
+    return buff.get_bytes_transferred();
+}
+
 void IMX_RT1060_I2CMaster::write_async(uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
     if (!start(address, MASTER_WRITE)) {
         return;
@@ -190,7 +194,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
 
     if (msr & LPI2C_MSR_RDF) {
         if (ignore_tdf) {
-            if (buff.not_stated_reading()) {
+            if (buff.not_started_reading()) {
                 _error = I2CError::ok;
                 state = State::transferring;
             }
@@ -500,7 +504,7 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
 void IMX_RT1060_I2CSlave::end_of_frame() {
     if (state == State::receiving) {
         if (after_receive_callback) {
-            after_receive_callback(rx_buffer.get_bytes_written());
+            after_receive_callback(rx_buffer.get_bytes_transferred());
         }
     } else if (state == State::transmitting) {
         trailing_byte_sent = false;
