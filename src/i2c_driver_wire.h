@@ -105,9 +105,9 @@ private:
     void on_receive_wrapper(size_t num_bytes);
 };
 
-extern I2CDriverWire Wire;
-extern I2CDriverWire Wire1;
-extern I2CDriverWire Wire2;
+extern I2CDriverWire Wire;      // Pins 19 and 18; SCL0 and SDA0
+extern I2CDriverWire Wire1;     // Pins 16 and 17; SCL1 and SDA1
+extern I2CDriverWire Wire2;     // Pins 24 and 25; SCL2 and SDA2
 
 // Alias for backwards compatibility with Wire.h
 using TwoWire = I2CDriverWire;

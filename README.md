@@ -96,6 +96,15 @@ Please contact me if you need any of these features.
 * 4 pin I2C in Master mode
 * Master reading more than 256 bytes in a single transfer
 
+## Ports and Pins
+This table lists the objects that you should use to handle each I2C port.
+
+| Port | Pins               | imx_rt1060_i2c_driver.h | i2c_driver_wire.h |
+| ---- |--------------------| ------------------|-------|
+| 0    | SCL0(19), SDA0(18) | Master or Slave   | Wire  |
+| 1    | SCL1(16), SDA1(17) | Master1 or Slave1 | Wire1 |
+| 2    | SCL2(24), SDA2(25) | Master2 or Slave2 | Wire2 |
+
 ## Version History
 | Version | Release Date      | Comment         |
 | ------- |-------------------| ----------------|

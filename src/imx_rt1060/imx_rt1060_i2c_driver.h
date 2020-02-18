@@ -156,9 +156,9 @@ private:
     void clear_all_msr_flags();
 };
 
-extern IMX_RT1060_I2CMaster Master;
-extern IMX_RT1060_I2CMaster Master1;
-extern IMX_RT1060_I2CMaster Master2;
+extern IMX_RT1060_I2CMaster Master;     // Pins 19 and 18; SCL0 and SDA0
+extern IMX_RT1060_I2CMaster Master1;    // Pins 16 and 17; SCL1 and SDA1
+extern IMX_RT1060_I2CMaster Master2;    // Pins 24 and 25; SCL2 and SDA2
 
 class IMX_RT1060_I2CSlave : public I2CSlave
 {
@@ -223,8 +223,8 @@ private:
     void end_of_frame();
 };
 
-extern IMX_RT1060_I2CSlave Slave;
-extern IMX_RT1060_I2CSlave Slave1;
-extern IMX_RT1060_I2CSlave Slave2;
+extern IMX_RT1060_I2CSlave Slave;   // Pins 19 and 18; SCL0 and SDA0
+extern IMX_RT1060_I2CSlave Slave1;  // Pins 16 and 17; SCL1 and SDA1
+extern IMX_RT1060_I2CSlave Slave2;  // Pins 24 and 25; SCL2 and SDA2
 
 #endif //IMX_RT1060_I2C_DRIVER_H
