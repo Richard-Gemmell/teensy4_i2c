@@ -46,7 +46,20 @@ the Wire API unless you have to. See below for alternatives.
 1. Change all #includes from Wire.h to i2c_driver_wire.h.
 1. If any of your dependencies use Wire.h you'll have to
 modify them to use i2c_driver_wire.h instead.
+1. If you depend on any libraries that use Wire.h then you'll
+have to replace _all_ references to Wire.h to i2c_driver_wire.h
+in that library. This is because Arduino compiles all .cpp files
+in a library whether you reference them or not.
 1. See the examples in the examples/wire directory
+
+If you miss a reference to Wire.h then you'll see compilation errors
+like this:-
+
+`... Wire/WireIMXRT.cpp:10: multiple definition of 'Wire'`
+
+You may also see linker errors like this:-
+
+`... bin/ld.exe: Warning: size of symbol 'Wire' changed from 116 in ... teensy4_i2c\i2c_driver_wire.cpp.o to 112 in ... libraries\Wire\WireIMXRT.cpp.o`
 
 ## Common Problems
 Here are some of the common problems that will can break the I2C
@@ -108,7 +121,8 @@ This table lists the objects that you should use to handle each I2C port.
 ## Version History
 | Version | Release Date      | Comment         |
 | ------- |-------------------| ----------------|
-| v0.9.0  | 7th November 2019 | Initial Version |
-| v0.9.1  | 7th January 2020  | Fixed bug in i2c_driver_wire.h |
-| v0.9.2  | 9th January 2020 | Can now probe for active slaves. |
+| v0.9.4  | 15th May 2020 | Added function overloads to I2CDriverWire to avoid ambiguous calls from existing code. |
 | v0.9.3  | 17th February 2020 | I2CDriverWire::requestFrom() now reports correct number of bytes. |
+| v0.9.2  | 9th January 2020 | Can now probe for active slaves. |
+| v0.9.1  | 7th January 2020  | Fixed bug in i2c_driver_wire.h |
+| v0.9.0  | 7th November 2019 | Initial Version |

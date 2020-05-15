@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 // A Simple Sensor
@@ -24,10 +24,10 @@ void setup()
   Wire1.begin();                         // join i2c bus
 
   // Configure the slave by writing to register 0
-  uint16_t new_config = 0x6763;                          // Suitable configuration values
+  uint16_t new_config = 0x6763;                           // Suitable configuration values
   Serial.println(new_config, HEX);
   Wire1.beginTransmission(sensor_address);
-  Wire1.write((uint8_t)0);                          // Write to register 0
+  Wire1.write(0);                                      // Write to register 0
   Wire1.write((uint8_t*)&new_config, sizeof(new_config)); // Send the new config
   Wire1.endTransmission(true);
 }
@@ -40,7 +40,7 @@ void loop()
 
   // Request the contents of register 0
   Wire1.beginTransmission(sensor_address);
-  Wire1.write((uint8_t)0);
+  Wire1.write(0);
   Wire1.endTransmission(false);
 
   // Read the register
