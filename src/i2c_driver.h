@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #ifndef I2C_DRIVER_H
@@ -29,6 +29,8 @@ enum class I2CError {
 // Contains behaviour that's common to both masters and slaves.
 class I2CDriver {
 public:
+    explicit I2CDriver();
+
     // Indicates whether the driver is working or what happened
     // in the last read/write
     inline I2CError error() {
@@ -39,8 +41,21 @@ public:
     inline bool has_error() {
         return _error > I2CError::ok;
     }
+
+    // Sets the pad control configuration that will be used for the I2C pins.
+    // This enables the built in pull up resistor and sets the pin impedance etc.
+    // You must call this method before calling begin() or listen().
+    //
+    // The default is PAD_CONTROL_CONFIG defined in imx_rt1060_i2c_driver.cpp.
+    // You may need to override the default implementation to tune the pad driver's
+    // impedance etc. See imx_rt1060_i2c_driver.cpp for details.
+    inline void set_pad_control_configuration(uint32_t config) {
+        pad_control_config = config;
+    }
+
 protected:
     volatile I2CError _error = I2CError::ok;
+    uint32_t pad_control_config;
 };
 
 class I2CMaster : public I2CDriver {

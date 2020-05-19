@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 //
 // Fragments of this code copied from WireIMXRT.cpp © Paul Stoffregen.
@@ -33,22 +33,69 @@ static uint8_t empty_buffer[0];
 I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
 }
 
-static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin) {
-    *(portControlRegister(pin.pin)) |= IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3);
+// NXP document the pad configuration in AN5078.pdf Rev 0.
+// https://www.nxp.com/docs/en/application-note/AN5078.pdf
+//
+// DSE - (Drive Strength Enable) - See AN5078.pdf section 7.1
+// Used to tune the output driver's impedance to match the load impedance.
+// If the impedance is too high the circuit behaves like a low pass filter,
+// rounding off the inputs.
+// Suggested Value: IOMUXC_PAD_DSE(4) // 37 Ohm
+//
+// SPEED - See AN5078.pdf section 7.3
+// "These options can either increase the output driver current in the higher
+// frequency range, or reduce the switching noise in the lower frequency range."
+// Suggested Value: IOMUXC_PAD_SPEED(1) // 100MHz
+//
+// SRE - Slew Rate Field - See AN5078.pdf section 7.2
+// NXP recommend that this option should be disabled for I2C
+// Suggested Value: disabled. Add IOMUXC_PAD_SRE to enable
+//
+// Pull/keeper - See AN5078.pdf sections 6 and 8.2.2
+// AN5078 recommends disabling pullup except for "very low clock frequencies"
+// Suggested Value: IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3) // Enable 22k pullup resistor
+//
+// Enable Open Drain - See AN5078.pdf sections 5.2
+// Recommended for I2C as I2C depends on open drain drivers
+// Suggested Value: IOMUXC_PAD_ODE  // Enabled
+//
+// Hysteresis - See AN5078.pdf section 7.2
+// Reduces the number of false input signal changes (glitches) caused by noise
+// near the centre point of the voltage range. Enabling this option on "slightly
+// increases the pin power consumption as well as the propagation delay by
+// several nanoseconds." (From AN5078)
+// Suggested Value: IOMUXC_PAD_HYS  // Enabled
+#define PAD_CONTROL_CONFIG \
+    IOMUXC_PAD_DSE(4) \
+    | IOMUXC_PAD_SPEED(1) \
+    | IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3) \
+    | IOMUXC_PAD_ODE \
+    | IOMUXC_PAD_HYS
+I2CDriver::I2CDriver()
+    : pad_control_config(PAD_CONTROL_CONFIG) {
+}
+
+static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control_config) {
+    *(portControlRegister(pin.pin)) = pad_control_config;
+    #ifdef DEBUG_I2C
+    Serial.print("Pad control register: 0x");
+    Serial.println(*(portControlRegister(pin.pin)), 16);
+    #endif
+
     *(portConfigRegister(pin.pin)) = pin.mux_val;
     if (pin.select_input_register) {
         *(pin.select_input_register) = pin.select_val;
     }
 }
 
-static void initialise_common(IMX_RT1060_I2CBase::Config hardware) {
+static void initialise_common(IMX_RT1060_I2CBase::Config hardware, uint32_t pad_control_config) {
     // Set LPI2C Clock to 24MHz. Required by slaves as well as masters.
     CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63)) | CCM_CSCDR2_LPI2C_CLK_SEL;
     hardware.clock_gate_register |= hardware.clock_gate_mask;
 
     // Setup SDA and SCL pins and registers
-    initialise_pin(hardware.sda_pin);
-    initialise_pin(hardware.scl_pin);
+    initialise_pin(hardware.sda_pin, pad_control_config);
+    initialise_pin(hardware.scl_pin, pad_control_config);
 }
 
 static void stop(IMXRT_LPI2C_Registers* port, IRQ_NUMBER_t irq) {
@@ -74,7 +121,7 @@ void IMX_RT1060_I2CMaster::begin(uint32_t frequency) {
     stop(port, config.irq);
 
     // Setup pins and master clock
-    initialise_common(config);
+    initialise_common(config, pad_control_config);
 
     // Configure and Enable Master Mode
     // Set FIFO watermarks. Determines when the RDF and TDF interrupts happen
@@ -84,8 +131,6 @@ void IMX_RT1060_I2CMaster::begin(uint32_t frequency) {
     attachInterruptVector(config.irq, isr);
     port->MIER = LPI2C_MIER_RDIE | LPI2C_MIER_SDIE | LPI2C_MIER_NDIE | LPI2C_MIER_ALIE | LPI2C_MIER_FEIE | LPI2C_MIER_PLTIE;
     NVIC_ENABLE_IRQ(config.irq);
-    // Enable master
-//    port->MCR = LPI2C_MCR_MEN;
 }
 
 void IMX_RT1060_I2CMaster::end() {
@@ -364,7 +409,7 @@ void IMX_RT1060_I2CSlave::listen(uint16_t address) {
     // Make sure slave mode is disabled before configuring it.
     stop_listening();
 
-    initialise_common(config);
+    initialise_common(config, pad_control_config);
 
     // Set the Slave Address
     port->SAMR = address << 1U;
@@ -614,6 +659,7 @@ static void log_master_control_register(const char* message, uint32_t mcr) {
 }
 
 static void log_master_status_register(uint32_t msr) {
+    return;
     if (msr) {
         Serial.print("MSR Flags: ");
     }
