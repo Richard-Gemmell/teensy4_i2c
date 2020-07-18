@@ -385,21 +385,21 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
                       LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(40);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(1);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
-                       LPI2C_MCFGR2_BUSIDLE(3900);
+                       LPI2C_MCFGR2_BUSIDLE(2 * (59 + 40 + 2));
     } else if (frequency < 1000000) {
         // Use Fast Mode - up to 400 kHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(26) | LPI2C_MCCR0_CLKLO(28) |
                       LPI2C_MCCR0_DATAVD(12) | LPI2C_MCCR0_SETHOLD(18);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(2) | LPI2C_MCFGR2_FILTSCL(2) |
-                       LPI2C_MCFGR2_BUSIDLE(3900);
+                       LPI2C_MCFGR2_BUSIDLE(2 * (28 + 18 + 2));
     } else {
         // Use Fast Mode Plus - up to 1 MHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(9) | LPI2C_MCCR0_CLKLO(10) |
                       LPI2C_MCCR0_DATAVD(4) | LPI2C_MCCR0_SETHOLD(7);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(1) | LPI2C_MCFGR2_FILTSCL(1) |
-                       LPI2C_MCFGR2_BUSIDLE(3900);
+                       LPI2C_MCFGR2_BUSIDLE(2 * (10 + 7 + 2));
     }
     port->MCCR1 = port->MCCR0;
     port->MCFGR3 = LPI2C_MCFGR3_PINLOW(3900);   // Pin low timeout
