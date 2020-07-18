@@ -378,6 +378,7 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 }
 
 // Supports 100 kHz, 400 kHz and 1 MHz modes.
+// BUSIDLE = (CLKLO+SETHOLD+2) × 2
 void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     if (frequency < 400000) {
         // Use Standard Mode - up to 100 kHz
