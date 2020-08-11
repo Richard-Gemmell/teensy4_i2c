@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 // This example WILL NOT work unless you have an INA260
@@ -12,6 +12,9 @@
 #include <Arduino.h>
 #include <i2c_device.h>
 
+// The I2C device. Determines which pins we use on the Teensy.
+I2CMaster& master = Master1;
+
 // Blink the LED to make sure the Teensy hasn't hung
 IntervalTimer blink_timer;
 volatile bool led_high = false;
@@ -23,7 +26,7 @@ const uint16_t expected_manufacturer_id = 0x5449;
 const uint8_t die_id_register = 0xFF;
 const uint16_t expected_die_id = 0x2270;
 bool configured = false;
-I2CDevice sensor = I2CDevice(Master1, slave_address, _BIG_ENDIAN);
+I2CDevice sensor = I2CDevice(master, slave_address, _BIG_ENDIAN);
 
 
 bool configure_sensor();
@@ -33,7 +36,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     // Initialise the master
-    Master1.begin(400 * 1000U);
+    master.begin(400 * 1000U);
 
     // Enable the serial port for debugging
     Serial.begin(9600);
@@ -105,5 +108,5 @@ bool configure_sensor() {
 void report_error(const char* message) {
     Serial.print(message);
     Serial.print(" Error: ");
-    Serial.println((int)Master1.error());
+    Serial.println((int)master.error());
 }

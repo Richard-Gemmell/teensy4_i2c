@@ -1,10 +1,11 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 // A Simple Sensor
 // Demonstrates use of the raw I2C driver as a simple slave transmitter.
 // The sensor provides the master with a simulated temperature reading
-// on demand.
+// on demand. The temperature increases each time the master reads it.
+//
 // To use it, connect a master to the Teensy on pins 18 and 19.
 // Send read requests to the Teensy.
 //
@@ -23,6 +24,7 @@ void blink_isr();
 
 const uint16_t slave_address = 0x002D;
 I2CSlave& slave = Slave;
+void set_temp(uint16_t new_temp);
 void before_transmit_isr();
 void after_transmit();
 
@@ -46,6 +48,9 @@ void setup() {
     // Create a timer to blink the LED
     blink_timer.begin(blink_isr, 500 * 1000);
 
+    // Initialise the data we'll send to the master
+    set_temp(fake_temp);
+
     // Configure I2C Slave and Start It
     slave.before_transmit(before_transmit_isr);
     slave.after_transmit(after_transmit);
@@ -58,15 +63,18 @@ void setup() {
 }
 
 void loop() {
-    // Work out the current temperature and make it available to the master
-    fake_temp++;
-    memcpy(tx_buffer, &fake_temp, sizeof(fake_temp));
-
     // Now we've got the time, we can handle the results of the ISR callbacks.
     log_transmit_events();
 
     // The master can read the sensor as often as it likes while we sleep
     delay(2);
+}
+
+// Sets the value that will be returned to the master
+void set_temp(uint16_t new_temp) {
+    memcpy(tx_buffer, &new_temp, sizeof(new_temp));
+    Serial.print("Setting temperature to ");
+    Serial.println(new_temp);
 }
 
 // Called by an interrupt service routine.
@@ -101,6 +109,10 @@ void log_transmit_events() {
             Serial.println("App: Buffer Underflow. (Master asked for too many bytes.)");
             buffer_underflow_detected = false;
         }
+        Serial.println();
+
+        // Use a new temperature
+        set_temp(++fake_temp);
     }
 }
 

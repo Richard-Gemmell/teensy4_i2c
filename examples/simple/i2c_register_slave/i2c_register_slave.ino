@@ -19,17 +19,17 @@ volatile bool led_high = false;
 
 // Registers that the caller can both read and write
 struct Settings {
-    int8_t temp_offset; // Zero point for temperature. Default -40.
-    int8_t scaling;     // Writable. Sets scaling of voltage and current fields.
+    int8_t temp_offset; // Register 0. Zero point for temperature. Default -40.
+    int8_t scaling;     // Register 1. Writable. Sets scaling of voltage and current fields.
 };
 
 // Registers that the caller can only read
 struct Registers {
-    uint8_t flags = 0;      // bit 0 : new data available
-    uint8_t temp = 0;       // degrees C starting at temp_offset
-    uint16_t reserved = 0;  // Fill up to the next word boundary
-    int32_t voltage = 0;    // in 10ths of a volt
-    int32_t current = 0;    // in 10ths of an amp
+    uint8_t flags = 0;      // Register 2. bit 0 => new data available
+    int8_t temp = 0;        // Register 3. degrees C starting at temp_offset
+    uint16_t reserved = 0;  // Register 4. Fill up to the next word boundary
+    int32_t voltage = 0;    // Register 6. in 10ths of a volt
+    int32_t current = 0;    // Register 10. in 10ths of an amp
 };
 
 Settings settings = {-40, 10};
@@ -61,8 +61,7 @@ void setup() {
 void loop() {
     // Gather raw data and convert to output values
     Registers new_values;
-    int16_t raw_temp = get_temp();
-    new_values.temp = raw_temp - (int16_t)settings.temp_offset;
+    new_values.temp = get_temp() - settings.temp_offset;
     int32_t raw_voltage = get_voltage();
     new_values.voltage = raw_voltage * settings.scaling;
     int32_t raw_current = get_current();
