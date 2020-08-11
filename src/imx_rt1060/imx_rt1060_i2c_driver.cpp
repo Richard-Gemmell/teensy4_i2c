@@ -20,6 +20,7 @@
 #define MASTER_READ 1   // Makes the address a read request
 #define MASTER_WRITE 0  // Makes the address a write request
 #define MAX_MASTER_READ_LENGTH 256  // Maximum number of bytes that can be read by a single Master read
+#define CLOCK_STRETCH_TIMEOUT 15000 // Timeout if a device stretches SCL this long, in microseconds
 
 // Debug tools
 #ifdef DEBUG_I2C
@@ -386,6 +387,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(1);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (59 + 40 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
+        port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1);
     } else if (frequency < 1000000) {
         // Use Fast Mode - up to 400 kHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(26) | LPI2C_MCCR0_CLKLO(28) |
@@ -393,6 +395,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(2) | LPI2C_MCFGR2_FILTSCL(2) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (28 + 18 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
+        port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1);
     } else {
         // Use Fast Mode Plus - up to 1 MHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(9) | LPI2C_MCCR0_CLKLO(10) |
@@ -400,9 +403,9 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(1) | LPI2C_MCFGR2_FILTSCL(1) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (10 + 7 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
+        port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1);
     }
     port->MCCR1 = port->MCCR0;
-    port->MCFGR3 = LPI2C_MCFGR3_PINLOW(3900);   // Pin low timeout
 }
 
 void IMX_RT1060_I2CSlave::listen(uint16_t address) {

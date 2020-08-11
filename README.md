@@ -152,6 +152,7 @@ Please contact me if you need any of these features.
 ## Version History
 | Version | Release Date      | Comment         |
 | ------- |-------------------| ----------------|
+| v1.0.1  | 11th Aug 2020 | Adjusted timings to improve responsiveness.
 | v1.0.0  | 19th May 2020 | Promoted v0.9.5 to 1.0 as it seems stable.
 | v0.9.5  | 19th May 2020 | Improved pad control configuration to reduce errors from noise. (Changed default config from 0xF0B0 to 0x1F830)
 | v0.9.4  | 15th May 2020 | Added function overloads to I2CDriverWire to avoid ambiguous calls from existing code. |
