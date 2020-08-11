@@ -63,6 +63,10 @@ public:
         return _finished;
     };
 
+    size_t get_bytes_transferred() {
+        return -1;
+    }
+
     void write_async(uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override {
         copy_to_next_buffer(false, address, buffer, num_bytes, send_stop);
     };
