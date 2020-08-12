@@ -169,6 +169,10 @@ public:
 
     void listen(uint8_t address) override;
 
+    void listen(uint8_t first_address, uint8_t second_address) override;
+
+    void listen_range(uint8_t first_address, uint8_t last_address) override;
+
     void stop_listening() override;
 
     // Call this to reset the slave when it ignores a new I2C transaction
@@ -182,11 +186,11 @@ public:
         port->SCR = LPI2C_SCR_SEN;
     }
 
-    void after_receive(std::function<void(int len)> callback) override;
+    void after_receive(std::function<void(size_t length, uint16_t address)> callback) override;
 
-    void before_transmit(std::function<void()> callback) override;
+    void before_transmit(std::function<void(uint16_t address)> callback) override;
 
-    void after_transmit(std::function<void()> callback) override;
+    void after_transmit(std::function<void(uint16_t address)> callback) override;
 
     void set_transmit_buffer(uint8_t* buffer, size_t size) override;
 
@@ -209,15 +213,18 @@ private:
     IMXRT_LPI2C_Registers* const port;
     IMX_RT1060_I2CBase::Config& config;
     volatile State state = State::idle;
+    volatile uint16_t address_called = 0;
 
     I2CBuffer rx_buffer = I2CBuffer();
     I2CBuffer tx_buffer = I2CBuffer();
     bool trailing_byte_sent = false;
 
     void (* isr)();
-    std::function<void(int len)> after_receive_callback = nullptr;
-    std::function<void()> before_transmit_callback = nullptr;
-    std::function<void()> after_transmit_callback = nullptr;
+    std::function<void(size_t length, uint16_t address)> after_receive_callback = nullptr;
+    std::function<void(uint16_t address)> before_transmit_callback = nullptr;
+    std::function<void(uint16_t address)> after_transmit_callback = nullptr;
+
+    void listen(uint32_t samr, uint32_t address_config);
 
     // Called from within the ISR when we receive a Repeated START or STOP
     void end_of_frame();

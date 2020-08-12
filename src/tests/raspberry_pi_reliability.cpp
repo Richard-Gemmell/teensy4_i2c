@@ -3,7 +3,7 @@
 
 // Tests the reliability of a connection by exchanging known data
 // with a Raspberry Pi I2C master.
-// Assumes the master is connected to pins 18 and 19.
+// Assumes the master is connected to pins 16 and 17.
 
 //#define I2C_RASPBERRY_PI_RELIABILITY  // Uncomment to build this example
 #ifdef I2C_RASPBERRY_PI_RELIABILITY
@@ -27,8 +27,8 @@ uint8_t received_message_ok = 0;
 
 void reset_rx_buffer();
 void report();
-void after_transmit();
-void after_receive(uint8_t len);
+void after_transmit(uint16_t address);
+void after_receive(size_t length, uint16_t address);
 
 uint32_t read_count = 0;
 uint32_t read_errors = 0;
@@ -60,7 +60,7 @@ void loop() {
     delay(1000);
 }
 
-void after_transmit() {
+void after_transmit(uint16_t address) {
     write_count++;
     if (slave.has_error()) {
         write_errors++;
@@ -68,12 +68,12 @@ void after_transmit() {
     }
 }
 
-void after_receive(uint8_t len) {
+void after_receive(size_t length, uint16_t address) {
     if (slave.has_error()) {
         read_errors += 1;
     }
-    bytes_read += len;
-    if (len == 1) {
+    bytes_read += length;
+    if (length == 1) {
         // Master is just setting the register number
         uint8_t reg_num = rx_buffer[0];
 //        Serial.print("Requesting register ");

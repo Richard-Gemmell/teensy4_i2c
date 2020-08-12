@@ -30,6 +30,7 @@ for master, multi-master and slave devices.
 * Non-blocking API for Master Mode and Slave Mode
 * Comprehensive error handling
 * Can tune the Teensy's electrical configuration for you application
+* A single slave can handle multiple I2C addresses
 
 ## Usage
 
@@ -132,6 +133,7 @@ restrictions. These features *should* work but don't be surprised if
 they don't. Please contact me if you encounter any problems.
 * Multi-master configurations
 * Cortex i.MX RT1050
+* Teensy 4.1
 
 ## Not Implemented
 The following features are supported by the NXP i.MXRT 1062 processor but
@@ -141,7 +143,6 @@ Please contact me if you need any of these features.
 * Direct Memory Access (DMA)
 * High Speed Mode (3.4 Mbps)
 * Ultra Fast Mode (5 Mbps)
-* Multiple addresses for a single slave
 * 10 bit slave addresses
 * Glitch filter (for slave mode)
 * SMBus Alert
@@ -152,6 +153,7 @@ Please contact me if you need any of these features.
 ## Version History
 | Version | Release Date      | Comment         |
 | ------- |-------------------| ----------------|
+| v1.1.0  | 12th Aug 2020 | I2C slave can now have many I2C addresses.
 | v1.0.1  | 11th Aug 2020 | Adjusted timings to improve responsiveness.
 | v1.0.0  | 19th May 2020 | Promoted v0.9.5 to 1.0 as it seems stable.
 | v0.9.5  | 19th May 2020 | Improved pad control configuration to reduce errors from noise. (Changed default config from 0xF0B0 to 0x1F830)

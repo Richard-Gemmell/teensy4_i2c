@@ -17,7 +17,7 @@
 
 class II2CRegisterSlave {
 public:
-    // Calls listen() on the underlying slave driver and then attaches out even
+    // Calls listen() on the underlying slave driver and then attaches our event
     // handlers. Don't call listen on the underlying slave directly or it won't work.
     virtual void listen(uint8_t address) = 0;
 
@@ -38,6 +38,9 @@ public:
 // loop. The master is expected to read the registers asynchronously without
 // the application needing to create an interrupt service routine to respond
 // to the master.
+//
+// This class is intended to represent a single I2C device so it does not
+// support multiple slave addresses.
 class I2CRegisterSlave : public II2CRegisterSlave {
 public:
     // 'mutable_buffer' a set of registers that the master can write to
@@ -56,7 +59,7 @@ public:
               read_only_buffer(read_only_buffer), read_only_buffer_size(num_read_only_bytes) {
     }
 
-    // Calls listen() on the underlying slave driver and then attaches out even
+    // Calls listen() on the underlying slave driver and then attaches our event
     // handlers. Don't call listen on the underlying slave directly or it won't work.
     void listen(uint8_t address) override;
 

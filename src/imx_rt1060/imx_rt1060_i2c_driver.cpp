@@ -409,18 +409,40 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
 }
 
 void IMX_RT1060_I2CSlave::listen(uint8_t address) {
+    // Listen to a single 7-bit address
+    uint32_t samr = LPI2C_SAMR_ADDR0(address);
+    uint32_t address_config = LPI2C_SCFGR1_ADDRCFG(0x0);
+    listen(samr, address_config);
+}
+
+void IMX_RT1060_I2CSlave::listen(uint8_t first_address, uint8_t second_address) {
+    // Listen to 2 7-bit addresses
+    uint32_t samr = LPI2C_SAMR_ADDR0(first_address) | LPI2C_SAMR_ADDR1(second_address);
+    uint32_t address_config = LPI2C_SCFGR1_ADDRCFG(0x02);
+    listen(samr, address_config);
+}
+
+void IMX_RT1060_I2CSlave::listen_range(uint8_t first_address, uint8_t last_address) {
+    // Listen to all 7-bit addresses in the range (inclusive)
+    uint32_t samr = LPI2C_SAMR_ADDR0(first_address) | LPI2C_SAMR_ADDR1(last_address);
+    uint32_t address_config = LPI2C_SCFGR1_ADDRCFG(0x06);
+    listen(samr, address_config);
+}
+
+void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     // Make sure slave mode is disabled before configuring it.
     stop_listening();
 
     initialise_common(config, pad_control_config);
 
     // Set the Slave Address
-    port->SAMR = address << 1U;
+    port->SAMR = samr;
+
     // Enable clock stretching
-    port->SCFGR1 |= (LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
+    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
     // Set up interrupts
     attachInterruptVector(config.irq, isr);
-    port->SIER |= (LPI2C_SIER_RSIE | LPI2C_SIER_SDIE | LPI2C_SIER_TDIE | LPI2C_SIER_RDIE);
+    port->SIER = (LPI2C_SIER_RSIE | LPI2C_SIER_SDIE | LPI2C_SIER_TDIE | LPI2C_SIER_RDIE);
     NVIC_ENABLE_IRQ(config.irq);
 
     // Enable Slave Mode
@@ -432,15 +454,15 @@ inline void IMX_RT1060_I2CSlave::stop_listening() {
     stop(port, config.irq);
 }
 
-inline void IMX_RT1060_I2CSlave::after_receive(std::function<void(int len)> callback) {
+inline void IMX_RT1060_I2CSlave::after_receive(std::function<void(size_t len, uint16_t address)> callback) {
     after_receive_callback = callback;
 }
 
-inline void IMX_RT1060_I2CSlave::before_transmit(std::function<void()> callback) {
+inline void IMX_RT1060_I2CSlave::before_transmit(std::function<void(uint16_t address)> callback) {
     before_transmit_callback = callback;
 }
 
-inline void IMX_RT1060_I2CSlave::after_transmit(std::function<void()> callback) {
+inline void IMX_RT1060_I2CSlave::after_transmit(std::function<void(uint16_t address)> callback) {
     after_transmit_callback = callback;
 }
 
@@ -458,8 +480,9 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
     uint32_t ssr = port->SSR;
 //    log_slave_status_register(ssr);
 
-    if (ssr & LPI2C_SSR_AM0F) {
-        port->SASR; // Read SASR to clear to the address flag. (Just for neatness)
+    if (ssr & LPI2C_SSR_AVF) {
+        // Find out which address was used and clear to the address flag.
+        address_called = (port->SASR & LPI2C_SASR_RADDR(0x7FF)) >> 1;
     }
 
     if (ssr & (LPI2C_SSR_RSF | LPI2C_SSR_SDF)) {
@@ -501,7 +524,7 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
             _error = I2CError::ok;
             state = State::transmitting;
             if (before_transmit_callback) {
-                before_transmit_callback();
+                before_transmit_callback(address_called);
             }
         }
         if (tx_buffer.initialised()) {
@@ -552,12 +575,12 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
 void IMX_RT1060_I2CSlave::end_of_frame() {
     if (state == State::receiving) {
         if (after_receive_callback) {
-            after_receive_callback(rx_buffer.get_bytes_transferred());
+            after_receive_callback(rx_buffer.get_bytes_transferred(), address_called);
         }
     } else if (state == State::transmitting) {
         trailing_byte_sent = false;
         if (after_transmit_callback) {
-            after_transmit_callback();
+            after_transmit_callback(address_called);
         }
     }
     #ifdef DEBUG_I2C

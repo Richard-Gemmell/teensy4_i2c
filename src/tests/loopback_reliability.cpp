@@ -1,8 +1,5 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
-
-// Demonstrates use of the raw I2C driver as a slave receiver.
-// Receives data from a master device.
 
 //#define I2C_RAW_LOOPBACK_RELIABILITY  // Uncomment to build this example
 #ifdef I2C_RAW_LOOPBACK_RELIABILITY
@@ -25,7 +22,7 @@ I2CMaster& master = Master;
 // Slave
 const uint16_t slave_address = 0x002D;
 I2CSlave& slave = Slave1;
-void after_slave_receive(int size);
+void after_slave_receive(size_t length, uint16_t address);
 
 // Data to exchange
 uint8_t master_tx_buffer[] = {0xAA};
@@ -35,7 +32,7 @@ const size_t slave_rx_buffer_size = 2;
 uint8_t slave_rx_buffer[slave_rx_buffer_size] = {};
 volatile size_t slave_bytes_received = 0;
 uint8_t slave_tx_buffer[] = {0xC3};
-void after_transmit();
+void after_transmit(uint16_t address);
 volatile bool after_transmit_received = false;
 volatile bool buffer_underflow_detected = false;
 
@@ -98,7 +95,7 @@ void setup() {
     slave.listen(slave_address);
 
     // Initialise the master
-    master.begin(400 * 1000U);
+    master.begin(1000 * 1000U);
 
     // Enable the serial port for debugging
     Serial.begin(9600);
@@ -155,9 +152,9 @@ void master_write_then_read() {
     }
 }
 
-void after_slave_receive(int size) {
-    if (size != 1) {
-        Serial.print("Freaky message size: ");Serial.println(size);
+void after_slave_receive(size_t length, uint16_t address) {
+    if (length != 1) {
+        Serial.print("Freaky message size: ");Serial.println(length);
     }
     slave_received_count++;
     if (slave.has_error()) {
@@ -171,7 +168,7 @@ void after_slave_receive(int size) {
     memset(slave_rx_buffer, 0, sizeof(slave_rx_buffer));
 }
 
-void after_transmit() {
+void after_transmit(uint16_t address) {
     slave_transmitted_count++;
     if (slave.has_error()) {
         slave_write_error_count++;

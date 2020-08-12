@@ -25,8 +25,8 @@ void blink_isr();
 const uint8_t slave_address = 0x2D;
 I2CSlave& slave = Slave1;
 void set_temp(uint16_t new_temp);
-void before_transmit_isr();
-void after_transmit();
+void before_transmit_isr(uint16_t address);
+void after_transmit(uint16_t address);
 
 // Set up transmit buffer and temperature value
 const size_t tx_buffer_size = 2;
@@ -79,13 +79,13 @@ void set_temp(uint16_t new_temp) {
 
 // Called by an interrupt service routine.
 // This function must be _very_ fast. Avoid IO.
-void before_transmit_isr() {
+void before_transmit_isr(uint16_t address) {
     before_transmit_received = true;
 }
 
 // Called by an interrupt service routine.
 // This function must be _very_ fast. Avoid IO.
-void after_transmit() {
+void after_transmit(uint16_t address) {
     after_transmit_received = true;
     if (slave.has_error()) {
         I2CError error = slave.error();

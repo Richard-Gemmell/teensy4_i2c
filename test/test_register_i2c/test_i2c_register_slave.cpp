@@ -13,20 +13,28 @@ unsigned __exidx_end;
 
 class DummyI2CSlave : public I2CSlave {
 public:
-    void listen(uint16_t slave_address) override {
+    void listen(uint8_t slave_address) override {
         address = slave_address;
     };
 
+    void listen(uint8_t first_address, uint8_t second_address) {
+        // Not implemented as not required by I2CRegisterSlave
+    }
+
+    void listen_range(uint8_t first_address, uint8_t last_address) {
+        // Not implemented as not required by I2CRegisterSlave
+    }
+
     void stop_listening() override {};
 
-    inline void after_receive(std::function<void(int len)> callback) override {
+    inline void after_receive(std::function<void(size_t length, uint16_t address)> callback) override {
         after_receive_callback = callback;
     }
 
-    void before_transmit(std::function<void()> callback) override {
+    void before_transmit(std::function<void(uint16_t address)> callback) override {
     };
 
-    void after_transmit(std::function<void()> callback) override {
+    void after_transmit(std::function<void(uint16_t address)> callback) override {
         after_transmit_callback = callback;
     };
 
@@ -45,7 +53,7 @@ public:
             latest_rx_buffer[0] = reg_num;
             memcpy(latest_rx_buffer+1, buffer, min(len, latest_rx_buffer_size-1));
             if(after_receive_callback) {
-                after_receive_callback(len+1);
+                after_receive_callback(len+1, address);
             }
         }
     }
@@ -54,7 +62,7 @@ public:
         if (latest_rx_buffer != nullptr && latest_rx_buffer_size > 0) {
             latest_rx_buffer[0] = reg_num;
             if(after_receive_callback) {
-                after_receive_callback(sizeof(uint8_t));
+                after_receive_callback(sizeof(uint8_t), address);
             }
         }
     }
@@ -63,7 +71,7 @@ public:
         if (latest_rx_buffer) {
             memcpy(latest_rx_buffer, buffer, min(len, latest_rx_buffer_size));
             if(after_receive_callback) {
-                after_receive_callback(len);
+                after_receive_callback(len, address);
             }
         }
     }
@@ -72,7 +80,7 @@ public:
         if (latest_tx_buffer) {
             memcpy(buffer, latest_tx_buffer, min(len, latest_tx_buffer_size));
             if(after_transmit_callback) {
-                after_transmit_callback();
+                after_transmit_callback(address);
             }
         }
     }
@@ -91,9 +99,9 @@ public:
     size_t latest_tx_buffer_size = 0;
 
 private:
-    std::function<void(int len)> after_receive_callback = nullptr;
-//    std::function<void()> before_transmit_callback = nullptr;
-    std::function<void()> after_transmit_callback = nullptr;
+    std::function<void(size_t length, uint16_t address)> after_receive_callback = nullptr;
+//    std::function<void(uint16_t address)> before_transmit_callback = nullptr;
+    std::function<void(uint16_t address)> after_transmit_callback = nullptr;
 };
 
 DummyI2CSlave dummy;

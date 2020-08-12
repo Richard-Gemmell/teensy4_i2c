@@ -39,7 +39,7 @@ class I2CDevice : public II2CDevice {
 public:
     const uint32_t timeout_millis = 200;
 
-    I2CDevice(I2CMaster& master, uint16_t address, int device_byte_order = _LITTLE_ENDIAN)
+    I2CDevice(I2CMaster& master, uint8_t address, int device_byte_order = _LITTLE_ENDIAN)
             : master(master), address(address) {
         swap_bytes = _BYTE_ORDER != device_byte_order;
     }
@@ -149,7 +149,7 @@ public:
 
 private:
     I2CMaster& master;
-    uint16_t address;
+    uint8_t address;
     bool swap_bytes;
 
     bool write_register(uint8_t reg) {
