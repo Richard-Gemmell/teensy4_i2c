@@ -53,7 +53,15 @@ public:
     void begin();
 
     // Use this version of begin() to initialise a slave.
-    void begin(int address);
+    void begin(uint8_t address);
+
+    // Use this version of begin() to initialise a slave that listens
+    // on 2 different addresses
+    void begin(uint8_t first_address, uint8_t second_address);
+
+    // Use this version of begin() to initialise a slave that listens
+    // on 2 different addresses
+    void beginRange(uint8_t first_address, uint8_t last_address);
 
     void end();
 
@@ -75,27 +83,39 @@ public:
 
     int peek() override;
 
-    // A callback that's called by the I2C driver's interrupt
-    // service routine (ISR).
-    // WARNING: This method is called inside an ISR so it must be
-    // very, very fast. Avoid using it if at all possible.
+    // Registers a function to be called when a slave device receives
+    // a transmission from a master.
+    //
+    // WARNING: This method is called inside the driver's interrupt
+    // service routing so it must be very, very fast. In particular,
+    // you should avoid doing any IO in the callback.
     inline void onReceive(void (* function)(int len)) {
         on_receive = function;
     }
 
-    // A callback that's called by the I2C driver's interrupt
-    // service routine (ISR).
-    // WARNING: This method is called inside an ISR so it must be
-    // very, very fast. Avoid using it if at all possible.
-    // In particular, don't call write() in this method to prepare
-    // the transmit buffer. It's much better to fill the transmit
-    // buffer during loop().
+    // Register a function to be called when a master requests data from
+    // this slave device.
+    //
+    // WARNING: This method is called inside the driver's interrupt
+    // service routing so it must be very, very fast. Avoid using it
+    // if possible and avoid IO. In particular, don't call write()
+    // in this method to prepare the transmit buffer. It's much better
+    // to fill the transmit buffer during loop().
     inline void onRequest(void (* function)()) {
         on_request = function;
     }
 
+    // Returns the address that the slave responded to the last
+    // time the master accessed it. This is only useful for slaves
+    // that are listening to more than one address.
+    inline int getLastAddress() {
+        return last_address_called;
+    }
+
     // Override various functions to avoid ambiguous calls
-    inline void begin(uint8_t address) { begin((int)address); }
+    inline void begin(int address) { begin((uint8_t)address); }
+    inline void begin(int first_address, int second_address) { begin((uint8_t)first_address, (uint8_t)second_address); }
+    inline void beginRange(int first_address, int last_address) { beginRange((uint8_t)first_address, (uint8_t)last_address); }
 
     inline size_t write(unsigned long n) { return write((uint8_t)n); }
     inline size_t write(long n) { return write((uint8_t)n); }
@@ -119,9 +139,12 @@ private:
     size_t rx_bytes_available = 0;
     size_t rx_next_byte_to_read = 0;
 
-    void before_transmit();
+    uint16_t last_address_called = 0xFF;
+
+    void prepare_slave();
+    void before_transmit(uint16_t address);
     void finish();
-    void on_receive_wrapper(size_t num_bytes);
+    void on_receive_wrapper(size_t num_bytes, uint16_t address);
 };
 
 extern I2CDriverWire Wire;      // Pins 19 and 18; SCL0 and SDA0
