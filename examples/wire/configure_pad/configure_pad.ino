@@ -9,7 +9,7 @@
 // imx_rt1060_i2c_driver.cpp for more information.
 //
 // This example WILL NOT work unless you have an INA260
-// current sensor connected to pins 16 and 17.
+// current sensor connected to pins 17 and 18.
 
 #include <Arduino.h>
 #include <i2c_driver.h>
@@ -27,8 +27,8 @@ void setup()
 
   // This call to setPadControlConfiguration() overrides the default
   // configuration defined in imx_rt1060_i2c_driver.cpp.
-  Wire1.setPadControlConfiguration(PAD_CONFIG);
-  Wire1.begin();                         // join i2c bus
+  Wire.setPadControlConfiguration(PAD_CONFIG);
+  Wire.begin();                         // join i2c bus
 
   Serial.begin(9600);                    // start serial for output
 }
@@ -38,16 +38,16 @@ void loop()
   Serial.print("read: ");
 
   digitalWrite(led, HIGH);  // briefly flash the LED
-  Wire1.requestFrom(0x40, 2);   // request 2 bytes from slave device #64
+  Wire.requestFrom(0x40, 2);   // request 2 bytes from slave device #64
 
   // Can peek at the first byte
-  if (Wire1.available()) {
-      Serial.print((char)Wire1.peek());
+  if (Wire.available()) {
+      Serial.print((char)Wire.peek());
       Serial.print(" ");
   }
 
-  while(Wire1.available()) { // slave may send less than requested
-    char c = Wire1.read();   // receive a byte as character
+  while(Wire.available()) { // slave may send less than requested
+    char c = Wire.read();   // receive a byte as character
     Serial.print(c);         // print the character
   }
 

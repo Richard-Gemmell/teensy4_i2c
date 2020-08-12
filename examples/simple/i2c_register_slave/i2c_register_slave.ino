@@ -4,7 +4,7 @@
 // Demonstrates use of the I2C Device class to represent a slave device.
 // Creates an I2C master, configures a device and reads registers.
 //
-// To use it, connect a master to the Teensy on pins 18 and 19.
+// To use it, connect a master to the Teensy on pins 16 and 17.
 // Use the master to read registers 0 to 10.
 // The master can write registers 0 and 1 to change the output.
 // loop() updates the output values. Changes to Settings will
@@ -34,7 +34,7 @@ struct Registers {
 
 Settings settings = {-40, 10};
 Registers registers;
-I2CRegisterSlave registerSlave = I2CRegisterSlave(Slave, (uint8_t*)&settings, sizeof(Settings), (uint8_t*)&registers, sizeof(Registers));
+I2CRegisterSlave registerSlave = I2CRegisterSlave(Slave1, (uint8_t*)&settings, sizeof(Settings), (uint8_t*)&registers, sizeof(Registers));
 
 // The code to read the raw data might be too expensive to
 // call in an interrupt service routine. It's represented

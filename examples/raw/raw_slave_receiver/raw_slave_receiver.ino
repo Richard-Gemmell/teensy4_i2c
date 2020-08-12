@@ -4,7 +4,7 @@
 // Demonstrates use of the raw I2C driver as a slave receiver.
 // Receives data from a master device.
 //
-// To use it, connect a master to the Teensy on pins 18 and 19.
+// To use it, connect a master to the Teensy on pins 16 and 17.
 // Use the master to write to the Teensy.
 //
 // This is an advanced example. Use the "simple" examples
@@ -21,7 +21,7 @@ volatile bool led_high = false;
 void blink_isr();
 
 const uint8_t slave_address = 0x2D;
-I2CSlave& slave = Slave;
+I2CSlave& slave = Slave1;
 void after_receive(int size);
 
 // Double receive buffers to hold data from master.

@@ -20,16 +20,16 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(9600);                    // start serial for output
 
-  Wire1.setClock(400 * 1000);   // Set the clock speed before calling begin()
-  Wire1.begin();                         // join i2c bus
+  Wire.setClock(400 * 1000);   // Set the clock speed before calling begin()
+  Wire.begin();                         // join i2c bus
 
   // Configure the slave by writing to register 0
   uint16_t new_config = 0x6763;                           // Suitable configuration values
   Serial.println(new_config, HEX);
-  Wire1.beginTransmission(sensor_address);
-  Wire1.write(0);                                      // Write to register 0
-  Wire1.write((uint8_t*)&new_config, sizeof(new_config)); // Send the new config
-  Wire1.endTransmission(true);
+  Wire.beginTransmission(sensor_address);
+  Wire.write(0);                                      // Write to register 0
+  Wire.write((uint8_t*)&new_config, sizeof(new_config)); // Send the new config
+  Wire.endTransmission(true);
 }
 
 void loop()
@@ -39,14 +39,14 @@ void loop()
   // Read back the config
 
   // Request the contents of register 0
-  Wire1.beginTransmission(sensor_address);
-  Wire1.write(0);
-  Wire1.endTransmission(false);
+  Wire.beginTransmission(sensor_address);
+  Wire.write(0);
+  Wire.endTransmission(false);
 
   // Read the register
-  Wire1.requestFrom(sensor_address, 2, true);
-  while(Wire1.available()) {
-    uint8_t c = Wire1.read();
+  Wire.requestFrom(sensor_address, 2, true);
+  while(Wire.available()) {
+    uint8_t c = Wire.read();
     Serial.print(c, HEX);   // Note that the byte order has changed!
   }
 

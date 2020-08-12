@@ -9,7 +9,7 @@
 // imx_rt1060_i2c_driver.cpp for more information.
 //
 // This example WILL NOT work unless you have an INA260
-// current sensor connected to pins 16 and 17.
+// current sensor connected to pins 18 and 19.
 
 #include <Arduino.h>
 #include <i2c_driver.h>
@@ -24,7 +24,7 @@ void blink_isr();
 const uint8_t slave_address = 0x40;
 const uint8_t manufacturer_id_register = 0xFE;
 const uint8_t die_id_register = 0xFF;
-I2CMaster& master = Master1;
+I2CMaster& master = Master;
 
 // Create a buffer to receive data from the slave.
 uint8_t rx_buffer[2] = {};

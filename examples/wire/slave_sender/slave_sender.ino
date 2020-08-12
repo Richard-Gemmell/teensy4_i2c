@@ -5,7 +5,7 @@
 // Demonstrates use of the Wire library
 // Sends data as an I2C/TWI slave device
 // Refer to the "Wire Master Reader" example for use with this
-// To use it, connect a master to the Teensy on pins 18 and 19.
+// To use it, connect a master to the Teensy on pins 16 and 17.
 //
 // Consider using the I2CRegisterSlave class instead of Wire to
 // create an I2C slave.
@@ -25,8 +25,8 @@ int led = LED_BUILTIN;
 void setup()
 {
   pinMode(led, OUTPUT);
-  Wire.begin(8);        // join i2c bus with address #8
-  Wire.onRequest(requestEvent); // register event
+  Wire1.begin(8);        // join i2c bus with address #8
+  Wire1.onRequest(requestEvent); // register event
 }
 
 void loop()
@@ -39,7 +39,7 @@ void loop()
 void requestEvent()
 {
   digitalWrite(led, HIGH);      // briefly flash the LED
-  Wire.write("hello ");     // respond with message of 6 bytes
+  Wire1.write("hello ");     // respond with message of 6 bytes
                                 // as expected by master
   digitalWrite(led, LOW);
 }

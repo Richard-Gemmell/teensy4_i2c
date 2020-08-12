@@ -1,8 +1,8 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 // This example WILL NOT work unless you have an INA260
-// current sensor connected to pins 16 and 17.
+// current sensor connected to pins 18 and 19.
 //
 // Demonstrates use of the raw I2C driver.
 // Creates an I2C master and reads a device with it.

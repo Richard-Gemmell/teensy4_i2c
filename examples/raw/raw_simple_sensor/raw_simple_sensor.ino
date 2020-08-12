@@ -6,7 +6,7 @@
 // The sensor provides the master with a simulated temperature reading
 // on demand. The temperature increases each time the master reads it.
 //
-// To use it, connect a master to the Teensy on pins 18 and 19.
+// To use it, connect a master to the Teensy on pins 16 and 17.
 // Send read requests to the Teensy.
 //
 // This is an advanced example. Use the "simple" examples
@@ -23,7 +23,7 @@ volatile bool led_high = false;
 void blink_isr();
 
 const uint8_t slave_address = 0x2D;
-I2CSlave& slave = Slave;
+I2CSlave& slave = Slave1;
 void set_temp(uint16_t new_temp);
 void before_transmit_isr();
 void after_transmit();

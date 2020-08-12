@@ -2,7 +2,7 @@
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 // This example WILL NOT work unless you have an INA260
-// current sensor connected to pins 16 and 17.
+// current sensor connected to pins 18 and 19.
 //
 // Demonstrates use of the I2C Device class to represent a slave device.
 // Creates an I2C master, configures a device and reads registers.
@@ -13,7 +13,7 @@
 #include <i2c_device.h>
 
 // The I2C device. Determines which pins we use on the Teensy.
-I2CMaster& master = Master1;
+I2CMaster& master = Master;
 
 // Blink the LED to make sure the Teensy hasn't hung
 IntervalTimer blink_timer;
