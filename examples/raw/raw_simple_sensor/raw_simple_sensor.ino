@@ -22,7 +22,7 @@ IntervalTimer blink_timer;
 volatile bool led_high = false;
 void blink_isr();
 
-const uint16_t slave_address = 0x002D;
+const uint8_t slave_address = 0x2D;
 I2CSlave& slave = Slave;
 void set_temp(uint16_t new_temp);
 void before_transmit_isr();

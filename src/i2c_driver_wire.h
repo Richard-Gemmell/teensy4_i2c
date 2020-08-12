@@ -111,7 +111,7 @@ private:
     void (* on_receive)(int len) = nullptr;
     void (* on_request)() = nullptr;
 
-    uint16_t write_address = 0;
+    uint8_t write_address = 0;
     uint8_t tx_buffer[tx_buffer_length] = {};
     size_t tx_next_byte_to_write = 0;
 

@@ -1,15 +1,15 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #include <cstring>
 #include "i2c_register_slave.h"
 
-void I2CRegisterSlave::listen(uint16_t address) {
+void I2CRegisterSlave::listen(uint8_t address) {
     slave.listen(address);
     slave.after_receive(std::bind(&I2CRegisterSlave::after_receive, this, std::placeholders::_1));
     slave.after_transmit(std::bind(&I2CRegisterSlave::after_transmit, this));
     wait_for_reg_num();
-};
+}
 
 void I2CRegisterSlave::after_receive(int len) {
     uint8_t num_bytes = len;

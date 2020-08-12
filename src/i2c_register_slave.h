@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #ifndef I2C_REGISTER_SLAVE_H
@@ -19,7 +19,7 @@ class II2CRegisterSlave {
 public:
     // Calls listen() on the underlying slave driver and then attaches out even
     // handlers. Don't call listen on the underlying slave directly or it won't work.
-    virtual void listen(uint16_t address) = 0;
+    virtual void listen(uint8_t address) = 0;
 
     // Add a callback to be notified when the master has read a register.
     // This is often used to clear the "new data available" flag if
@@ -58,7 +58,7 @@ public:
 
     // Calls listen() on the underlying slave driver and then attaches out even
     // handlers. Don't call listen on the underlying slave directly or it won't work.
-    void listen(uint16_t address) override;
+    void listen(uint8_t address) override;
 
     // Add a callback to be notified when the master has read a register.
     // This is often used to clear the "new data available" flag if

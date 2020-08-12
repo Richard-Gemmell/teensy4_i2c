@@ -20,7 +20,7 @@ IntervalTimer blink_timer;
 volatile bool led_high = false;
 
 // The slave is an INA 260 current sensor
-const uint16_t slave_address = 0x40;
+const uint8_t slave_address = 0x40;
 const uint8_t manufacturer_id_register = 0xFE;
 const uint16_t expected_manufacturer_id = 0x5449;
 const uint8_t die_id_register = 0xFF;

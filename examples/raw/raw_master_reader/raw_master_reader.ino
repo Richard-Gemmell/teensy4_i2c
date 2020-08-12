@@ -21,7 +21,7 @@ volatile bool led_high = false;
 void blink_isr();
 
 // The slave is an INA 260 current sensor
-const uint16_t slave_address = 0x40;
+const uint8_t slave_address = 0x40;
 const uint8_t manufacturer_id_register = 0xFE;
 const uint8_t die_id_register = 0xFF;
 I2CMaster& master = Master;

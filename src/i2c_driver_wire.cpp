@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #include "i2c_driver_wire.h"
@@ -29,7 +29,7 @@ void I2CDriverWire::begin(int address) {
     slave.set_receive_buffer(rxBuffer, rx_buffer_length);
     slave.after_receive(std::bind(&I2CDriverWire::on_receive_wrapper, this, std::placeholders::_1));
     slave.before_transmit(std::bind(&I2CDriverWire::before_transmit, this));
-    slave.listen((uint16_t)address);
+    slave.listen((uint8_t)address);
 }
 
 void I2CDriverWire::end() {
@@ -38,7 +38,7 @@ void I2CDriverWire::end() {
 }
 
 void I2CDriverWire::beginTransmission(int address) {
-    write_address = (uint16_t)address;
+    write_address = (uint8_t)address;
     tx_next_byte_to_write = 0;
 }
 
@@ -70,7 +70,7 @@ size_t I2CDriverWire::write(const uint8_t* data, size_t length) {
 uint8_t I2CDriverWire::requestFrom(int address, int quantity, int stop) {
     rx_bytes_available = 0;
     rx_next_byte_to_read = 0;
-    master.read_async(address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
+    master.read_async((uint8_t)address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
     finish();
     rx_bytes_available = master.get_bytes_transferred();
     return rx_bytes_available;

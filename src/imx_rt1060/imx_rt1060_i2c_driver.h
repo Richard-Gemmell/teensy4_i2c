@@ -1,4 +1,4 @@
-// Copyright © 2019 Richard Gemmell
+// Copyright © 2019-2020 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #ifndef IMX_RT1060_I2C_DRIVER_H
@@ -120,9 +120,9 @@ public:
 
     size_t get_bytes_transferred() override;
 
-    void write_async(uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
+    void write_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
 
-    void read_async(uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
+    void read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
 
     // DO NOT call this method directly.
     void _interrupt_service_routine();
@@ -150,7 +150,7 @@ private:
     void (* isr)();
     void set_clock(uint32_t frequency);
     void abort_transaction_async();
-    bool start(uint16_t address, uint32_t direction);
+    bool start(uint8_t address, uint32_t direction);
     uint8_t tx_fifo_count();
     uint8_t rx_fifo_count();
     void clear_all_msr_flags();
@@ -167,7 +167,7 @@ public:
             : port(port), config(config), isr(isr) {
     }
 
-    void listen(uint16_t address) override;
+    void listen(uint8_t address) override;
 
     void stop_listening() override;
 
