@@ -3,7 +3,7 @@ An I2C library for the [Teensy 4](https://www.pjrc.com/store/teensy40.html)
 microcontroller.
 
 The Teensy 4.0 uses the [NXP i.MXRT 1062](https://www.nxp.com/products/processors-and-microcontrollers/arm-microcontrollers/i.mx-rt-series/i.mx-rt1060-crossover-processor-with-arm-cortex-m7-core:i.MX-RT1060)
-microcontroller with n ARM Corex-M7 core.
+microcontroller with an ARM Corex-M7 core.
 
 This library can be used as a drop in replacement for the Wire library
 in [Teensyduino](https://www.pjrc.com/teensy/td_download.html). It has
@@ -123,7 +123,7 @@ message. (A partial read bug).
 
 ## Data Sheets and References
 * https://www.i2c-bus.org/
-* https://www.pjrc.com/teensy/IMXRT1060RM_rev1.pdf
+* https://www.pjrc.com/teensy/IMXRT1060RM_rev2.pdf
 * https://www.nxp.com/docs/en/application-note/AN5078.pdf
 * https://www.nxp.com/docs/en/application-note/AN10216.pdf
 
