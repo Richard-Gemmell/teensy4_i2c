@@ -23,7 +23,8 @@ enum class I2CError {
     master_fifos_not_empty = 8, // Programming error. FIFOs not empty at start of transaction.
     address_nak = 9,
     data_nak = 10,
-    bit_error = 11              // Slave sent a 1 but found a 0 on the bus. Transaction aborted.
+    bit_error = 11,             // Slave sent a 1 but found a 0 on the bus. Transaction aborted.
+    bus_busy = 12               // Master failed to start a transaction because the bus is in use. Could be another master. Could be a stuck bus.
 };
 
 // Contains behaviour that's common to both masters and slaves.

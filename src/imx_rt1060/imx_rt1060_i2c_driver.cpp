@@ -190,10 +190,10 @@ void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t n
 // Do not call this method directly
 void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     uint32_t msr = port->MSR;
-    #ifdef DEBUG_I2C
-    Serial.print("ISR: enter: ");
-    log_master_status_register(msr);
-    #endif
+//    #ifdef DEBUG_I2C
+//    Serial.print("ISR: enter: ");
+//    log_master_status_register(msr);
+//    #endif
 
     if (msr & (LPI2C_MSR_NDF | LPI2C_MSR_ALF | LPI2C_MSR_FEF | LPI2C_MSR_PLTF)) {
         if (msr & LPI2C_MSR_NDF) {
@@ -318,6 +318,18 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
         abort_transaction_async();
 
         _error = I2CError::master_not_ready;
+        state = State::idle;
+        return false;
+    }
+
+    if(port->MSR & LPI2C_MSR_BBF) {
+        // SDA or SCL is low so either
+        //  - there's another master on the bus
+        //  - or the bus is stuck because a slave is confused
+#ifdef DEBUG_I2C
+        Serial.println("Master: Cannot start. Bus already in use.");
+#endif
+        _error = I2CError::bus_busy;
         state = State::idle;
         return false;
     }
@@ -685,7 +697,6 @@ static void log_master_control_register(const char* message, uint32_t mcr) {
 }
 
 static void log_master_status_register(uint32_t msr) {
-    return;
     if (msr) {
         Serial.print("MSR Flags: ");
     }
