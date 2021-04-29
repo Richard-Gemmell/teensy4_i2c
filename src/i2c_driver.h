@@ -13,7 +13,7 @@ enum class I2CError {
     ok = 0,
 
     // Remaining codes mean that something went wrong.
-    arbitration_lost = 1,       // Another master interrupted
+    arbitration_lost = 1,       // Another master interrupted with START or STOP or the master transmitted a bit but observed the opposite value
     buffer_overflow = 2,        // Not enough room in receive buffer to hold all the data. Bytes dropped.
     buffer_underflow = 3,       // Not enough data in transmit buffer to satisfy reader. Padding sent.
     invalid_request = 4,        // Caller asked Master to read more than 256 bytes in one go

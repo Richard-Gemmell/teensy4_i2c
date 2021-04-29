@@ -139,7 +139,16 @@ void IMX_RT1060_I2CMaster::end() {
 }
 
 inline bool IMX_RT1060_I2CMaster::finished() {
-    return state >= State::idle;
+    bool state_busy = state < State::idle;
+    #ifdef DEBUG_I2C
+    boolean mbf = port->MSR & LPI2C_MSR_MBF;
+    if (state_busy != mbf && (state != State::starting)) {
+        Serial.print("WARNING: Inconsistent state in finished(). 'state'=");
+        Serial.print((int)state);Serial.print(" but MBF=");
+        Serial.println(mbf);
+    }
+    #endif
+    return !state_busy;
 }
 
 size_t IMX_RT1060_I2CMaster::get_bytes_transferred() {
@@ -382,11 +391,16 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 
     // Send a stop if haven't already done so and still control the bus
     uint32_t msr = port->MSR;
-    if ((msr & LPI2C_MSR_MBF) && !(msr & LPI2C_MSR_SDF)) {
-        #ifdef DEBUG_I2C
-        Serial.println("  sending STOP");
-        #endif
-        port->MTDR = LPI2C_MTDR_CMD_STOP;
+    if (msr & LPI2C_MSR_MBF) {
+        if(!(msr & LPI2C_MSR_SDF)) {
+            #ifdef DEBUG_I2C
+            Serial.println("  sending STOP");
+            #endif
+            port->MTDR = LPI2C_MTDR_CMD_STOP;
+        }
+    } else {
+        // We lost control of the bus somehow. Probably an ALF.
+        state = State::idle;
     }
 }
 
