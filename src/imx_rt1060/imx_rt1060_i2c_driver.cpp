@@ -1,10 +1,10 @@
-// Copyright © 2019-2020 Richard Gemmell
+// Copyright © 2019-2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 //
 // Fragments of this code copied from WireIMXRT.cpp © Paul Stoffregen.
 // Please support the Teensy project at pjrc.com.
 
-//#define DEBUG_I2C // Uncomment to enable debug tools
+#define DEBUG_I2C // Uncomment to enable debug tools
 #ifdef DEBUG_I2C
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
@@ -73,15 +73,15 @@ I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
     | IOMUXC_PAD_ODE \
     | IOMUXC_PAD_HYS
 I2CDriver::I2CDriver()
-    : pad_control_config(PAD_CONTROL_CONFIG) {
+        : pad_control_config(PAD_CONTROL_CONFIG) {
 }
 
 static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control_config) {
     *(portControlRegister(pin.pin)) = pad_control_config;
-    #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
     Serial.print("Pad control register: 0x");
     Serial.println(*(portControlRegister(pin.pin)), 16);
-    #endif
+#endif
 
     *(portConfigRegister(pin.pin)) = pin.mux_val;
     if (pin.select_input_register) {
@@ -140,14 +140,14 @@ void IMX_RT1060_I2CMaster::end() {
 
 inline bool IMX_RT1060_I2CMaster::finished() {
     bool state_busy = state < State::idle;
-    #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
     boolean mbf = port->MSR & LPI2C_MSR_MBF;
     if (state_busy != mbf && (state != State::starting)) {
         Serial.print("WARNING: Inconsistent state in finished(). 'state'=");
         Serial.print((int)state);Serial.print(" but MBF=");
         Serial.println(mbf);
     }
-    #endif
+#endif
     return !state_busy;
 }
 
@@ -214,9 +214,9 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             }
         }
         if (msr & LPI2C_MSR_ALF) {
-            #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
             Serial.println("Master: Arbitration lost");
-            #endif
+#endif
             port->MSR = LPI2C_MSR_ALF;
             _error = I2CError::arbitration_lost;
         }
@@ -228,17 +228,13 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             // else FEF was triggered by another error. Ignore it.
         }
         if (msr & LPI2C_MSR_PLTF) {
-            #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
             Serial.println("Master: Pin low timeout (PLTF)");
-            #endif
+#endif
             port->MSR = LPI2C_MSR_PLTF;
             _error = I2CError::master_pin_low_timeout;
         }
-        if (state != State::stopping) {
-            state = State::stopping;
-            abort_transaction_async();
-        }
-        // else already trying to end the transaction
+        abort_transaction_async();
     }
 
     if (msr & LPI2C_MSR_SDF) {
@@ -268,7 +264,6 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             }
         } else {
             // This is a write transaction. We shouldn't have got a read.
-            state = State::stopping;
             abort_transaction_async();
         }
     }
@@ -317,12 +312,12 @@ inline void IMX_RT1060_I2CMaster::clear_all_msr_flags() {
 bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
     if (!finished()) {
         // We haven't completed the previous transaction yet
-        #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
         Serial.print("Master: Cannot start. Transaction still in progress. State: ");
         Serial.print((int)state);
         Serial.print(". Error code: ");
         Serial.println((int)_error);
-        #endif
+#endif
 
         abort_transaction_async();
 
@@ -351,12 +346,12 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
     // Make sure the FIFOs are empty before we start.
     if (tx_fifo_count() > 0 || rx_fifo_count() > 0) {
         // This should never happen.
-        #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
         Serial.print("Master: FIFOs not empty in start(). TX: ");
         Serial.print(tx_fifo_count());
         Serial.print(" RX: ");
         Serial.println(rx_fifo_count());
-        #endif
+#endif
         _error = I2CError::master_fifos_not_empty;
         abort_transaction_async();
         return false;
@@ -377,10 +372,10 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
 // this doesn't seem to work in some circumstances. e.g.
 // When the master is trying to receive more bytes.
 void IMX_RT1060_I2CMaster::abort_transaction_async() {
-    #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
     Serial.println("Master: abort_transaction");
     log_master_status_register(port->MSR);
-    #endif
+#endif
 
     // Don't handle anymore TDF interrupts
     port->MIER &= ~LPI2C_MIER_TDIE;
@@ -393,9 +388,10 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
     uint32_t msr = port->MSR;
     if (msr & LPI2C_MSR_MBF) {
         if(!(msr & LPI2C_MSR_SDF)) {
-            #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
             Serial.println("  sending STOP");
-            #endif
+#endif
+            state = State::stopping;
             port->MTDR = LPI2C_MTDR_CMD_STOP;
         }
     } else {
@@ -585,9 +581,9 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
     }
 
     if (ssr & LPI2C_SSR_BEF) {
-        #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
         Serial.println("I2C Slave: Bit Error");
-        #endif
+#endif
         // The bus is probably stuck at this point.
         // I don't think the slave can clear the fault. The master has to do it.
         port->SSR = LPI2C_SSR_BEF;
@@ -609,7 +605,7 @@ void IMX_RT1060_I2CSlave::end_of_frame() {
             after_transmit_callback(address_called);
         }
     }
-    #ifdef DEBUG_I2C
+#ifdef DEBUG_I2C
     else if (state != State::idle) {
         Serial.print("Unexpected 'End of Frame'. State: ");
         Serial.println((int)state);
@@ -617,7 +613,7 @@ void IMX_RT1060_I2CSlave::end_of_frame() {
     if (_error == I2CError::bit_error) {
         Serial.println("Transaction aborted because of bit error.");
     }
-    #endif
+#endif
     state = State::idle;
 }
 
