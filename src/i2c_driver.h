@@ -13,7 +13,8 @@ enum class I2CError {
     ok = 0,
 
     // Remaining codes mean that something went wrong.
-    arbitration_lost = 1,       // Another master interrupted with START or STOP or the master transmitted a bit but observed the opposite value
+    arbitration_lost = 1,       // EITHER Master detected a START or STOP condition that it didn't generate
+                                // OR the master set SDA to one value but observed the opposite value.
     buffer_overflow = 2,        // Not enough room in receive buffer to hold all the data. Bytes dropped.
     buffer_underflow = 3,       // Not enough data in transmit buffer to satisfy reader. Padding sent.
     invalid_request = 4,        // Caller asked Master to read more than 256 bytes in one go
@@ -21,8 +22,8 @@ enum class I2CError {
     master_not_ready = 6,       // Caller failed to wait for one transaction to finish before starting the next
     master_fifo_error = 7,      // Master attempted to send or receive without a START. Programming error.
     master_fifos_not_empty = 8, // Programming error. FIFOs not empty at start of transaction.
-    address_nak = 9,
-    data_nak = 10,
+    address_nak = 9,            // Master received a NACK after sending the address byte. Usually means there's no slave listeing for this address.
+    data_nak = 10,              // Master received a NACK after sending a data byte. Either the slave rejected the data or it wasn't listening.
     bit_error = 11,             // Slave sent a 1 but found a 0 on the bus. Transaction aborted.
     bus_busy = 12               // Master failed to start a transaction because the bus is in use. Could be another master. Could be a stuck bus.
 };

@@ -139,16 +139,16 @@ void IMX_RT1060_I2CMaster::end() {
 }
 
 inline bool IMX_RT1060_I2CMaster::finished() {
-    bool state_busy = state < State::idle;
-#ifdef DEBUG_I2C
     boolean mbf = port->MSR & LPI2C_MSR_MBF;
+    #ifdef DEBUG_I2C
+    bool state_busy = state < State::idle;
     if (state_busy != mbf && (state != State::starting)) {
         Serial.print("WARNING: Inconsistent state in finished(). 'state'=");
         Serial.print((int)state);Serial.print(" but MBF=");
         Serial.println(mbf);
     }
-#endif
-    return !state_busy;
+    #endif
+    return !mbf;
 }
 
 size_t IMX_RT1060_I2CMaster::get_bytes_transferred() {
@@ -326,7 +326,7 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
         return false;
     }
 
-    if(port->MSR & LPI2C_MSR_BBF) {
+    if(port->MSR & LPI2C_MSR_BBF && !(port->MSR & LPI2C_MSR_MBF)) {
         // SDA or SCL is low so either
         //  - there's another master on the bus
         //  - or the bus is stuck because a slave is confused
@@ -335,6 +335,7 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
 #endif
         _error = I2CError::bus_busy;
         state = State::idle;
+
         return false;
     }
 
@@ -395,7 +396,16 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
             port->MTDR = LPI2C_MTDR_CMD_STOP;
         }
     } else {
-        // We lost control of the bus somehow. Probably an ALF.
+        // We lost control of the bus somehow.
+        if (_error == I2CError::arbitration_lost) {
+            // Section 47.3.2.5 of the data sheet says:
+            //   Software must respond to the MSR[PTLF] flag to terminate the existing
+            //   command either cleanly (by clearing MCR[MEN]), or abruptly (by setting MCR[SWRST]).
+            #ifdef DEBUG_I2C
+            Serial.println("Resetting bus due to PLTF");
+            #endif
+            port->MCR &= ~LPI2C_MCR_RST;
+        }
         state = State::idle;
     }
 }
