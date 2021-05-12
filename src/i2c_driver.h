@@ -16,7 +16,7 @@ enum class I2CError {
     arbitration_lost = 1,       // Another master interrupted
     buffer_overflow = 2,        // Not enough room in receive buffer to hold all the data. Bytes dropped.
     buffer_underflow = 3,       // Not enough data in transmit buffer to satisfy reader. Padding sent.
-    invalid_request = 4,        // Caller asked Master to read more than 256 bytes in one go
+    invalid_request = 4,        // No longer used.
     master_pin_low_timeout = 5, // SCL or SDA held low for too long. Can be caused by a stuck slave.
     master_not_ready = 6,       // Caller failed to wait for one transaction to finish before starting the next
     master_fifo_error = 7,      // Master attempted to send or receive without a START. Programming error.

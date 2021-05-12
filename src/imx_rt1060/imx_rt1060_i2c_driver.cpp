@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #endif
 
+#include <algorithm>
 #include <imxrt.h>
 #include <pins_arduino.h>
 #include "imx_rt1060_i2c_driver.h"
@@ -164,11 +165,6 @@ void IMX_RT1060_I2CMaster::write_async(uint8_t address, uint8_t* buffer, size_t 
 }
 
 void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
-    if (num_bytes > MAX_MASTER_READ_LENGTH) {
-        _error = I2CError::invalid_request;
-        return;
-    }
-
     if (!start(address, MASTER_READ)) {
         return;
     }
@@ -180,20 +176,47 @@ void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t n
     }
 
     buff.initialise(buffer, num_bytes);
-    port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (num_bytes - 1);
+    stop_on_completion = send_stop;
+    packets_to_read = num_bytes / (size_t)MAX_MASTER_READ_LENGTH;
+    #ifdef DEBUG_I2C
+    Serial.print("Additional read packets required ");Serial.println(packets_to_read);
+    #endif
+    uint8_t initial_packet_size = num_bytes % MAX_MASTER_READ_LENGTH;
+    if (initial_packet_size > 0) {
+        #ifdef DEBUG_I2C
+        Serial.print("Initial packet size ");Serial.println(initial_packet_size);
+        #endif
+        port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (initial_packet_size - 1);
+    } else {
+        request_more_bytes();
+    }
+    // We can queue up to 4 instructions
+    // Make sure we're requesting at least 2 packets so there's no delay between requests.
+    request_more_bytes();
+}
 
-    if (send_stop) {
-        port->MTDR = LPI2C_MTDR_CMD_STOP;
+void IMX_RT1060_I2CMaster::request_more_bytes() {
+    if (packets_to_read == 0) {
+        if (stop_on_completion) {
+            #ifdef DEBUG_I2C
+            Serial.println("Requesting STOP.");
+            #endif
+            port->MTDR = LPI2C_MTDR_CMD_STOP;
+            stop_on_completion = false;
+        }
+    } else {
+        port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (MAX_MASTER_READ_LENGTH - 1);
+        packets_to_read--;
     }
 }
 
 // Do not call this method directly
 void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     uint32_t msr = port->MSR;
-    #ifdef DEBUG_I2C
-    Serial.print("ISR: enter: ");
-    log_master_status_register(msr);
-    #endif
+//    #ifdef DEBUG_I2C
+//    Serial.print("ISR: enter: ");
+//    log_master_status_register(msr);
+//    #endif
 
     if (msr & (LPI2C_MSR_NDF | LPI2C_MSR_ALF | LPI2C_MSR_FEF | LPI2C_MSR_PLTF)) {
         if (msr & LPI2C_MSR_NDF) {
@@ -256,6 +279,10 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
                     state = State::transfer_complete;
                 }
                 port->MCR &= ~LPI2C_MCR_MEN;    // Avoids triggering PLTF if we didn't send a STOP
+            } else {
+                if (buff.get_bytes_transferred() % MAX_MASTER_READ_LENGTH == 0) {
+                    request_more_bytes();
+                }
             }
         } else {
             // This is a write transaction. We shouldn't have got a read.
