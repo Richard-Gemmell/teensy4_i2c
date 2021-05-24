@@ -26,10 +26,10 @@ void loop() {
     Serial.println("Searching for slave devices...");
 
     uint8_t num_found = 0;
-    uint8_t buffer[0] = {};
+    uint8_t buffer[] = {};
     for (uint8_t address = 1; address < 127; address++) {
         trace("Checking address ", address);
-        master.read_async(address, buffer, 0, true);    // You can use write_async as well
+        master.write_async(address, buffer, 0, true);
         finish();
 
         I2CError status = master.error();
