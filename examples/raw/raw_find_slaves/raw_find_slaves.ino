@@ -9,7 +9,7 @@
 #include "imx_rt1060/imx_rt1060_i2c_driver.h"
 
 I2CMaster& master = Master;
-void finish();
+void finish(bool report_timeout);
 void trace(const char* message);
 void trace(const char* message, uint8_t address);
 
@@ -26,11 +26,13 @@ void loop() {
     Serial.println("Searching for slave devices...");
 
     uint8_t num_found = 0;
-    uint8_t buffer[] = {};
+    uint8_t buffer[] = {0};
     for (uint8_t address = 1; address < 127; address++) {
         trace("Checking address ", address);
+        master.read_async(address, buffer, 1, true);
+        finish(false);
         master.write_async(address, buffer, 0, true);
-        finish();
+        finish(true);
 
         I2CError status = master.error();
         if (status == I2CError::ok) {
@@ -55,17 +57,19 @@ void loop() {
     }
     Serial.println();
 
-    delay(5000);           // wait 5 seconds for next scan
+    delay(3'000);   // wait a while before scanning again
 }
 
-void finish() {
+void finish(bool report_timeout) {
     elapsedMillis timeout;
     while (timeout < 200) {
         if (master.finished()){
             return;
         }
     }
-    Serial.println("Master: ERROR timed out waiting for transfer to finish.");
+    if (report_timeout) {
+        Serial.println("Master: ERROR timed out waiting for transfer to finish.");
+    }
 }
 
 void trace(const char* message) {
