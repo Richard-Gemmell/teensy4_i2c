@@ -32,6 +32,15 @@ for master, multi-master and slave devices.
 * Can tune the Teensy's electrical configuration for you application
 * A single slave can handle multiple I2C addresses
 
+## Installation
+* [Arduino Instructions](documentation/installation/arduino_installation.md)
+* [PlatformIO Instructions](documentation/installation/platformio_installation.md)
+
+### GitHub Help
+If you're wondering how to get code out of GitHub then you're not alone!
+Here are some [instructions for downloading or cloning](documentation/github_help.md)
+this library. The page also explains how to download a different branch.
+
 ## Usage
 
 ### Use I2C Register Wrappers
