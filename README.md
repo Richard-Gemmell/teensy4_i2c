@@ -38,7 +38,7 @@ for master, multi-master and slave devices.
 
 ### GitHub Help
 If you're wondering how to get code out of GitHub then you're not alone!
-Here are some [instructions for downloading or cloning](documentation/github_help.md)
+Here are some [instructions for downloading or cloning](documentation/installation/github_help.md)
 this library. The page also explains how to download a different branch.
 
 ## Usage
