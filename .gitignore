@@ -2,3 +2,4 @@
 .pio
 cmake-build-teensy40
 CMakeListsPrivate.txt
+src/main.cpp*
