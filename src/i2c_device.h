@@ -44,6 +44,8 @@ public:
         swap_bytes = _BYTE_ORDER != device_byte_order;
     }
 
+    virtual ~I2CDevice() = default;
+
     bool write(uint8_t reg, uint8_t* buffer, size_t num_bytes, bool send_stop) override {
         uint8_t big_buffer[num_bytes+1];
         big_buffer[0] = reg;
