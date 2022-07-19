@@ -8,7 +8,7 @@
 #include "unit/test_i2c_register_slave.h"
 
 // End to End Tests
-//#include "e2e/common/hal/arduino/arduino_pin_test.h"
+#include "e2e/loopback/test_e2e_loopback.h"
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
@@ -24,14 +24,14 @@ void run_tests() {
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
 //    test(new ExampleTestSuite());
-    test(new I2CDeviceTest());
-    test(new I2CRegisterSlaveTest());
+//    test(new I2CDeviceTest());
+//    test(new I2CRegisterSlaveTest());
 
     // Full Stack Tests
     // These tests require working hardware
     Serial.println("Run Full Stack (E2E) Tests");
     Serial.println("--------------------");
-//    test(new common::hal::ArduinoPinTest());
+    test(new e2e::loopback::LoopbackTest());
 }
 
 void test(TestSuite* suite) {
