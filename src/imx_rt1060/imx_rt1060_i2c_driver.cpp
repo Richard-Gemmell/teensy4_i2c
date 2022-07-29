@@ -438,15 +438,36 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     // Set the Slave Address
     port->SAMR = samr;
 
-    // Enable clock stretching
-    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
+    // djholt - Issue #30
+    // START of changes
+    // Note that the constants depend on clock speed.
+    // I've set them for a 100 kHz bus. You'll need to comment them out
+    // and use the following lines if your bus is faster.
+    // The 100 kHz will BREAK the bus if your running at a higher frequency.
+
+    // Clock stretching. Enabled in the release driver.
+//    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
+
+    // Set the data valid duration. Disabled in the release driver.
+    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(37); // For 100 kHz clock
+//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(6); // For 400 kHz clock
+//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(1); // For 1 MHz clock
+
+    // Slave glitch filters. Disabled in release driver.
+    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(10) | LPI2C_SCFGR2_FILTSCL(10); // For 100 kHz clock
+//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(4) | LPI2C_SCFGR2_FILTSCL(4); // For 400 kHz clock
+//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(1) | LPI2C_SCFGR2_FILTSCL(1); // For 1 MHz clock
+
+    // djholt - Issue #30
+    // END of changes
+
     // Set up interrupts
     attachInterruptVector(config.irq, isr);
     port->SIER = (LPI2C_SIER_RSIE | LPI2C_SIER_SDIE | LPI2C_SIER_TDIE | LPI2C_SIER_RDIE);
     NVIC_ENABLE_IRQ(config.irq);
 
     // Enable Slave Mode
-    port->SCR = LPI2C_SCR_SEN;
+    port->SCR = LPI2C_SCR_SEN | LPI2C_SCR_FILTEN;
 }
 
 inline void IMX_RT1060_I2CSlave::stop_listening() {
