@@ -14,15 +14,15 @@ enum class I2CError {
 
     // Remaining codes mean that something went wrong.
     arbitration_lost = 1,       // Another master interrupted
-    buffer_overflow = 2,        // Not enough room in receive buffer to hold all the data. Bytes dropped.
-    buffer_underflow = 3,       // Not enough data in transmit buffer to satisfy reader. Padding sent.
+    buffer_overflow = 2,        // Raised by the slave if the master sends too many bytes to fit in the receive buffer. The extra bytes are dropped.
+    buffer_underflow = 3,       // Raised by the slave if the master requires more bytes than the transmit buffer holds. Slave pads the message with 0x00.
     invalid_request = 4,        // Caller asked Master to read more than 256 bytes in one go
     master_pin_low_timeout = 5, // SCL or SDA held low for too long. Can be caused by a stuck slave.
     master_not_ready = 6,       // Caller failed to wait for one transaction to finish before starting the next
     master_fifo_error = 7,      // Master attempted to send or receive without a START. Programming error.
     master_fifos_not_empty = 8, // Programming error. FIFOs not empty at start of transaction.
-    address_nak = 9,
-    data_nak = 10,
+    address_nak = 9,            // Raised by master if the slave does not reply when called
+    data_nak = 10,              // Raised by master if the slave fails to acknowledge a data byte
     bit_error = 11              // Slave sent a 1 but found a 0 on the bus. Transaction aborted.
 };
 
