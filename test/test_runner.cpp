@@ -8,31 +8,43 @@
 #include "unit/test_i2c_register_slave.h"
 
 // End to End Tests
-#include "e2e/loopback/test_e2e_loopback.h"
+//#include "e2e/loopback/test_e2e_loopback.h"
+//#include "e2e/loopback/signals/test_e2e_slave_signals.h"
+#include "e2e/loopback/logic/test_e2e_basic_messages.h"
 
-TestSuite* test_suite;
 void test(TestSuite* suite);
-void report_test_results();
-UNITY_COUNTER_TYPE tests_run = 0;
-UNITY_COUNTER_TYPE tests_ignored = 0;
-UNITY_COUNTER_TYPE tests_failed = 0;
 
-void run_tests() {
-    // Run each test suite in succession.
+// Runs a limited number of test suites.
+// Return true to run all tests afterwards.
+bool run_subset() {
+    return true;
+//    test(new e2e::loopback::logic::BasicMessagesTest());
+//    return false;
+}
 
+// Runs every test suite in succession.
+void run_all_tests() {
     // Unit tests run an any board layout
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
 //    test(new ExampleTestSuite());
-//    test(new I2CDeviceTest());
-//    test(new I2CRegisterSlaveTest());
+    test(new I2CDeviceTest());
+    test(new I2CRegisterSlaveTest());
 
     // Full Stack Tests
     // These tests require working hardware
     Serial.println("Run Full Stack (E2E) Tests");
     Serial.println("--------------------");
-    test(new e2e::loopback::LoopbackTest());
+//    test(new e2e::loopback::LoopbackTest());
+    test(new e2e::loopback::logic::BasicMessagesTest());
+//    test(new e2e::loopback::signals::SlaveSignalTest());
 }
+
+TestSuite* test_suite;
+void report_test_results();
+UNITY_COUNTER_TYPE tests_run = 0;
+UNITY_COUNTER_TYPE tests_ignored = 0;
+UNITY_COUNTER_TYPE tests_failed = 0;
 
 void test(TestSuite* suite) {
     test_suite = suite;
@@ -47,12 +59,12 @@ void test(TestSuite* suite) {
 }
 
 // Called before each test.
-void setUp(void) {
+__attribute__((unused)) void setUp(void) {
     test_suite->setUp();
 }
 
 // Called after each test.
-void tearDown(void) {
+__attribute__((unused)) void tearDown(void) {
     test_suite->tearDown();
 }
 
@@ -68,7 +80,9 @@ void setup() {
     // otherwise the test output gets truncated in a weird way.
     delay(1000);
     UNITY_BEGIN();
-    run_tests();
+    if(run_subset()) {
+        run_all_tests();
+    }
     UNITY_END();
 }
 

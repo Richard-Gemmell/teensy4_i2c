@@ -6,7 +6,7 @@
 
 #include <unity.h>
 #include <Arduino.h>
-#include "../utils/test_suite.h"
+#include "utils/test_suite.h"
 
 class ExampleTestSuite : public TestSuite {
     // We can't access the 'this' pointer in the test methods
