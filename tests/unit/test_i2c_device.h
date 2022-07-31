@@ -17,7 +17,7 @@ struct TestBuffer {
     size_t _num_bytes = 0;
     bool _send_stop = false;
 
-    void set(bool read, uint16_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
+    void set(bool read, uint16_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop) {
         _read = read;
         _address = address;
         _num_bytes = num_bytes;
@@ -73,7 +73,7 @@ public:
         return -1;
     }
 
-    void write_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override {
+    void write_async(uint8_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop) override {
         copy_to_next_buffer(false, address, buffer, num_bytes, send_stop);
     };
 
@@ -82,7 +82,7 @@ public:
         copy_to_next_buffer(true, address, buffer, num_bytes, send_stop);
     };
 
-    void copy_to_next_buffer(bool read, uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop){
+    void copy_to_next_buffer(bool read, uint8_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop){
         if(next_buffer < size_t(buffers)) {
             buffers[next_buffer++].set(read, address, buffer, num_bytes, send_stop);
         }

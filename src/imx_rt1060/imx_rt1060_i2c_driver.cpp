@@ -146,7 +146,7 @@ size_t IMX_RT1060_I2CMaster::get_bytes_transferred() {
     return buff.get_bytes_transferred();
 }
 
-void IMX_RT1060_I2CMaster::write_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
+void IMX_RT1060_I2CMaster::write_async(uint8_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop) {
     if (!start(address, MASTER_WRITE)) {
         return;
     }
@@ -158,7 +158,7 @@ void IMX_RT1060_I2CMaster::write_async(uint8_t address, uint8_t* buffer, size_t 
         return;
     }
 
-    buff.initialise(buffer, num_bytes);
+    buff.initialise(const_cast<uint8_t*>(buffer), num_bytes);
     stop_on_completion = send_stop;
     port->MIER |= LPI2C_MIER_TDIE;
 }
@@ -466,8 +466,8 @@ inline void IMX_RT1060_I2CSlave::after_transmit(std::function<void(uint16_t addr
     after_transmit_callback = callback;
 }
 
-inline void IMX_RT1060_I2CSlave::set_transmit_buffer(uint8_t* buffer, size_t size) {
-    tx_buffer.initialise(buffer, size);
+inline void IMX_RT1060_I2CSlave::set_transmit_buffer(const uint8_t* buffer, size_t size) {
+    tx_buffer.initialise(const_cast<uint8_t*>(buffer), size);
 }
 
 inline void IMX_RT1060_I2CSlave::set_receive_buffer(uint8_t* buffer, size_t size) {

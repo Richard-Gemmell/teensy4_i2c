@@ -36,7 +36,7 @@ public:
         after_transmit_callback = callback;
     };
 
-    void set_transmit_buffer(uint8_t* buffer, size_t size) override {
+    void set_transmit_buffer(const uint8_t* buffer, size_t size) override {
         latest_tx_buffer = buffer;
         latest_tx_buffer_size = size;
     };
@@ -93,7 +93,7 @@ public:
     uint16_t address = 0;
     uint8_t* latest_rx_buffer = nullptr;
     size_t latest_rx_buffer_size = 0;
-    uint8_t* latest_tx_buffer = nullptr;
+    const uint8_t* latest_tx_buffer = nullptr;
     size_t latest_tx_buffer_size = 0;
 
 private:

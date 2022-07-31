@@ -87,7 +87,7 @@ public:
     // Set 'send_stop' to true if this is the last transfer in the transaction.
     // Set 'send_stop' to false if are going to make another transfer.
     // Call finished() to see if the call has finished.
-    virtual void write_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) = 0;
+    virtual void write_async(uint8_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop) = 0;
 
     // Reads the specified number of bytes and copies them into the supplied buffer.
     // The caller must not modify the buffer until the read is complete.
@@ -138,7 +138,7 @@ public:
     // it reads from us.
     // The master will receive up to 'size' bytes from us. If it demands
     // more data it will be sent 0xFF until it ends the request.
-    virtual void set_transmit_buffer(uint8_t* buffer, size_t size) = 0;
+    virtual void set_transmit_buffer(const uint8_t* buffer, size_t size) = 0;
 
     // Determines where to put data we receive from the master
     // the next time it writes to us.

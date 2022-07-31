@@ -120,7 +120,7 @@ public:
 
     size_t get_bytes_transferred() override;
 
-    void write_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
+    void write_async(uint8_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop) override;
 
     void read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
 
@@ -192,7 +192,7 @@ public:
 
     void after_transmit(std::function<void(uint16_t address)> callback) override;
 
-    void set_transmit_buffer(uint8_t* buffer, size_t size) override;
+    void set_transmit_buffer(const uint8_t* buffer, size_t size) override;
 
     void set_receive_buffer(uint8_t* buffer, size_t size) override;
 
