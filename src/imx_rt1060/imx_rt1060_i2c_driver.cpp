@@ -438,15 +438,39 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     // Set the Slave Address
     port->SAMR = samr;
 
-    // Enable clock stretching
-    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
+    // Data Valid Time. Determines how long slave waits before changing
+    // SDA value after the previous clock pulse in preparation for the next clock.
+    // Affects slave ACK, NACK and data bits. (tVD:DAT, tVD;ACK in I2C Spec)
+    // Requires SCR[FILTEN] to be set. Affected by SCR[FILTDZ]. Disabled if high speed mode is enabled.
+    // TODO: Value depends on clock speed. 100k values won't work at higher clock speeds
+//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(37); // For 100 kHz clock
+//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(6); // For 400 kHz clock
+//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(2); // For 1 MHz clock
+
+    // Glitch Filter. Suppresses noise.
+    // Rules for enabling/disabling are the same as for the data valid time. See above.
+    // Note that FILTSDA must be >= FILTSCL
+    // Seems to hang the Teensy if LPI2C_SCFGR2_FILTSDA is 5.
+    // TODO: Value depends on clock speed. 100k values won't work at higher clock speeds
+//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(10) | LPI2C_SCFGR2_FILTSCL(10); // For 100 kHz clock
+//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(4) | LPI2C_SCFGR2_FILTSCL(4); // For 400 kHz clock
+//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(1) | LPI2C_SCFGR2_FILTSCL(1); // For 1 MHz clock
+
+    // Clock Hold Time. Increases the
+    // I don't think it's needed
+//     port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_CLKHOLD(1);
+
     // Set up interrupts
     attachInterruptVector(config.irq, isr);
     port->SIER = (LPI2C_SIER_RSIE | LPI2C_SIER_SDIE | LPI2C_SIER_TDIE | LPI2C_SIER_RDIE);
     NVIC_ENABLE_IRQ(config.irq);
 
+    // Enable clock stretching and set address
+    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
+
     // Enable Slave Mode
     port->SCR = LPI2C_SCR_SEN;
+//    port->SCR = LPI2C_SCR_SEN | LPI2C_SCR_FILTEN;
 }
 
 inline void IMX_RT1060_I2CSlave::stop_listening() {
