@@ -38,7 +38,7 @@ public:
         // Shows that the Slave writes bytes correctly including all
         // four bit transitions. 0->0, 0->1, 1->1, 1->0
         bus_trace::BusTrace trace(MAX_EVENTS);
-        uint8_t tx_buffer[] = {0x00, BYTE_A, BYTE_B};
+        const uint8_t tx_buffer[] = {0x00, BYTE_A, BYTE_B};
         slave->set_transmit_buffer(tx_buffer, sizeof(tx_buffer));
         uint8_t rx_buffer[] = {0x00, 0x00, 0x00};
 
@@ -73,7 +73,7 @@ public:
         // Shows that the Master writes bytes correctly including all
         // four bit transitions. 0->0, 0->1, 1->1, 1->0
         bus_trace::BusTrace trace(events, MAX_EVENTS);
-        uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
+        const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
         uint8_t rx_buffer[] = {0x00, 0x00};
         slave->set_receive_buffer(rx_buffer, sizeof(rx_buffer));
 

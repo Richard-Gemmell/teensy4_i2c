@@ -10,6 +10,7 @@
 // End to End Tests
 //#include "e2e/loopback/test_e2e_loopback.h"
 //#include "e2e/loopback/signals/test_e2e_slave_signals.h"
+#include "e2e/loopback/signals/test_e2e_master_signals.h"
 #include "e2e/loopback/logic/test_e2e_basic_messages.h"
 
 void test(TestSuite* suite);
@@ -19,6 +20,7 @@ void test(TestSuite* suite);
 bool run_subset() {
     return true;
 //    test(new e2e::loopback::logic::BasicMessagesTest());
+//    test(new e2e::loopback::signals::MasterSignalsTest());
 //    return false;
 }
 
@@ -37,6 +39,7 @@ void run_all_tests() {
     Serial.println("--------------------");
 //    test(new e2e::loopback::LoopbackTest());
     test(new e2e::loopback::logic::BasicMessagesTest());
+    test(new e2e::loopback::signals::MasterSignalsTest());
 //    test(new e2e::loopback::signals::SlaveSignalTest());
 }
 

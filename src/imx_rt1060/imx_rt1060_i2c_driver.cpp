@@ -1,4 +1,4 @@
-// Copyright © 2019-2020 Richard Gemmell
+// Copyright © 2019-2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 //
 // Fragments of this code copied from WireIMXRT.cpp © Paul Stoffregen.
@@ -383,7 +383,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     if (frequency < 400000) {
         // Use Standard Mode - up to 100 kHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
-                      LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(40);
+                      LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(50);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(1);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (59 + 40 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
@@ -391,7 +391,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     } else if (frequency < 1000000) {
         // Use Fast Mode - up to 400 kHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(26) | LPI2C_MCCR0_CLKLO(28) |
-                      LPI2C_MCCR0_DATAVD(12) | LPI2C_MCCR0_SETHOLD(18);
+                      LPI2C_MCCR0_DATAVD(12) | LPI2C_MCCR0_SETHOLD(15);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(2) | LPI2C_MCFGR2_FILTSCL(2) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (28 + 18 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
@@ -399,7 +399,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     } else {
         // Use Fast Mode Plus - up to 1 MHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(9) | LPI2C_MCCR0_CLKLO(10) |
-                      LPI2C_MCCR0_DATAVD(4) | LPI2C_MCCR0_SETHOLD(7);
+                      LPI2C_MCCR0_DATAVD(4) | LPI2C_MCCR0_SETHOLD(6);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(1) | LPI2C_MCFGR2_FILTSCL(1) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (10 + 7 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
