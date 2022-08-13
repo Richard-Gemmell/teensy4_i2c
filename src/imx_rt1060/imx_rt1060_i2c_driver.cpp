@@ -41,34 +41,37 @@ I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
 // Used to tune the output driver's impedance to match the load impedance.
 // If the impedance is too high the circuit behaves like a low pass filter,
 // rounding off the inputs.
-// Suggested Value: IOMUXC_PAD_DSE(4) // 37 Ohm
+// Suggested Value: IOMUXC_PAD_DSE(2) - minimises undershoot spikes and change in Vol
 //
 // SPEED - See AN5078.pdf section 7.3
 // "These options can either increase the output driver current in the higher
 // frequency range, or reduce the switching noise in the lower frequency range."
-// Suggested Value: IOMUXC_PAD_SPEED(1) // 100MHz
+// Suggested Value: IOMUXC_PAD_SPEED(0) // 50MHz
 //
 // SRE - Slew Rate Field - See AN5078.pdf section 7.2
 // NXP recommend that this option should be disabled for I2C
 // Suggested Value: disabled. Add IOMUXC_PAD_SRE to enable
 //
 // Pull/keeper - See AN5078.pdf sections 6 and 8.2.2
-// AN5078 recommends disabling pullup except for "very low clock frequencies"
+// IOMUXC_PAD_PUS 1 -  47k pulldown
+// IOMUXC_PAD_PUS 2 - 100k pulldown
+// IOMUXC_PAD_PUS 3 -  22k pulldown
 // Suggested Value: IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3) // Enable 22k pullup resistor
+// Alternative Value: diable all value to use external pullups only.
 //
 // Enable Open Drain - See AN5078.pdf sections 5.2
-// Recommended for I2C as I2C depends on open drain drivers
-// Suggested Value: IOMUXC_PAD_ODE  // Enabled
+// Required for I2C to avoid shorts
+// Required Value: IOMUXC_PAD_ODE  // Enabled
 //
 // Hysteresis - See AN5078.pdf section 7.2
 // Reduces the number of false input signal changes (glitches) caused by noise
-// near the centre point of the voltage range. Enabling this option on "slightly
+// near the centre point of the voltage range. Enabling this option "slightly
 // increases the pin power consumption as well as the propagation delay by
 // several nanoseconds." (From AN5078)
 // Suggested Value: IOMUXC_PAD_HYS  // Enabled
 #define PAD_CONTROL_CONFIG \
-    IOMUXC_PAD_DSE(4) \
-    | IOMUXC_PAD_SPEED(1) \
+    IOMUXC_PAD_DSE(2) \
+    | IOMUXC_PAD_SPEED(0) \
     | IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3) \
     | IOMUXC_PAD_ODE \
     | IOMUXC_PAD_HYS

@@ -11,10 +11,10 @@ native APIs that are more flexible than Wire and simpler to use in
 some cases. The primary reason for creating this library was to add
 support for Slave mode.
 
-The driver implementations IMX_RT1060_I2CMaster and IMX_RT1060_I2CSlave have
-no dependencies on Arduino itself and relatively few dependencies on the
-Teensy code. This means that is should be possible to use the drivers with
-other tool sets without having to change too much.
+The driver implementations, IMX_RT1060_I2CMaster and IMX_RT1060_I2CSlave, have
+relatively few dependencies on Arduino or the main Teensy libraries. This means
+that it should be possible to port them to other devices based on the NXP i.MXRT 1060
+series of MPUs.
 
 ## Features
 * Supports all features that are required by the I2C specification
@@ -31,6 +31,16 @@ for master, multi-master and slave devices.
 * Comprehensive error handling
 * Can tune the Teensy's electrical configuration for you application
 * A single slave can handle multiple I2C addresses
+
+## Version 2
+Version 2 is currently a work in progress. It's available on the `dev` branch.
+You're welcome to use it but expect it to change without notice.
+
+The goal of version 2 is to make the driver more reliable and to support
+a few more features. See below for a full list of v2 changes.
+
+Please let me know ASAP if your project works Ok with v1 but breaks if you
+update to v2. This definitely shouldn't happen!
 
 ## Installation
 * [Arduino Instructions](documentation/installation/arduino_installation.md)
@@ -153,21 +163,36 @@ Please contact me if you need any of these features.
 * High Speed Mode (3.4 Mbps)
 * Ultra Fast Mode (5 Mbps)
 * 10 bit slave addresses
-* Glitch filter (for slave mode)
 * SMBus Alert
 * General Call
 * 4 pin I2C in Master mode
 * Master reading more than 256 bytes in a single transfer
 
 ## Version History
-| Version | Release Date      | Comment         |
-| ------- |-------------------| ----------------|
-| v1.1.0  | 12th Aug 2020 | I2C slave can now have many I2C addresses.
-| v1.0.1  | 11th Aug 2020 | Adjusted timings to improve responsiveness.
-| v1.0.0  | 19th May 2020 | Promoted v0.9.5 to 1.0 as it seems stable.
-| v0.9.5  | 19th May 2020 | Improved pad control configuration to reduce errors from noise. (Changed default config from 0xF0B0 to 0x1F830)
-| v0.9.4  | 15th May 2020 | Added function overloads to I2CDriverWire to avoid ambiguous calls from existing code. |
-| v0.9.3  | 17th February 2020 | I2CDriverWire::requestFrom() now reports correct number of bytes. |
-| v0.9.2  | 9th January 2020 | Can now probe for active slaves. |
-| v0.9.1  | 7th January 2020  | Fixed bug in i2c_driver_wire.h |
-| v0.9.0  | 7th November 2019 | Initial Version |
+| Version  | Release Date       | Comment                                                                                                         |
+|----------|--------------------|-----------------------------------------------------------------------------------------------------------------|
+| v2-alpha | ??                 | Added automated test suite. Tuned signal strength and timings.                                                  |
+| v1.1.0   | 12th Aug 2020      | I2C slave can now have many I2C addresses.                                                                      |
+| v1.0.1   | 11th Aug 2020      | Adjusted timings to improve responsiveness.                                                                     |
+| v1.0.0   | 19th May 2020      | Promoted v0.9.5 to 1.0 as it seems stable.                                                                      |
+| v0.9.5   | 19th May 2020      | Improved pad control configuration to reduce errors from noise. (Changed default config from 0xF0B0 to 0x1F830) |
+| v0.9.4   | 15th May 2020      | Added function overloads to I2CDriverWire to avoid ambiguous calls from existing code.                          |
+| v0.9.3   | 17th February 2020 | I2CDriverWire::requestFrom() now reports correct number of bytes.                                               |
+| v0.9.2   | 9th January 2020   | Can now probe for active slaves.                                                                                |
+| v0.9.1   | 7th January 2020   | Fixed bug in i2c_driver_wire.h                                                                                  |
+| v0.9.0   | 7th November 2019  | Initial Version                                                                                                 |
+
+## Version 2
+### Work
+* deep dive review of electrical behaviour to ensure the driver conforms
+to the I2C specification
+* adjust signal timings to make the driver work well in a wider variety
+of projects
+* introduce an automated test suite to make it easier to make changes
+  without breaking existing behaviour
+
+### Changes
+* reduced pin drive strength which significantly reduced voltage
+  undershoot spikes on falling clock edges
+* adjusted start hold time (tHD;STA) for master as it didn't meet the I2C
+  spec at 100kHz and was a bit slow at 400kHz and 1MHz

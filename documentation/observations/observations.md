@@ -4,9 +4,10 @@
 ## Test Configuration
 * Master - Teensy 4 I2C port 0
 * Slave - Teensy 4 I2C port 1 on the same device
-* SCL connected to pin 22
-* SDA connected to pin 23
-* Owon VDS 1022 25 MHz oscilloscope hooked on to pins 22 and 23
+* All I2C pins configured to use internal 22 kΩ pullups
+* Owon VDS 1022 25 MHz oscilloscope hooked on to pins 22 (SCL) and 23 (SDA)
+* Pins 22 and 23 are configured as INPUT_PULLUP and used to capture a trace.
+  * these have a pullup of ? kΩ which makes the rise time faster
 * Measurements taken with oscilloscope unless stated otherwise
 
 ## Findings
@@ -15,8 +16,11 @@ According to the I2C specification, the fall time is the time taken for
 a line to fall from 0.7 V<sub>dd</sub> to 0.3 V<sub>dd</sub>. This is
 called t<sub>f</sub> in the spec.
 
-* SCL fall time approx 4 ns
-* SDA fall time approx 6 ns
+* SCL fall time < 6 ns
+* SDA fall time < 6 ns
+
+These times are less than the resolution of the oscilloscope so could
+be much less than 6 ns.
 
 ![Fall Times and Minimum Data Hold Time](fall_times.png)
 ### Hold Time (t<sub>HD;DAT</sub>)
@@ -28,8 +32,8 @@ According to the I2C specification, the rise time is the time taken for
 a line to rise from 0.3 V<sub>dd</sub> to 0.7 V<sub>dd</sub>. This is
 called t<sub>r</sub> in the spec.
 
-* SCL fall time approx 320 ns
-* SDA fall time approx 320 ns
+* SCL rise time approx 320 ns
+* SDA rise time approx 320 ns
 
 ![Rise Times](rise_times.png)
 
@@ -90,3 +94,40 @@ is another place where control changes from one device to the other and again we
 SDA pulse.
 
 ![SDA Pulse Before STOP](m-0_s-ACK_STOP_pulse_before_STOP.png)
+
+## Effects of Series Resistors
+Series resistors are claimed to:
+* raise the minimum voltage of the line
+  * can help with debugging clock stretching etc
+* reduce undershoots caused by SCL falling
+* increase t<sub>fall</sub>
+  * useful as Teensy fall time is too fast
+
+### Findings
+Experiments were done with IOMUXC_PAD_DSE(4) unless stated otherwise.
+
+* 10Ω resistor
+  * raise minimum voltage from 70 mV to 110 mV
+  * no significant effect on undershoots
+  * had no measurable effect on t<sub>fall</sub>
+* 100Ω resistor
+  * raise minimum voltage as high as 530 mV with 1kΩ pullup
+    * not acceptable for I2C but smaller pullup should be Ok
+  * eliminated undershoots caused by SCL falling
+    * overshoots caused by coupling with SDA falling did not fall below 0 V
+  * maybe increases t<sub>fall</sub> by 2 ns to 10 ns if DSE is set to 1
+* 200Ω series resistor + 1kΩ pullup
+  * raise minimum voltage from 70 mV to 640 mV with 1kΩ pullup
+    * not acceptable for I2C but smaller pullup should be Ok
+  * eliminated undershoots caused by SCL falling
+  * increased t<sub>fall</sub> to 18 ns
+    * effect disappears if external pullup is removed
+
+### Conclusion
+On the Teensy series resistors are:
+* do not increase t<sub>fall</sub> significantly
+* reduce undershoot spikes but shouldn't be necessary
+* are useful for debugging oscilloscope traces
+* can easily raise the logic LOW level high enough to break I2C
+
+In short: not recommended except for debugging

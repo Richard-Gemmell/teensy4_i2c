@@ -51,7 +51,7 @@ All durations are given in nanoseconds (ns).
 
 ## t<sub>high</sub>
 I've found it impossible to relate the master config directly to t<sub>high</sub>.
-Testing with the built in 100k, 47k and 22k pull up resistors shows:-
+Testing with the built in 100kΩ, 47kΩ and 22kΩ pull up resistors shows:-
 * t<sub>high</sub> is affected by:
   * CLKHI - as expected
   * PRESCALE - as expected
@@ -84,3 +84,39 @@ suspect this isn't useful as it relies on the exact shape of the rise time curve
 ### t<sub>high</sub> Max Value
 **t<sub>high</sub> <= ((CLKHI + 1 + SCL_LATENCY) x scale)</sub>**
 
+## t<sub>fall</sub>
+According to the spec, t<sub>fall</sub> must have a minimum value of 12 ns.
+The Teensy in loopback is much faster than that. It seems to vary between
+4 and 8 ns. It's a hard to be sure as the actual value is approximately
+the same as my oscilloscope's resolution. These figures are similar to
+the ones given in section "7.2 Slew rate" of `AN5078.pdf`.
+
+I searched the web and concluded that:
+* fall times below 10ns are common
+* the I2C spec figure is probably designed to reduce electrical noise such as undershoot spikes
+
+SPEED, DSE and SRE are intended to control the "strength" of the pin.
+I tried a lot of combinations of SPEED and DSE. If DSE is set to 1 then
+the fall time is approx 8 ns. Otherwise it's 4 or 5 ns. SPEED seems to
+have little effect although values 0 and 1 may be marginally slower.
+
+I changed the default values to DSE(2) and SPEED(0). This still doesn't
+meet the spec but it seems to reduce noise spikes. (Compared to the previous
+values of DES(4) and SPEED(1)).
+
+This table shows:
+* DSE value
+* size of falling edges undershoot spike with 22k pullup
+* LOW voltage (V<sub>OL</sub>) with 1k external pullup
+
+| DSE | t<sub>fall</sub> | Undershoot | V<sub>OL</sub> |
+|-----|------------------|------------|----------------|
+| 1   | 8 ns             | -180 mV    | 290 mV         |
+| 2   | 5 ns             | -150 mV    | 130 mV         |
+| 3   | 5 ns             | -160 mV    | 90 mV          |
+| 4   | 5 ns             | -270 mV    | 70 mV          |
+
+Adding a series resistor increases t<sub>fall</sub> but the effect is
+very minor. For example 100Ω, increases fall time by a couple of
+nanoseconds but increases V<sub>OL1</sub> to 500 mV with a 1k pull up
+which exceeds the maximum allowed in the spec.
