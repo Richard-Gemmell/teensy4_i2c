@@ -19,8 +19,11 @@ class RiseTimeTest : public TestSuite {
 public:
     void tearDown() override {
         Master.end();
+        Master.set_internal_pullups(InternalPullup::enabled_22k_ohm);
         Slave1.stop_listening();
+        Slave1.set_internal_pullups(InternalPullup::enabled_22k_ohm);
         Slave2.stop_listening();
+        Slave2.set_internal_pullups(InternalPullup::enabled_22k_ohm);
         Loopback::disable_all_pullups();
         TestSuite::tearDown();
     }

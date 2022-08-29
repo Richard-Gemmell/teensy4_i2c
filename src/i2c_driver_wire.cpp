@@ -49,6 +49,8 @@ void I2CDriverWire::prepare_slave() {
 void I2CDriverWire::end() {
     master.end();
     slave.stop_listening();
+    slave.after_receive(nullptr);
+    slave.before_transmit(nullptr);
 }
 
 void I2CDriverWire::beginTransmission(int address) {
