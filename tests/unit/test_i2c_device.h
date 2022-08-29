@@ -26,17 +26,17 @@ struct TestBuffer {
     }
 
     void assert_unused() {
-        assert_details(false, 0, 0, false);
+        assert_details(false, 0, false);
         uint8_t blank[] = {0, 0, 0, 0};
         TEST_ASSERT_EQUAL_MEMORY(blank, _buffer, sizeof(_buffer));
     }
 
     void assert_equals(bool read, uint16_t address, uint8_t buffer[], size_t num_bytes, bool send_stop) {
-        assert_details(read, address, num_bytes, send_stop);
+        assert_details(read, address, send_stop);
         TEST_ASSERT_EQUAL_MEMORY(buffer, _buffer, num_bytes);
     }
 
-    void assert_details(bool read, uint16_t address, size_t num_bytes, bool send_stop) {
+    void assert_details(bool read, uint16_t address, bool send_stop) const {
         TEST_ASSERT_EQUAL(read, _read);
         TEST_ASSERT_EQUAL(address, _address);
         TEST_ASSERT_EQUAL(send_stop, _send_stop);
@@ -91,7 +91,7 @@ public:
     void reset() {
         _error = I2CError::ok;
         next_buffer = 0;
-        _finished = false;
+        _finished = true;
         buffers[0].reset();
         buffers[1].reset();
     }
@@ -100,7 +100,7 @@ public:
     size_t next_buffer = 0;
     uint8_t read_data[8] = {0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
 
-    bool _finished = false;
+    bool _finished = true;
 };
 
 class I2CDeviceTest : public TestSuite {
@@ -318,7 +318,7 @@ public:
 
         TEST_ASSERT_TRUE(success)
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
-        dummy->buffers[1].assert_details(true, address, sizeof(value), true);
+        dummy->buffers[1].assert_details(true, address, true);
         TEST_ASSERT_EQUAL(0x0809, value);
     }
 
@@ -342,7 +342,7 @@ public:
 
         TEST_ASSERT_TRUE(success)
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
-        dummy->buffers[1].assert_details(true, address, sizeof(value), false);
+        dummy->buffers[1].assert_details(true, address, false);
         TEST_ASSERT_EQUAL(0x0809, value);
     }
 
@@ -366,7 +366,7 @@ public:
 
         TEST_ASSERT_TRUE(success)
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
-        dummy->buffers[1].assert_details(true, address, sizeof(value), true);
+        dummy->buffers[1].assert_details(true, address, true);
         TEST_ASSERT_EQUAL(0x08090A0B, value);
     }
 
@@ -390,7 +390,7 @@ public:
 
         TEST_ASSERT_TRUE(success)
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
-        dummy->buffers[1].assert_details(true, address, sizeof(value), true);
+        dummy->buffers[1].assert_details(true, address, true);
         TEST_ASSERT_EQUAL(0x08090A0B, value);
     }
 
