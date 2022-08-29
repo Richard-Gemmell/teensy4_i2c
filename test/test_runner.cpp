@@ -90,6 +90,8 @@ void setup() {
     if(run_subset()) {
         run_all_tests();
     }
+    Serial.flush();
+    delay(100);
     UNITY_END();
 }
 
