@@ -23,6 +23,8 @@ public:
     }
 
     void tearDown() override {
+        Master.set_internal_pullups(InternalPullup::enabled_22k_ohm);
+        Slave1.set_internal_pullups(InternalPullup::enabled_22k_ohm);
         TestSuite::tearDown();
     }
 

@@ -119,16 +119,13 @@ public:
     void test() final {
         // Run all combinations of supported frequencies
         // and supported I2C ports
-        // TODO: Tests currently fail at 1 MHz
-        // The problem is that BusRecorder is not capturing events in
-        // the correct order. Disable for now.
-//        Serial.println("Testing at 100 kHz");
-//        frequency = 100'000;
-//        Serial.println("Testing Master & Slave1");
-//        test_suite(Master, Slave1);
-//        Serial.println("Testing Master1 & Slave");
-//        test_suite(Master1, Slave);
-//        Serial.println(".");
+        Serial.println("Testing at 100 kHz");
+        frequency = 100'000;
+        Serial.println("Testing Master & Slave1");
+        test_suite(Master, Slave1);
+        Serial.println("Testing Master1 & Slave");
+        test_suite(Master1, Slave);
+        Serial.println(".");
 
         Serial.println("Testing at 400 kHz");
         frequency = 400'000;

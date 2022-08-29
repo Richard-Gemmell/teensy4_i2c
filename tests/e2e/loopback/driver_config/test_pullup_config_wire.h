@@ -25,6 +25,8 @@ public:
     }
 
     void tearDown() override {
+        Wire.setInternalPullups(InternalPullup::enabled_22k_ohm);
+        Wire1.setInternalPullups(InternalPullup::enabled_22k_ohm);
         TestSuite::tearDown();
     }
 
