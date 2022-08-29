@@ -26,6 +26,23 @@ enum class I2CError {
     bit_error = 11              // Slave sent a 1 but found a 0 on the bus. Transaction aborted.
 };
 
+enum class InternalPullup : uint32_t {
+    // Disables the internal pullup resistors.
+    // This setting is useful if you want to use external pullups and you
+    // want to keep the maths simple.
+    disabled =  0,
+
+    // The 22k internal pullup resistors are enabled by default.
+    // They may be sufficient for a 100k bus especially if another device also has
+    // internal pullups. You'll need to use external pullups for faster lines.
+    enabled_22k_ohm =  3,
+
+    // The 47k and 100k internal pullup options are here for completeness.
+    // They're too weak to use without external pullups.
+    enabled_47k_ohm =  1,
+    enabled_100k_ohm =  2,
+};
+
 // Contains behaviour that's common to both masters and slaves.
 class I2CDriver {
 public:
@@ -43,19 +60,28 @@ public:
     }
 
     // Sets the pad control configuration that will be used for the I2C pins.
-    // This enables the built in pull up resistor and sets the pin impedance etc.
-    // You must call this method before calling begin() or listen().
+    // This sets the drive strength, hysteresis etc.
+    // This change takes effect the next time you call begin() or listen().
+    // The internal pullup resistor is configured by set_internal_pullup().
     //
-    // The default is PAD_CONTROL_CONFIG defined in imx_rt1060_i2c_driver.cpp.
+    // The default value is PAD_CONTROL_CONFIG defined in imx_rt1060_i2c_driver.cpp.
     // You may need to override the default implementation to tune the pad driver's
     // impedance etc. See imx_rt1060_i2c_driver.cpp for details.
     inline void set_pad_control_configuration(uint32_t config) {
         pad_control_config = config;
     }
 
+    // Enables or disables the internal pullup resistors.
+    // You may need external pullups even if you enable the internal ones.
+    // This change takes effect the next time you call begin() or listen().
+    inline void set_internal_pullups(InternalPullup pullup) {
+        pullup_config = pullup;
+    }
+
 protected:
     volatile I2CError _error = I2CError::ok;
     uint32_t pad_control_config;
+    InternalPullup pullup_config;
 };
 
 class I2CMaster : public I2CDriver {

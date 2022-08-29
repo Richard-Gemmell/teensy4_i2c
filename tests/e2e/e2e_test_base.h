@@ -34,8 +34,8 @@ public:
     };
 
     void setUp() override {
-        pinMode(PIN_SNIFF_SDA, INPUT_PULLUP);
-        pinMode(PIN_SNIFF_SCL, INPUT_PULLUP);
+        pinMode(PIN_SNIFF_SDA, INPUT);
+        pinMode(PIN_SNIFF_SCL, INPUT);
         sda.set_on_edge_isr([]() {
             sda.raise_on_edge();
         });

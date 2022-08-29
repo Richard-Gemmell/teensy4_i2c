@@ -1,15 +1,13 @@
-// Copyright © 2020 Richard Gemmell
+// Copyright © 2020-2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 // This example shows the use of set_pad_control_configuration() to
-// change the Teensy's pad configuration. This may be necessary if
-// your project has an unusual I2C setup. e.g. if you need to disable
-// the Teensy's internal pullup resistor or if you need to match the
-// Teeensy's impedance to the rest of the I2C circuit. See
-// imx_rt1060_i2c_driver.cpp for more information.
+// change the Teensy's pad configuration. You don't normally need
+// to do this. This is only necessary if you need to change the pin's
+// drive strength etc. See imx_rt1060_i2c_driver.cpp for more information.
 //
-// This example WILL NOT work unless you have an INA260
-// current sensor connected to pins 18 and 19.
+// This example WILL NOT work unless you have an INA260 current sensor
+// Connect the INA260's SCL and SDA pins to Teensy pins 19 and 18.
 
 #include <Arduino.h>
 #include <i2c_driver.h>
@@ -17,7 +15,6 @@
 
 // Blink the LED to make sure the Teensy hasn't hung
 IntervalTimer blink_timer;
-volatile bool led_high = false;
 void blink_isr();
 
 // The slave is an INA 260 current sensor
@@ -35,7 +32,7 @@ uint16_t get_int_from_buffer();
 
 // Define the pad control configuration that we wish to use.
 // This happens to be the config that was used prior to version 0.9.5 of teensy4_i2c
-#define PAD_CONFIG IOMUXC_PAD_DSE(6) | IOMUXC_PAD_SPEED(2) | IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3)
+#define PAD_CONFIG (IOMUXC_PAD_ODE | IOMUXC_PAD_DSE(3) | IOMUXC_PAD_SPEED(2))
 
 void setup() {
     // Turn the LED on
@@ -128,6 +125,5 @@ void finish() {
 }
 
 void blink_isr() {
-    led_high = !led_high;
-    digitalWrite(LED_BUILTIN, led_high);
+    digitalToggle(LED_BUILTIN);
 }

@@ -59,11 +59,11 @@ the standard I2C pattern of reading or writing to "registers".
 I recommend that you use this interface if it's suitable.
 
 1. Download the code and put it in your include path.
-1. &#35;include "i2c_device.h" if you have a master and wish
+2. &#35;include "i2c_device.h" if you have a master and wish
 to read from a slave device.
-1. &#35;include "i2c_register_slave.h" if you want to implement
+3. &#35;include "i2c_register_slave.h" if you want to implement
 a slave device to be read by a master.
-1. See the examples in the examples/simple directory
+4. See the examples in the examples/simple directory
 
 ### Use the Driver Directly
 The driver interfaces are defined in i2c_driver.h. These provide
@@ -71,8 +71,8 @@ everything you need to use I2C without the limitations of the Wire
 library. The key classes are I2CMaster and I2CSlave.
 
 1. Download the code and put it in your include path.
-1. &#35;include "imx_rt1060_i2c_driver.h"
-1. See the examples in the examples/raw directory
+2. &#35;include "imx_rt1060_i2c_driver.h"
+3. See the examples in the examples/raw directory
 
 ### Replacing Wire.h
 Follow these instructions if you have already written code to
@@ -80,14 +80,14 @@ use Wire.h and don't want to change it. I don't recommend using
 the Wire API unless you have to.
 
 1. Download the code and put it in your include path.
-1. Change all #includes from Wire.h to i2c_driver_wire.h.
-1. If any of your dependencies use Wire.h you'll have to
+2. Change all #includes from Wire.h to i2c_driver_wire.h.
+3. If any of your dependencies use Wire.h you'll have to
 modify them to use i2c_driver_wire.h instead.
-1. If you depend on any libraries that use Wire.h then you'll
+4. If you depend on any libraries that use Wire.h then you'll
 have to replace _all_ references to Wire.h to i2c_driver_wire.h
 in that library. This is because Arduino compiles all .cpp files
 in a library whether you reference them or not.
-1. See the examples in the examples/wire directory
+5. See the examples in the examples/wire directory
 
 If you miss a reference to Wire.h then you'll see compilation errors
 like this:-
@@ -102,10 +102,10 @@ You may also see linker errors like this:-
 This table lists the objects that you should use to handle each I2C port.
 
 | Port | Pins               | imx_rt1060_i2c_driver.h | i2c_driver_wire.h |
-| ---- |--------------------| ------------------|-------|
-| 0    | SCL0(19), SDA0(18) | Master or Slave   | Wire  |
-| 1    | SCL1(16), SDA1(17) | Master1 or Slave1 | Wire1 |
-| 2    | SCL2(24), SDA2(25) | Master2 or Slave2 | Wire2 |
+|------|--------------------|-------------------------|-------------------|
+| 0    | SCL0(19), SDA0(18) | Master or Slave         | Wire              |
+| 1    | SCL1(16), SDA1(17) | Master1 or Slave1       | Wire1             |
+| 2    | SCL2(24), SDA2(25) | Master2 or Slave2       | Wire2             |
 
 ## Pull Up Resistors
 The I2C protocol uses open drain pins to pull signal voltages low and
@@ -123,7 +123,7 @@ Here are some of the common problems that will can break the I2C
 connection or just make it very unreliable.
 * the slave and the master must share a common ground
 * you may need external pullup resistors (see above)
-* if you're upgrading your project from a Teensy 3 with 5V IO to a Teensy 4
+* if you're upgrading your project from a Teensy 3 with 5V IO to a Teensy 4,
 and you already have 4.7 kΩ pullup resistors then you may need to swap them
 to 2.2 kΩ. This is because the Teensy 4 IO pins run at 3.3V.
 * you may need to tune the Teensy's pad configuration to match the
@@ -171,7 +171,7 @@ Please contact me if you need any of these features.
 ## Version History
 | Version  | Release Date       | Comment                                                                                                         |
 |----------|--------------------|-----------------------------------------------------------------------------------------------------------------|
-| v2-alpha | ??                 | Added automated test suite. Tuned signal strength and timings.                                                  |
+| v2-alpha | ??                 | Added automated test suite. Tuned electrical settings and timings. See below for details.                       |
 | v1.1.0   | 12th Aug 2020      | I2C slave can now have many I2C addresses.                                                                      |
 | v1.0.1   | 11th Aug 2020      | Adjusted timings to improve responsiveness.                                                                     |
 | v1.0.0   | 19th May 2020      | Promoted v0.9.5 to 1.0 as it seems stable.                                                                      |
@@ -191,7 +191,14 @@ of projects
 * introduce an automated test suite to make it easier to make changes
   without breaking existing behaviour
 
+### Breaking Changes
+* `set_pad_control_configuration()` and `setPadControlConfiguration()` no
+  longer control the internal pullup resistors. Use `set_internal_pullups()`
+  and `setInternalPullups()` instead.
+
 ### Changes
+* you can now enable or disable the internal pullup resistors with
+  `set_internal_pullups()` or `setInternalPullups()`
 * reduced pin drive strength which significantly reduced voltage
   undershoot spikes on falling clock edges
 * adjusted start hold time (tHD;STA) for master as it didn't meet the I2C

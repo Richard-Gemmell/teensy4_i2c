@@ -37,6 +37,10 @@ I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
 // NXP document the pad configuration in AN5078.pdf Rev 0.
 // https://www.nxp.com/docs/en/application-note/AN5078.pdf
 //
+// Enable Open Drain - See AN5078.pdf sections 5.2
+// Required for I2C to avoid shorts
+// Required Value: IOMUXC_PAD_ODE  // Enabled
+//
 // DSE - (Drive Strength Enable) - See AN5078.pdf section 7.1
 // Used to tune the output driver's impedance to match the load impedance.
 // If the impedance is too high the circuit behaves like a low pass filter,
@@ -48,39 +52,30 @@ I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
 // frequency range, or reduce the switching noise in the lower frequency range."
 // Suggested Value: IOMUXC_PAD_SPEED(0) // 50MHz
 //
-// SRE - Slew Rate Field - See AN5078.pdf section 7.2
-// NXP recommend that this option should be disabled for I2C
-// Suggested Value: disabled. Add IOMUXC_PAD_SRE to enable
-//
-// Pull/keeper - See AN5078.pdf sections 6 and 8.2.2
-// IOMUXC_PAD_PUS 1 -  47k pulldown
-// IOMUXC_PAD_PUS 2 - 100k pulldown
-// IOMUXC_PAD_PUS 3 -  22k pulldown
-// Suggested Value: IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3) // Enable 22k pullup resistor
-// Alternative Value: diable all value to use external pullups only.
-//
-// Enable Open Drain - See AN5078.pdf sections 5.2
-// Required for I2C to avoid shorts
-// Required Value: IOMUXC_PAD_ODE  // Enabled
-//
 // Hysteresis - See AN5078.pdf section 7.2
 // Reduces the number of false input signal changes (glitches) caused by noise
 // near the centre point of the voltage range. Enabling this option "slightly
 // increases the pin power consumption as well as the propagation delay by
 // several nanoseconds." (From AN5078)
 // Suggested Value: IOMUXC_PAD_HYS  // Enabled
-#define PAD_CONTROL_CONFIG \
-    IOMUXC_PAD_DSE(2) \
-    | IOMUXC_PAD_SPEED(0) \
-    | IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(3) \
-    | IOMUXC_PAD_ODE \
-    | IOMUXC_PAD_HYS
+//
+// SRE - Slew Rate Field - See AN5078.pdf section 7.2
+// NXP recommend that this option should be disabled for I2C
+// Suggested Value: disabled. Add IOMUXC_PAD_SRE to enable
+//
+#define PAD_CONTROL_CONFIG (IOMUXC_PAD_ODE | IOMUXC_PAD_DSE(2) | IOMUXC_PAD_SPEED(0) | IOMUXC_PAD_HYS)
 I2CDriver::I2CDriver()
-    : pad_control_config(PAD_CONTROL_CONFIG) {
+    : pad_control_config(PAD_CONTROL_CONFIG), pullup_config(InternalPullup::enabled_22k_ohm) {
 }
 
-static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control_config) {
-    *(portControlRegister(pin.pin)) = pad_control_config;
+static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control_config, InternalPullup pullup) {
+    uint32_t pullup_config = 0x0;
+    if(pullup != InternalPullup::disabled) {
+        pullup_config = IOMUXC_PAD_PKE | IOMUXC_PAD_PUE | IOMUXC_PAD_PUS(static_cast<uint32_t>(pullup));
+    }
+
+    const uint32_t pullup_mask = 0b1'00001000'11111001;
+    *(portControlRegister(pin.pin)) = (pad_control_config & pullup_mask) | pullup_config;
     #ifdef DEBUG_I2C
     Serial.print("Pad control register: 0x");
     Serial.println(*(portControlRegister(pin.pin)), 16);
@@ -92,14 +87,14 @@ static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control
     }
 }
 
-static void initialise_common(IMX_RT1060_I2CBase::Config hardware, uint32_t pad_control_config) {
+void initialise_common(IMX_RT1060_I2CBase::Config hardware, uint32_t pad_control_config, InternalPullup pullup) {
     // Set LPI2C Clock to 24MHz. Required by slaves as well as masters.
     CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63)) | CCM_CSCDR2_LPI2C_CLK_SEL;
     hardware.clock_gate_register |= hardware.clock_gate_mask;
 
     // Setup SDA and SCL pins and registers
-    initialise_pin(hardware.sda_pin, pad_control_config);
-    initialise_pin(hardware.scl_pin, pad_control_config);
+    initialise_pin(hardware.sda_pin, pad_control_config, pullup);
+    initialise_pin(hardware.scl_pin, pad_control_config, pullup);
 }
 
 static void stop(IMXRT_LPI2C_Registers* port, IRQ_NUMBER_t irq) {
@@ -125,7 +120,7 @@ void IMX_RT1060_I2CMaster::begin(uint32_t frequency) {
     stop(port, config.irq);
 
     // Setup pins and master clock
-    initialise_common(config, pad_control_config);
+    initialise_common(config, pad_control_config, pullup_config);
 
     // Configure and Enable Master Mode
     // Set FIFO watermarks. Determines when the RDF and TDF interrupts happen
@@ -436,7 +431,7 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     // Make sure slave mode is disabled before configuring it.
     stop_listening();
 
-    initialise_common(config, pad_control_config);
+    initialise_common(config, pad_control_config, pullup_config);
 
     // Set the Slave Address
     port->SAMR = samr;

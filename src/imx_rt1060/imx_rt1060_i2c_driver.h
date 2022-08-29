@@ -126,6 +126,7 @@ public:
 
     // DO NOT call this method directly.
     void _interrupt_service_routine();
+
 private:
     enum class State {
         // Busy states
@@ -144,7 +145,7 @@ private:
     IMX_RT1060_I2CBase::Config& config;
     I2CBuffer buff = I2CBuffer();
     volatile State state = State::idle;
-    volatile uint32_t ignore_tdf = false;          // True for a receivve transfer
+    volatile uint32_t ignore_tdf = false;       // True for a receive transfer
     volatile bool stop_on_completion = false;   // True if the transmit transfer requires a stop.
 
     void (* isr)();

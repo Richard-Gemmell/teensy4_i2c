@@ -32,15 +32,24 @@ public:
     I2CDriverWire(I2CMaster& master, I2CSlave& slave);
 
     // Sets the pad control configuration that will be used for the I2C pins.
-    // This enables the built in pull up resistor and sets the pin impedance etc.
-    // You must call this method before calling begin()
+    // This sets the drive strength, hysteresis etc.
+    // This change takes effect the next time you call begin() or listen().
+    // The internal pullup resistor is configured by set_internal_pullup().
     //
-    // The default is PAD_CONTROL_CONFIG defined in imx_rt1060_i2c_driver.cpp.
+    // The default value is PAD_CONTROL_CONFIG defined in imx_rt1060_i2c_driver.cpp.
     // You may need to override the default implementation to tune the pad driver's
     // impedance etc. See imx_rt1060_i2c_driver.cpp for details.
     inline void setPadControlConfiguration(uint32_t config) {
         master.set_pad_control_configuration(config);
         slave.set_pad_control_configuration(config);
+    }
+
+    // Enables or disables the internal pullup resistors.
+    // You may need external pullups even if you enable the internal ones.
+    // This change takes effect the next time you call begin() or listen().
+    inline void setInternalPullups(InternalPullup pullup) {
+        master.set_internal_pullups(pullup);
+        slave.set_internal_pullups(pullup);
     }
 
     // Call setClock() before calling begin() to set the I2C frequency.

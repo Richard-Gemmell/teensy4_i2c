@@ -7,10 +7,12 @@
 #include "unit/test_i2c_device.h"
 #include "unit/test_i2c_register_slave.h"
 
-// End to End Tests
-//#include "e2e/loopback/test_e2e_loopback.h"
+// End-to-End Tests
+#include "e2e/loopback/driver_config/test_pullup_config.h"
+#include "e2e/loopback/driver_config/test_pullup_config_wire.h"
 //#include "e2e/loopback/signals/test_e2e_slave_signals.h"
-#include "e2e/loopback/signals/test_e2e_master_signals.h"
+//#include "e2e/loopback/signals/test_e2e_master_signals.h"
+#include "e2e/loopback/signals/test_e2e_rise_times.h"
 #include "e2e/loopback/logic/test_e2e_basic_messages.h"
 
 void test(TestSuite* suite);
@@ -37,9 +39,11 @@ void run_all_tests() {
     // These tests require working hardware
     Serial.println("Run Full Stack (E2E) Tests");
     Serial.println("--------------------");
-//    test(new e2e::loopback::LoopbackTest());
+    test(new e2e::loopback::driver_config::PullupConfigTest());
+    test(new e2e::loopback::driver_config::PullupConfigWireTest());
     test(new e2e::loopback::logic::BasicMessagesTest());
-    test(new e2e::loopback::signals::MasterSignalsTest());
+//    test(new e2e::loopback::signals::MasterSignalsTest());
+    test(new e2e::loopback::signals::RiseTimeTest());
 //    test(new e2e::loopback::signals::SlaveSignalTest());
 }
 
