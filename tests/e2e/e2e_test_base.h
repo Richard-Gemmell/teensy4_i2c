@@ -23,8 +23,7 @@ public:
     const static uint32_t PIN_SNIFF_SDA = 23;
     const static uint32_t PIN_SNIFF_SCL = 22;
 
-    static common::hal::ArduinoPin sda;
-    static common::hal::ArduinoPin scl;
+    static bus_trace::BusRecorder recorder;
     static common::hal::TeensyClock clock;
     static const size_t MAX_EVENTS = 1024;
     static bus_trace::BusEvent events[MAX_EVENTS];
@@ -34,19 +33,14 @@ public:
     };
 
     void setUp() override {
+        recorder.set_callbacks([](){recorder.add_event(false);}, [](){recorder.add_event(true);});
         pinMode(PIN_SNIFF_SDA, INPUT);
         pinMode(PIN_SNIFF_SCL, INPUT);
-        sda.set_on_edge_isr([]() {
-            sda.raise_on_edge();
-        });
-        scl.set_on_edge_isr([]() {
-            scl.raise_on_edge();
-        });
     }
 
     void tearDown() override {
-        sda.set_on_edge_isr(nullptr);
-        scl.set_on_edge_isr(nullptr);
+        pinMode(PIN_SNIFF_SCL, INPUT_DISABLE);
+        pinMode(PIN_SNIFF_SDA, INPUT_DISABLE);
     }
 
     static void trace_i2c_transaction(
@@ -72,14 +66,14 @@ public:
         master.begin(frequency);
         slave.listen(slave_address);
         // Start a recording
-        bus_trace::BusRecorder recorder(sda, scl, clock);
         recorder.start(trace);
 
         // Trigger the I2C transaction
         transaction(master, slave);
+        finish(master);         // Wait for the I2C transaction to end.
+        delayNanoseconds(300);  // Wait for the recorder to catch the final edge.
 
         // Clean up
-        finish(master);
         slave.stop_listening();
         master.end();
         recorder.stop();
@@ -87,9 +81,9 @@ public:
 
     static void print_traces(bus_trace::BusTrace& actual, bus_trace::BusTrace& expected) {
         Serial.println("Actual:");
-        Serial.print(actual);
+        Serial.print(actual.to_message());
         Serial.println("Expected:");
-        Serial.print(expected);
+        Serial.print(expected.to_message());
     }
 
     static void finish(I2CMaster& master) {
@@ -104,8 +98,7 @@ public:
 };
 }
 // Define statics
-common::hal::ArduinoPin e2e::E2ETestBase::sda(PIN_SNIFF_SDA); // NOLINT(cppcoreguidelines-interfaces-global-init)
-common::hal::ArduinoPin e2e::E2ETestBase::scl(PIN_SNIFF_SCL); // NOLINT(cppcoreguidelines-interfaces-global-init)
+bus_trace::BusRecorder e2e::E2ETestBase::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL); // NOLINT(cppcoreguidelines-interfaces-global-init)
 common::hal::TeensyClock e2e::E2ETestBase::clock;
 bus_trace::BusEvent e2e::E2ETestBase::events[MAX_EVENTS];
 #endif //TEENSY4_I2C_E2E_TEST_BASE_H

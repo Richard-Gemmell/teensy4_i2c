@@ -8,6 +8,7 @@
 #include "unit/test_i2c_register_slave.h"
 
 // End-to-End Tests
+#include "e2e/loopback/bus_trace/test_bus_recorder.h"
 #include "e2e/loopback/driver_config/test_pullup_config.h"
 #include "e2e/loopback/driver_config/test_pullup_config_wire.h"
 #include "e2e/loopback/logic/test_e2e_basic_messages.h"
@@ -40,6 +41,7 @@ void run_all_tests() {
     // These tests require working hardware
     Serial.println("Run Full Stack (E2E) Tests");
     Serial.println("--------------------");
+    test(new e2e::loopback::bus_trace_tests::BusRecorderTest());
     test(new e2e::loopback::driver_config::PullupConfigTest());
     test(new e2e::loopback::driver_config::PullupConfigWireTest());
     test(new e2e::loopback::logic::BasicMessagesTest());
