@@ -20,8 +20,9 @@ class E2ETestBase : public TestSuite {
 public:
     // WARNING: Changing pins can affect the order of edges.
     // SDA on pin 23 and SCL on pin 22 works Ok.
-    const static uint32_t PIN_SNIFF_SDA = 23;
-    const static uint32_t PIN_SNIFF_SCL = 22;
+    // SDA on pin 21 and SCL on pin 20 works Ok.
+    const static uint32_t PIN_SNIFF_SDA = 21;
+    const static uint32_t PIN_SNIFF_SCL = 20;
 
     static bus_trace::BusRecorder recorder;
     static common::hal::TeensyClock clock;

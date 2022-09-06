@@ -39,7 +39,7 @@ public:
 
     static void scl_pullups_give_desired_rise_times() {
         pullups_give_desired_rise_times(
-                Loopback::PIN_SNIFF_SCL,
+                E2ETestBase::PIN_SNIFF_SCL,
                 Loopback::PIN_SCL_FASTEST,
                 Loopback::PIN_SCL_120_ns,
                 Loopback::PIN_SCL_300_ns,
@@ -48,7 +48,7 @@ public:
 
     static void sda_pullups_give_desired_rise_times() {
         pullups_give_desired_rise_times(
-                Loopback::PIN_SNIFF_SDA,
+                E2ETestBase::PIN_SNIFF_SDA,
                 Loopback::PIN_SDA_FASTEST,
                 Loopback::PIN_SDA_120_ns,
                 Loopback::PIN_SDA_300_ns,

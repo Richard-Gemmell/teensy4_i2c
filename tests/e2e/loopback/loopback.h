@@ -20,22 +20,18 @@ namespace loopback {
 //      - 1000 ns - max rise time for Standard Mode
 class Loopback {
 public:
-    // Pins for monitors SDA and SCL
-    const static uint8_t PIN_SNIFF_SDA = 23;
-    const static uint8_t PIN_SNIFF_SCL = 22;
-
     // WARNING: Turn Trimpots clockwise to increase resistance
     // Fastest currently use a 470 Ω resistor. This gives a drain
     // current of 7 mA. This is too much for the I2C spec but is
     // Ok for the Teensy 4 which supports 10 mA.
-    const static uint8_t PIN_SCL_FASTEST = 11; // < 30ns with 470 Ω resistor
-    const static uint8_t PIN_SCL_120_ns = 10;
-    const static uint8_t PIN_SCL_300_ns = 9;
-    const static uint8_t PIN_SCL_1000_ns = 8;
+    const static uint8_t PIN_SCL_FASTEST = 8; // < 30ns with 470 Ω resistor
+    const static uint8_t PIN_SCL_120_ns = 7;
+    const static uint8_t PIN_SCL_300_ns = 4;
+    const static uint8_t PIN_SCL_1000_ns = 1;
     const static uint8_t PIN_SDA_FASTEST = 14; // < 30ns with 470 Ω resistor
     const static uint8_t PIN_SDA_120_ns = 15;
-    const static uint8_t PIN_SDA_300_ns = 20;
-    const static uint8_t PIN_SDA_1000_ns = 21;
+    const static uint8_t PIN_SDA_300_ns = 22;
+    const static uint8_t PIN_SDA_1000_ns = 23;
 
     static void enable_pullup(uint8_t pin) {
         pinMode(pin, OUTPUT);

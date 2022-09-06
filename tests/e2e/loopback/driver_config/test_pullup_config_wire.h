@@ -46,11 +46,11 @@ public:
     }
 
     static void can_set_internal_pullups_for_scl() {
-        pullups_give_expected_rise_times(Loopback::PIN_SNIFF_SCL);
+        pullups_give_expected_rise_times(E2ETestBase::PIN_SNIFF_SCL);
     }
 
     static void can_set_internal_pullups_for_sda() {
-        pullups_give_expected_rise_times(Loopback::PIN_SNIFF_SDA);
+        pullups_give_expected_rise_times(E2ETestBase::PIN_SNIFF_SDA);
     }
 
     static void pullups_give_expected_rise_times(uint8_t line_pin) {
