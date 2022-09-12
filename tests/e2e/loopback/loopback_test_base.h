@@ -23,6 +23,12 @@ public:
 
     void tearDown() override {
         E2ETestBase::tearDown();
+        Master.end();
+        Slave.stop_listening();
+        Master1.end();
+        Slave1.stop_listening();
+        Master2.end();
+        Slave2.stop_listening();
         loopback::Loopback::disable_all_pullups();
     }
 };

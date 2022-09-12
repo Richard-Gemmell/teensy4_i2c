@@ -123,24 +123,30 @@ public:
         frequency = 100'000;
         Serial.println("Testing Master & Slave1");
         test_suite(Master, Slave1);
-        Serial.println("Testing Master1 & Slave");
-        test_suite(Master1, Slave);
+        Serial.println("Testing Master1 & Slave2");
+        test_suite(Master1, Slave2);
+        Serial.println("Testing Master2 & Slave");
+        test_suite(Master2, Slave);
         Serial.println(".");
 
         Serial.println("Testing at 400 kHz");
         frequency = 400'000;
         Serial.println("Testing Master & Slave1");
         test_suite(Master, Slave1);
-        Serial.println("Testing Master1 & Slave");
-        test_suite(Master1, Slave);
+        Serial.println("Testing Master1 & Slave2");
+        test_suite(Master1, Slave2);
+        Serial.println("Testing Master2 & Slave");
+        test_suite(Master2, Slave);
         Serial.println(".");
 
         Serial.println("Testing at 1 MHz");
         frequency = 1'000'000;
         Serial.println("Testing Master & Slave1");
         test_suite(Master, Slave1);
-        Serial.println("Testing Master1 & Slave");
-        test_suite(Master1, Slave);
+        Serial.println("Testing Master1 & Slave2");
+        test_suite(Master1, Slave2);
+        Serial.println("Testing Master2 & Slave");
+        test_suite(Master2, Slave);
     }
 
     BasicMessagesTest() : LoopbackTestBase(__FILE__) {};

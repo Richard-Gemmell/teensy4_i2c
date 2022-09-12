@@ -151,8 +151,6 @@ I haven't been able to test some features because of hardware and time
 restrictions. These features *should* work but don't be surprised if
 they don't. Please contact me if you encounter any problems.
 * Multi-master configurations
-* Cortex i.MX RT1050
-* Teensy 4.1
 
 ## Not Implemented
 The following features are supported by the NXP i.MXRT 1062 processor but
@@ -190,6 +188,7 @@ to the I2C specification
 of projects
 * introduce an automated test suite to make it easier to make changes
   without breaking existing behaviour
+* create dedicated circuit boards to provide tunable pullups and a reliable setup
 
 ### Breaking Changes
 * `set_pad_control_configuration()` and `setPadControlConfiguration()` no
@@ -203,3 +202,4 @@ of projects
   undershoot spikes on falling clock edges
 * adjusted start hold time (tHD;STA) for master as it didn't meet the I2C
   spec at 100kHz and was a bit slow at 400kHz and 1MHz
+* tested port 2 (pins 24 & 25) on both Teensy 4.1 and Teensy 4.0

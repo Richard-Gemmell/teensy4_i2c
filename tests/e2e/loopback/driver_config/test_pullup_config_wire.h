@@ -27,6 +27,7 @@ public:
     void tearDown() override {
         Wire.setInternalPullups(InternalPullup::enabled_22k_ohm);
         Wire1.setInternalPullups(InternalPullup::enabled_22k_ohm);
+        Wire2.setInternalPullups(InternalPullup::enabled_22k_ohm);
         TestSuite::tearDown();
     }
 
@@ -34,6 +35,7 @@ public:
         Loopback::disable_all_pullups();
         Wire.begin();
         Wire1.begin(0x20);
+        Wire2.begin(0x22);
         delayMicroseconds(2);
 
         auto result = line_test::LineTester::TestLine(line_pin, 5'000);
@@ -42,6 +44,7 @@ public:
 
         Wire.end();
         Wire1.end();
+        Wire2.end();
         return rise_time;
     }
 
@@ -54,35 +57,43 @@ public:
     }
 
     static void pullups_give_expected_rise_times(uint8_t line_pin) {
-        uint32_t rise_time;
-
         // WHEN we disable pullups
         Wire.setInternalPullups(InternalPullup::disabled);
         Wire1.setInternalPullups(InternalPullup::disabled);
-        // THEN the line doesn't rise at all
-        rise_time = measure_rise_time(line_pin, "Expected test to time out: ");
-        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, rise_time);
+        Wire2.setInternalPullups(InternalPullup::disabled);
 
-        // WHEN we enable 22k pullups
+        // THEN the line doesn't rise at all
+        auto no_pullup_time = measure_rise_time(line_pin, "Expected test to time out: ");
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, no_pullup_time);
+
+        // WHEN we compare the rise times for 22k, 47k and 100k
         Wire.setInternalPullups(InternalPullup::enabled_22k_ohm);
         Wire1.setInternalPullups(InternalPullup::enabled_22k_ohm);
-        // THEN the rise should be fairly short
-        rise_time = measure_rise_time(line_pin, "22k rise time: ");
-        TEST_ASSERT_UINT32_WITHIN(150, 670, rise_time);
+        Wire2.setInternalPullups(InternalPullup::enabled_22k_ohm);
+        auto _22k_rise_time = measure_rise_time(line_pin, "22k rise time: ");
 
-        // WHEN we enable 47k pullups
         Wire.setInternalPullups(InternalPullup::enabled_47k_ohm);
         Wire1.setInternalPullups(InternalPullup::enabled_47k_ohm);
-        // THEN the rise should be medium
-        rise_time = measure_rise_time(line_pin, "47k rise time: ");
-        TEST_ASSERT_UINT32_WITHIN(280, 1400, rise_time);
+        Wire2.setInternalPullups(InternalPullup::enabled_47k_ohm);
+        auto _47k_rise_time = measure_rise_time(line_pin, "47k rise time: ");
 
-        // WHEN we enable 100k pullups
         Wire.setInternalPullups(InternalPullup::enabled_100k_ohm);
         Wire1.setInternalPullups(InternalPullup::enabled_100k_ohm);
-        // THEN the rise should be very long
-        rise_time = measure_rise_time(line_pin, "100k rise time: ");
-        TEST_ASSERT_UINT32_WITHIN(600, 3000, rise_time);
+        Wire2.setInternalPullups(InternalPullup::enabled_100k_ohm);
+        auto _100k_rise_time = measure_rise_time(line_pin, "100k rise time: ");
+
+        // THEN the 22k rise time should be a reasonable number
+        // (The exact value depends on the board layout and how
+        // many I2C ports are connected.)
+        TEST_ASSERT_UINT32_WITHIN(700, 1000, _22k_rise_time);
+
+        // THEN the 47k rise time should be 47/22 times longer than the 22k time
+        auto expected_47k_time = (uint32_t)(_22k_rise_time*(47.0/22.0));
+        TEST_ASSERT_UINT32_WITHIN(expected_47k_time/5, expected_47k_time, _47k_rise_time);
+
+        // AND the 100k rise time should be 100/47 times longer than the 47k time
+        auto expected_100k_time = (uint32_t)(_47k_rise_time*(100.0/47.0));
+        TEST_ASSERT_UINT32_WITHIN(expected_100k_time/5, expected_100k_time, _100k_rise_time);
     }
 
     void test() final {

@@ -29,7 +29,7 @@ public:
     static void test_i2c_timings() {
         Loopback::enable_pullup(Loopback::PIN_SCL_FASTEST);
         Loopback::enable_pullup(Loopback::PIN_SDA_FASTEST);
-        bus_trace::BusTrace trace(MAX_EVENTS);
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         uint8_t tx = BYTE_A;
         Slave1.set_transmit_buffer(&tx, sizeof(tx));
         uint8_t rx = 0x00;

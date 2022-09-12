@@ -75,11 +75,11 @@ public:
 
         // THEN we can set the maximum rise time for Fast Mode Plus (1MHz)
         rise_time = measure_rise_time(line_pin, pullup_120, "Expected rise time of 120 ns got: ");
-        TEST_ASSERT_UINT32_WITHIN(20, 120, rise_time);
+        TEST_ASSERT_UINT32_WITHIN(30, 120, rise_time);
 
         // THEN we can set the maximum rise time for Fast Mode (400kHz)
         rise_time = measure_rise_time(line_pin, pullup_300, "Expected rise time of 300 ns got: ");
-        TEST_ASSERT_UINT32_WITHIN(30, 300, rise_time);
+        TEST_ASSERT_UINT32_WITHIN(60, 300, rise_time);
 
         // THEN we can set the maximum rise time for Standard Mode (100kHz)
         rise_time = measure_rise_time(line_pin, pullup_1000, "Expected rise time of 1000 ns got: ");
