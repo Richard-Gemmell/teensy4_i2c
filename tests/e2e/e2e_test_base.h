@@ -72,7 +72,7 @@ public:
         // Trigger the I2C transaction
         transaction(master, slave);
         finish(master);         // Wait for the I2C transaction to end.
-        delayNanoseconds(300);  // Wait for the recorder to catch the final edge.
+        delayNanoseconds(1000); // Wait for the recorder to catch the final edge.
 
         // Clean up
         slave.stop_listening();

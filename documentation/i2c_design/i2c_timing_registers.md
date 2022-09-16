@@ -37,6 +37,48 @@ All durations are given in nanoseconds (ns).
 ## scale
 **scale = (2 ^ PRESCALE) x T<sub>LPI2C</sub>**
 
+## t<sub>HD;STA</sub>
+**t<sub>HD;STA</sub> = (SETHOLD + 1) x scale**
+
+I've been unable to establish whether the fall time (t<sub>f</sub>)
+effects this or not.
+
+## t<sub>SU;STO</sub>
+Behaviour:
+* the processor releases the SCL pin allowing SCL to rise
+* when it detects that SCL has risen it waits for a time derived from SETHOLD
+  * this provides limited compensation for different rise times
+* when the time has passed it releases SDA allowing SDA to rise
+
+Notes:
+* The processor decides that SCL has risen at approximately 0.5 V<sub>dd</sub>.
+The exact point depends on the rise time.
+* The I2C Specification defines t<sub>SU;STO</sub> as the time between SCL
+reaching 0.7 V<sub>dd</sub> and SDA reaching 0.3 V<sub>dd</sub>. It specifies
+a minimum value but not a maximum.
+* The worst case scenario is that the SCL rise time is very long and the SDA
+rise time is very short.
+* The duration is affected by SCL_LATENCY as described in section `47.3.2.4`.
+
+### t<sub>SU;STO</sub> Ideal Value
+**t<sub>SU;STO</sub> = ((CLKHI + 1 + SCL_LATENCY) x scale)</sub>**
+
+Applies only if t<sub>r</sub> is 0 for both lines.
+
+### t<sub>SU;STO</sub> Minimum Value
+**t<sub>SU;STO</sub> >= ((CLKHI + 1 + SCL_LATENCY) x scale) - t<sub>r</sub>**
+
+Applies when SDA rises instantly but SCL rises slowly.
+
+This is a slightly pessimistic estimate. It assumes the Teensy detects the
+SCL rise at 0.3 V<sub>dd</sub> but it usually detects it closer to
+0.5 V<sub>dd</sub>.
+
+### t<sub>SU;STO</sub> Maximum Value
+**t<sub>high</sub> <= ((CLKHI + 1 + SCL_LATENCY) x scale)</sub> + t<sub>r0</sub>**
+
+Applies if t<sub>r</sub> is 0 for SCL but long for SDA.
+
 ## t<sub>low</sub>
 **t<sub>low</sub> = ((CLKLO + 1) x scale) + t<sub>r0</sub>**
 * probably affected by t<sub>f</sub> but I haven't tested it yet
@@ -51,7 +93,7 @@ All durations are given in nanoseconds (ns).
 
 ## t<sub>high</sub>
 I've found it impossible to relate the master config directly to t<sub>high</sub>.
-Testing with the built in 100kΩ, 47kΩ and 22kΩ pull up resistors shows:-
+Testing with the builtin 100kΩ, 47kΩ and 22kΩ pull up resistors shows:-
 * t<sub>high</sub> is affected by:
   * CLKHI - as expected
   * PRESCALE - as expected

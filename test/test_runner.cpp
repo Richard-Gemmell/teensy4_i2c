@@ -13,7 +13,7 @@
 #include "e2e/loopback/driver_config/test_pullup_config_wire.h"
 #include "e2e/loopback/logic/test_e2e_basic_messages.h"
 //#include "e2e/loopback/signals/test_e2e_slave_signals.h"
-//#include "e2e/loopback/signals/test_e2e_master_signals.h"
+#include "e2e/loopback/signals/test_e2e_master_signals.h"
 #include "e2e/loopback/signals/test_e2e_rise_times.h"
 #include "e2e/loopback/wire/test_e2e_driver_wire.h"
 
@@ -24,8 +24,8 @@ void test(TestSuite* suite);
 bool run_subset() {
     return true;
 //    test(new e2e::loopback::logic::BasicMessagesTest());
-//    test(new e2e::loopback::signals::MasterSignalsTest());
-//    return false;
+    test(new e2e::loopback::signals::MasterSignalsTest());
+    return false;
 }
 
 // Runs every test suite in succession.
@@ -45,7 +45,7 @@ void run_all_tests() {
     test(new e2e::loopback::driver_config::PullupConfigTest());
     test(new e2e::loopback::driver_config::PullupConfigWireTest());
     test(new e2e::loopback::logic::BasicMessagesTest());
-//    test(new e2e::loopback::signals::MasterSignalsTest());
+    test(new e2e::loopback::signals::MasterSignalsTest());
     test(new e2e::loopback::signals::RiseTimeTest());
 //    test(new e2e::loopback::signals::SlaveSignalTest());
     test(new e2e::loopback::wire::DriverWireTest());

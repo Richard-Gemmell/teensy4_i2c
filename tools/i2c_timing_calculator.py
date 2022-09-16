@@ -23,6 +23,9 @@ class TeensyConfig:
         self.CLKHI = clkhi
         self.CLKLO = clklo
 
+    def pre_rise(self, rise_time):
+        return rise_time * 0.42
+
     def validate(self):
         if self.FILTSCL < 0 or self.FILTSCL > 15:
             raise ValueError("FILTSCL is out range")
@@ -52,15 +55,21 @@ class TeensyConfig:
     def start_hold(self):
         return (self.SETHOLD + 1) * self.scale
 
-    def repeated_start_setup(self):
-        return (self.SETHOLD + 1 + self.scl_latency()) * self.scale
+    def repeated_start(self):
+        ideal = self.scale * (self.SETHOLD + 1 + self.scl_latency())
+        min_value = ideal - self.SCL_RISETIME
+        max_value = ideal + self.pre_rise(self.SDA_RISETIME)
+        return [ideal, min_value, max_value]
 
     def stop_setup(self):
-        return self.repeated_start_setup()
+        ideal = self.scale * (self.SETHOLD + 1 + self.scl_latency())
+        min_value = ideal - self.SCL_RISETIME
+        max_value = ideal + self.pre_rise(self.SDA_RISETIME)
+        return [ideal, min_value, max_value]
 
     def clock_high_min(self):
         """Minimum value for tHIGH"""
-        return self.scale * (self.CLKHI + 1 + self.scl_latency()) - self.SCL_RISETIME
+        return self.clock_high_max() - self.SCL_RISETIME
 
     def clock_high_max(self):
         """Max value of tHIGH"""
@@ -68,7 +77,7 @@ class TeensyConfig:
 
     def clock_low(self):
         # Tested only with 0 fall time
-        return (self.scale * (self.CLKLO + 1)) + (self.SCL_RISETIME * 0.42)
+        return (self.scale * (self.CLKLO + 1)) + self.pre_rise(self.SCL_RISETIME)
 
     def bus_free(self):
         # Reality seems to be wildly different.
@@ -78,25 +87,17 @@ class TeensyConfig:
 
 master_100k_config = TeensyConfig(
     name="Master 100k",
-    # scl_risetime=1980, sda_risetime=1980,
-    # scl_risetime=1000, sda_risetime=1000,
     scl_risetime=490, sda_risetime=490,
-    # scl_risetime=40, sda_risetime=40,
     frequency=24, prescale=1,
-    datavd=25, sethold=40,
-    # filtscl=15, filtsda=15,
-    # filtscl=10, filtsda=10,
+    datavd=25, sethold=63,
     filtscl=5, filtsda=5,
-    # filtscl=2, filtsda=2,
-    # filtscl=0, filtsda=0,
-    # clkhi=55, clklo=59)
     clkhi=55, clklo=59)
 
 master_400k_config = TeensyConfig(
     name="Master 400k",
     scl_risetime=300, sda_risetime=320,
     frequency=24, prescale=0,
-    datavd=12, sethold=18,
+    datavd=12, sethold=25,
     filtscl=2, filtsda=2,
     clkhi=26, clklo=28)
 
@@ -104,7 +105,7 @@ master_1M_config = TeensyConfig(
     name="Master 1M",
     scl_risetime=300, sda_risetime=320,
     frequency=24, prescale=0,
-    datavd=4, sethold=7,
+    datavd=4, sethold=10,
     filtscl=1, filtsda=1,
     clkhi=9, clklo=10)
 
@@ -141,6 +142,10 @@ master_example_1M_config_2 = TeensyConfig(
     clkhi=11, clklo=15)
 
 
+def print_range(description, range):
+    print(f"{description} {range[0]:.0f} ({range[1]:.0f} to {range[2]:.0f}) nanos")
+
+
 def print_master_timings(config: TeensyConfig):
     print(f"{config.name}")
     print(f"Period {config.period:.0f}. Scale {config.scale:.0f} nanos")
@@ -148,7 +153,8 @@ def print_master_timings(config: TeensyConfig):
     # print(f"SDA Latency {config.sda_latency():.0f} clocks")
     print(f"SCL Latency {config.scl_latency():.0f} clocks")
     print(f"START Hold Time (tHD:STA) {config.start_hold():.0f} nanos")
-    print(f"Repeated START / STOP Setup Time (tSU:STA) {config.repeated_start_setup():.0f} nanos")
+    print_range("Repeated START (tSU:STA)", config.repeated_start())
+    print_range("STOP Setup Time (tSU:STO)", config.stop_setup())
     print(f"Data Setup Time (tSU:DAT) {config.data_setup():.0f} nanos")
     print(f" Data Hold Time (tHD:DAT) {config.data_hold():.0f} nanos")
     print(f"Data Valid 0->1 (tVD:DAT) {config.data_valid_rise():.0f} nanos")
@@ -162,5 +168,7 @@ def print_master_timings(config: TeensyConfig):
 
 if __name__ == '__main__':
     master_config = master_100k_config
+    # master_config = master_400k_config
+    # master_config = master_1M_config
     master_config.validate()
     print_master_timings(master_config)
