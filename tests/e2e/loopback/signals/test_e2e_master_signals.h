@@ -25,7 +25,7 @@ const analysis::MasterDesignParameters StandardModeDesignParameters = {
         {1, 1}, // scl_high_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
-        {5'000, 6'050}, // stop_setup_time
+        {5'000, 6'500}, // stop_setup_time
         {1, 1}, // bus_free_time
 };
 
@@ -36,18 +36,18 @@ const analysis::MasterDesignParameters FastModeDesignParameters = {
         {1, 1}, // scl_high_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
-        {750, 1'095}, // stop_setup_time
+        {750, 1'400}, // stop_setup_time
         {1, 1}, // bus_free_time
 };
 
 const analysis::MasterDesignParameters FastModePlusDesignParameters = {
         {1'000'000, 1'000'000}, // clock_frequency - maximum allowed
-        {380, 465}, // start_hold_time - min allowed by spec +5% rounded up i.e. >(260*1.05)
+        {325, 465}, // start_hold_time - min allowed by spec +5% rounded up i.e. >(260*1.05)
         {1, 1}, // scl_low_time
         {1, 1}, // scl_high_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
-        {380, 465}, // stop_setup_time
+        {380, 600}, // stop_setup_time
         {1, 1}, // bus_free_time
 };
 
@@ -67,8 +67,10 @@ public:
     static I2CMaster* master;
     static I2CSlave* slave;
     static uint32_t frequency;
-    static bool fast_scl_rise_time;
     static bool fast_sda_rise_time;
+    static bool fast_scl_rise_time;
+    static uint32_t sda_rise_time;  // Estimated rise time based on pullups
+    static uint32_t scl_rise_time;
     static common::i2c_specification::I2CParameters parameters;
     static analysis::MasterDesignParameters master_design_parameters;
 
@@ -86,26 +88,37 @@ public:
 
         if(fast_sda_rise_time) {
             Loopback::enable_pullup(Loopback::PIN_SDA_FASTEST);
+            sda_rise_time = Loopback::SDA_FASTEST_RISE_TIME;
         } else {
             if (frequency == 100'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_1000_ns);
+                sda_rise_time = Loopback::SDA_1000_RISE_TIME;
             } else if (frequency == 400'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_300_ns);
+                sda_rise_time = Loopback::SDA_300_RISE_TIME;
             } else if (frequency == 1'000'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_120_ns);
+                sda_rise_time = Loopback::SDA_120_RISE_TIME;
             }
         }
         if(fast_scl_rise_time) {
             Loopback::enable_pullup(Loopback::PIN_SCL_FASTEST);
+            scl_rise_time = Loopback::SCL_FASTEST_RISE_TIME;
         } else {
             if (frequency == 100'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_1000_ns);
+                scl_rise_time = Loopback::SCL_1000_RISE_TIME;
             } else if (frequency == 400'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_300_ns);
+                scl_rise_time = Loopback::SCL_300_RISE_TIME;
             } else if (frequency == 1'000'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_120_ns);
+                scl_rise_time = Loopback::SCL_120_RISE_TIME;
             }
         }
+        // Rise times are longer if the oscilloscope is attached
+        sda_rise_time = (uint32_t)(sda_rise_time * 1.2);
+        scl_rise_time = (uint32_t)(scl_rise_time * 1.2);
     }
 
     static analysis::I2CTimingAnalysis analyse_read_transaction() {
@@ -126,7 +139,7 @@ public:
         // Ensure the read succeeded
         TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
 
-        return analysis::I2CTimingAnalyser::analyse(trace);
+        return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
     }
 
     // Checks tHD;STA - the startup hold time after a normal start bit
@@ -149,8 +162,8 @@ public:
         auto analysis = analyse_read_transaction();
 
         // THEN the startup hold time (tHD;STA) meets the I2C Specification
-        auto stop_setup_time = analysis.stop_setup_time;
-        log_value("Stop setup time (tSU;STO)", master_design_parameters.stop_setup_time, stop_setup_time);
+        auto stop_setup_time = analysis.stop_setup_time;    // This is the actual time at which the Teensy detected the edges at approx 0.5 Vdd.
+//        log_value("Stop setup time (tSU;STO)", master_design_parameters.stop_setup_time, stop_setup_time);
         TEST_ASSERT_TRUE(stop_setup_time.meets_specification(parameters.times.stop_setup_time));
 
         // AND the setup stop time fits the design of this driver
@@ -207,7 +220,7 @@ public:
 
         // AND the clock frequency fits the design of this driver
         // We can't check the average because it depends on the rise and fall times
-        log_value("SCL clock frequency (fSCL). Design", master_design_parameters.clock_frequency, clock_frequency);
+//        log_value("SCL clock frequency (fSCL). Design", master_design_parameters.clock_frequency, clock_frequency);
         TEST_ASSERT_TRUE(clock_frequency.meets_specification(master_design_parameters.clock_frequency));
         TEST_FAIL_MESSAGE("What do we expect?");
     }
@@ -275,6 +288,8 @@ I2CSlave* e2e::loopback::signals::MasterSignalsTest::slave;
 uint32_t e2e::loopback::signals::MasterSignalsTest::frequency;
 bool e2e::loopback::signals::MasterSignalsTest::fast_sda_rise_time;
 bool e2e::loopback::signals::MasterSignalsTest::fast_scl_rise_time;
+uint32_t e2e::loopback::signals::MasterSignalsTest::sda_rise_time;
+uint32_t e2e::loopback::signals::MasterSignalsTest::scl_rise_time;
 common::i2c_specification::I2CParameters e2e::loopback::signals::MasterSignalsTest::parameters;
 analysis::MasterDesignParameters e2e::loopback::signals::MasterSignalsTest::master_design_parameters = StandardModeDesignParameters;
 

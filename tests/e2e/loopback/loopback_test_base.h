@@ -14,7 +14,7 @@ class LoopbackTestBase : public e2e::E2ETestBase {
 public:
     explicit LoopbackTestBase(const char* test_file_name)
         : e2e::E2ETestBase(test_file_name) {
-    };
+    }
 
     void setUp() override {
         loopback::Loopback::disable_all_pullups();

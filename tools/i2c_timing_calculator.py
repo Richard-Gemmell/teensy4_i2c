@@ -88,6 +88,7 @@ class TeensyConfig:
 master_100k_config = TeensyConfig(
     name="Master 100k",
     scl_risetime=490, sda_risetime=490,
+    # scl_risetime=1000, sda_risetime=1000,
     frequency=24, prescale=1,
     datavd=25, sethold=63,
     filtscl=5, filtsda=5,
@@ -95,7 +96,7 @@ master_100k_config = TeensyConfig(
 
 master_400k_config = TeensyConfig(
     name="Master 400k",
-    scl_risetime=300, sda_risetime=320,
+    scl_risetime=350, sda_risetime=327,
     frequency=24, prescale=0,
     datavd=12, sethold=25,
     filtscl=2, filtsda=2,

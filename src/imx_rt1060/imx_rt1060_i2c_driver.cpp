@@ -380,6 +380,7 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     if (frequency < 400000) {
         // Use Standard Mode - up to 100 kHz
+        // TODO: Increase SETHOLD by 150 ns
         port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
                       LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(63);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(1);

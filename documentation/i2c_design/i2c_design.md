@@ -45,11 +45,11 @@ For a STOP setup time:
 * add the maximum value of t<sub>r</sub>
 * make no allowance for SDA rise (usually very short anyway)
 
-| Frequency | Min Setup Time | 25%   | Max Rise Time | Target Total |
-|-----------|----------------|-------|---------------|--------------|
-| 100 kHz   | 4'000          | 1'000 | 1000          | 6'000        |
-| 400 kHz   | 600            | 150   | 300           | 1'050        |
-| 1 MHz     | 260            | 65    | 120           | 445          |
+| Frequency | Min Setup Time | 25%   | Max Rise Time | Target       | Min   |
+|-----------|----------------|-------|---------------|--------------| ----- |
+| 100 kHz   | 4'000          | 1'000 | 1000          | 6'000        | 5'000 |
+| 400 kHz   | 600            | 150   | 300           | 1'050        |   750 |
+| 1 MHz     | 260            | 65    | 120           | 445          |   325 |
 
 ## Pin Configuration
 
