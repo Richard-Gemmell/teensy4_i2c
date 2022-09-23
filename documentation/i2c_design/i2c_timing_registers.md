@@ -52,7 +52,6 @@ Behaviour:
 
 Notes:
 * The processor decides that SCL has risen at approximately 0.5 V<sub>dd</sub>.
-The exact point depends on the rise time.
 * The I2C Specification defines t<sub>SU;STO</sub> as the time between SCL
 reaching 0.7 V<sub>dd</sub> and SDA reaching 0.3 V<sub>dd</sub>. It specifies
 a minimum value but not a maximum.

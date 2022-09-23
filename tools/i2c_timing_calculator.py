@@ -84,6 +84,11 @@ class TeensyConfig:
         # Calc says 5'600 nanos but actually comes out at 22'800 nanos
         return self.scale * (self.CLKLO + 1 + self.sda_latency())
 
+    def sda_glitch_filter(self):
+        return self.FILTSDA * self.period
+
+    def scl_glitch_filter(self):
+        return self.FILTSCL * self.period
 
 master_100k_config = TeensyConfig(
     name="Master 100k",
@@ -152,7 +157,7 @@ def print_master_timings(config: TeensyConfig):
     print(f"Period {config.period:.0f}. Scale {config.scale:.0f} nanos")
     # print(f"SDA Rise Time {config.SDA_RISETIME:.2f} clocks")
     # print(f"SDA Latency {config.sda_latency():.0f} clocks")
-    print(f"SCL Latency {config.scl_latency():.0f} clocks")
+    # print(f"SCL Latency {config.scl_latency():.0f} clocks")
     print(f"START Hold Time (tHD:STA) {config.start_hold():.0f} nanos")
     print_range("Repeated START (tSU:STA)", config.repeated_start())
     print_range("STOP Setup Time (tSU:STO)", config.stop_setup())
@@ -160,7 +165,7 @@ def print_master_timings(config: TeensyConfig):
     print(f" Data Hold Time (tHD:DAT) {config.data_hold():.0f} nanos")
     print(f"Data Valid 0->1 (tVD:DAT) {config.data_valid_rise():.0f} nanos")
     print(f"Data Valid 1->0 (tVD:DAT) {config.data_valid():.0f} nanos")
-
+    print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
     print(f"Clock High Time (tHIGH) {config.clock_high_min():.0f} to {config.clock_high_max():.0f} nanos")
     print(f"Clock Low Time (tLOW) {config.clock_low():.0f} nanos")
     print(f"Bus Free Time (tBUF) {config.bus_free():.0f} nanos")
@@ -168,8 +173,8 @@ def print_master_timings(config: TeensyConfig):
 
 
 if __name__ == '__main__':
-    master_config = master_100k_config
+    # master_config = master_100k_config
     # master_config = master_400k_config
-    # master_config = master_1M_config
+    master_config = master_1M_config
     master_config.validate()
     print_master_timings(master_config)

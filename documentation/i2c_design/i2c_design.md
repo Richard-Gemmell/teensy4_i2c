@@ -36,20 +36,31 @@ For a START:
 | 1 MHz     | 260            | 65    | 120           | 445          |
 
 For a repeated START
-* ???
+* the worst case scenario is that the SCL rise time is very long
+  and the SDA fall time is very short
+* start with the minimum value from the I2C Specification
+* add 25% of the minimum to give other I2C devices a nice window to react
+* add 60% of SCL t<sub>r</sub> to allow for Teensy trigger voltage
+* make no allowance for SDA fall time in case it's very short
+
+| Frequency | Min Setup Time | 25%   | SCL Rise | Target Total | Min   |
+|-----------|----------------|-------|----------|--------------| ----- |
+| 100 kHz   | 4'700          | 1'175 | 600      | 6'475        | 5'875 |
+| 400 kHz   | 600            | 150   | 180      | 930          | 750   |
+| 1 MHz     | 260            | 65    | 72       | 397          | 325   |
 
 For a STOP setup time:
 * the worst case scenario is that the SCL rise time is very long
   and the SDA rise time is very short
 * start with the minimum value from the I2C Specification
-* add the maximum value of t<sub>r</sub>
-* make no allowance for SDA rise (usually very short anyway)
+* add 60% of SCL t<sub>r</sub> to allow for Teensy trigger voltage
+* make no allowance for SDA rise in case it's very short
 
-| Frequency | Min Setup Time | 25%   | Max Rise Time | Target       | Min   |
-|-----------|----------------|-------|---------------|--------------| ----- |
-| 100 kHz   | 4'000          | 1'000 | 1000          | 6'000        | 5'000 |
-| 400 kHz   | 600            | 150   | 300           | 1'050        |   750 |
-| 1 MHz     | 260            | 65    | 120           | 445          |   325 |
+| Frequency | Min Setup Time | 25%   | SCL Rise | Target Total | Min   |
+|-----------|----------------|-------|----------|--------------| ----- |
+| 100 kHz   | 4'000          | 1'000 | 600      | 5'600        | 5'000 |
+| 400 kHz   | 600            | 150   | 180      | 930          |   750 |
+| 1 MHz     | 260            | 65    | 72       | 397          |   325 |
 
 ## Pin Configuration
 

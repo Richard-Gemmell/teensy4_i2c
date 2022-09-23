@@ -23,6 +23,7 @@ const analysis::MasterDesignParameters StandardModeDesignParameters = {
         {5'000, 5'350}, // start_hold_time - max includes measurement error allowance
         {1, 1}, // scl_low_time  // TODO: What values to use for tHIGH and tLOW
         {1, 1}, // scl_high_time
+        {5'875, 7'000}, // start_setup_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
         {5'000, 6'500}, // stop_setup_time
@@ -34,6 +35,7 @@ const analysis::MasterDesignParameters FastModeDesignParameters = {
         {750, 1'095}, // start_hold_time - max includes measurement error allowance
         {1, 1}, // scl_low_time
         {1, 1}, // scl_high_time
+        {750, 1'095}, // start_setup_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
         {750, 1'400}, // stop_setup_time
@@ -45,6 +47,7 @@ const analysis::MasterDesignParameters FastModePlusDesignParameters = {
         {325, 465}, // start_hold_time - min allowed by spec +5% rounded up i.e. >(260*1.05)
         {1, 1}, // scl_low_time
         {1, 1}, // scl_high_time
+        {325, 465}, // start_setup_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
         {380, 600}, // stop_setup_time
@@ -75,10 +78,10 @@ public:
     static analysis::MasterDesignParameters master_design_parameters;
 
     static void print_trace(const bus_trace::BusTrace& trace) {
-//        print_traces(trace, expected_trace);
-        for (size_t i = 0; i < trace.event_count(); ++i) {
-            Serial.printf("Index %d: delta %d ns\n", i, common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks));
-        }
+        Serial.println(trace);
+//        for (size_t i = 0; i < trace.event_count(); ++i) {
+//            Serial.printf("Index %d: delta %d ns\n", i, common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks));
+//        }
     }
 
     void setUp() override {
@@ -117,8 +120,8 @@ public:
             }
         }
         // Rise times are longer if the oscilloscope is attached
-        sda_rise_time = (uint32_t)(sda_rise_time * 1.2);
-        scl_rise_time = (uint32_t)(scl_rise_time * 1.2);
+//        sda_rise_time = (uint32_t)(sda_rise_time * 1.2);
+//        scl_rise_time = (uint32_t)(scl_rise_time * 1.2);
     }
 
     static analysis::I2CTimingAnalysis analyse_read_transaction() {
@@ -134,6 +137,26 @@ public:
 // HACK to trigger a restart and bus idle behaviours
 //            finish(*master);
 //            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
+        });
+//        print_trace(trace);
+        // Ensure the read succeeded
+        TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
+
+        return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
+    }
+
+    static analysis::I2CTimingAnalysis analyse_repeated_read_transaction() {
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+
+        const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
+        slave->set_transmit_buffer(tx_buffer, sizeof(tx_buffer));
+        uint8_t rx_buffer[] = {0x00, 0x00};
+
+        // Master reads from slave
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [&rx_buffer](){
+            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), false);
+            finish(*master);
+            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
         });
 //        print_trace(trace);
         // Ensure the read succeeded
@@ -170,9 +193,18 @@ public:
         TEST_ASSERT_TRUE(stop_setup_time.meets_specification(master_design_parameters.stop_setup_time));
     }
 
-    // Checks tHD;STA - the startup hold time after a repeated start bit
-    static void start_hold_time_for_repeated_start() {
-        TEST_FAIL_MESSAGE("test is not implemented");
+    // Checks tSU;STA - the startup hold time after a repeated start bit
+    static void setup_time_for_repeated_start() {
+        // WHEN the master reads data from the slave
+        auto analysis = analyse_repeated_read_transaction();
+
+        // THEN the setup time for repeated start (tSU;STA) meets the I2C Specification
+        auto start_setup_time = analysis.start_setup_time;
+        log_value("Setup time for repeated start (tSU;STA)", master_design_parameters.start_setup_time, start_setup_time);
+        TEST_ASSERT_TRUE(start_setup_time.meets_specification(parameters.times.start_setup_time));
+
+        // AND the setup time for repeated start time fits the design of this driver
+        TEST_ASSERT_TRUE(start_setup_time.meets_specification(master_design_parameters.start_setup_time));
     }
 
     // Checks tHIGH - the HIGH period of the SCL clock
@@ -231,9 +263,9 @@ public:
         slave = &Slave1;
         fast_sda_rise_time = fast_sda;
         fast_scl_rise_time = fast_scl;
-        RUN_TEST(start_hold_time);
-//        RUN_TEST(start_hold_time_for_repeated_start);
-        RUN_TEST(stop_setup_time);
+//        RUN_TEST(start_hold_time);
+        RUN_TEST(setup_time_for_repeated_start);
+//        RUN_TEST(stop_setup_time);
 //        RUN_TEST(clock_high_time);
 //        RUN_TEST(clock_low_time);
 //        RUN_TEST(master_clock_frequency);
