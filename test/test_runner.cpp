@@ -87,15 +87,12 @@ void setup() {
     // Blink the LED to show we're still alive
     blink_timer.begin(blink_isr, 300'000);
 
-    // You must connect the Serial Monitor before this delay times out
-    // otherwise the test output gets truncated in a weird way.
-    delay(1000);
     UNITY_BEGIN();
     if(run_subset()) {
         run_all_tests();
     }
     Serial.flush();
-    delay(100);
+    delay(250);
     UNITY_END();
 }
 

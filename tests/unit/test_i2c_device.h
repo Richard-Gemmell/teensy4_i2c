@@ -131,7 +131,7 @@ public:
 
         bool success = device->write(reg, (uint8_t*)&value, sizeof(value), true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[3] = {reg, 0xAB, 0x01};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), true);
     }
@@ -143,7 +143,7 @@ public:
 
         bool success = device->read(reg, rx_buffer, sizeof(rx_buffer), true);
 
-        TEST_ASSERT_FALSE(success)
+        TEST_ASSERT_FALSE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_unused();
         // Wipes target buffer if read fails.
@@ -157,7 +157,7 @@ public:
 
         bool success = device->read(reg, rx_buffer, sizeof(rx_buffer), true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, rx_buffer, sizeof(rx_buffer), true);
         uint8_t expected_rx_buffer[8] = {0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
@@ -170,7 +170,7 @@ public:
 
         bool success = device->write(reg, value, false);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[2] = {reg, value};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), false);
     }
@@ -181,7 +181,7 @@ public:
 
         bool success = device->write(reg, value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[2] = {reg, (uint8_t)value};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), true);
     }
@@ -192,7 +192,7 @@ public:
 
         bool success = device->write(reg, value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[3] = {reg, 0xDE, 0xAB};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), true);
     }
@@ -203,7 +203,7 @@ public:
 
         bool success = big_endian_device->write(reg, value, false);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[3] = {reg, 0xAB, 0xDE};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), false);
     }
@@ -214,7 +214,7 @@ public:
 
         bool success = device->write(reg, value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[3] = {reg, 0xDE, 0xAB};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), true);
     }
@@ -225,7 +225,7 @@ public:
 
         bool success = big_endian_device->write(reg, value, false);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[3] = {reg, 0xAB, 0xDE};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), false);
     }
@@ -236,7 +236,7 @@ public:
 
         bool success = device->write(reg, value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[5] = {reg, 0x34, 0x12, 0xDE, 0xAB};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), true);
     }
@@ -247,7 +247,7 @@ public:
 
         bool success = big_endian_device->write(reg, value, false);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[5] = {reg, 0xAB, 0xDE, 0x12, 0x34};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), false);
     }
@@ -258,7 +258,7 @@ public:
 
         bool success = device->write(reg, value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[5] = {reg, 0x34, 0x12, 0xDE, 0xAB};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), true);
     }
@@ -269,7 +269,7 @@ public:
 
         bool success = big_endian_device->write(reg, value, false);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         uint8_t expected_buffer[5] = {reg, 0xAB, 0xDE, 0x12, 0x34};
         dummy->buffers[0].assert_equals(false, address, expected_buffer, sizeof(expected_buffer), false);
     }
@@ -280,7 +280,7 @@ public:
 
         bool success = device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, &value, sizeof(value), true);
         TEST_ASSERT_EQUAL(0x08, value);
@@ -292,7 +292,7 @@ public:
 
         bool success = device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, (uint8_t*)&value, sizeof(value), true);
         TEST_ASSERT_EQUAL((int8_t)0x08, value);
@@ -304,7 +304,7 @@ public:
 
         bool success = device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, (uint8_t*)&value, sizeof(value), true);
         TEST_ASSERT_EQUAL(0x0908, value);
@@ -316,7 +316,7 @@ public:
 
         bool success = big_endian_device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_details(true, address, true);
         TEST_ASSERT_EQUAL(0x0809, value);
@@ -328,7 +328,7 @@ public:
 
         bool success = device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, (uint8_t*)&value, sizeof(value), true);
         TEST_ASSERT_EQUAL(0x0908, value);
@@ -340,7 +340,7 @@ public:
 
         bool success = big_endian_device->read(reg, &value, false);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_details(true, address, false);
         TEST_ASSERT_EQUAL(0x0809, value);
@@ -352,7 +352,7 @@ public:
 
         bool success = device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, (uint8_t*)&value, sizeof(value), true);
         TEST_ASSERT_EQUAL(0x0B0A0908, value);
@@ -364,7 +364,7 @@ public:
 
         bool success = big_endian_device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_details(true, address, true);
         TEST_ASSERT_EQUAL(0x08090A0B, value);
@@ -376,7 +376,7 @@ public:
 
         bool success = device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_equals(true, address, (uint8_t*)&value, sizeof(value), true);
         TEST_ASSERT_EQUAL(0x0B0A0908, value);
@@ -388,7 +388,7 @@ public:
 
         bool success = big_endian_device->read(reg, &value, true);
 
-        TEST_ASSERT_TRUE(success)
+        TEST_ASSERT_TRUE(success);
         dummy->buffers[0].assert_equals(false, address, &reg, sizeof(reg), false);
         dummy->buffers[1].assert_details(true, address, true);
         TEST_ASSERT_EQUAL(0x08090A0B, value);

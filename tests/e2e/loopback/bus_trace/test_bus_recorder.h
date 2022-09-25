@@ -74,7 +74,7 @@ public:
         // Anything gap between 2 edges gets recorded as 64 nanos however
         // short it was. We have to allow errors this big when both edges
         // fall in quick succession
-        uint32_t allowed_error = 60;
+        uint32_t allowed_error = 65;
         bool failed = false;
         // Ignore the first 2 events. The second is the first edge of the message.
         // The third is the first one where we can predict the delay
