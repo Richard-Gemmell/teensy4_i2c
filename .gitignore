@@ -4,3 +4,4 @@ cmake-build-teensy40
 CMakeListsPrivate.txt
 src/main.cpp*
 lib/i2c-underneath
+__pycache__
