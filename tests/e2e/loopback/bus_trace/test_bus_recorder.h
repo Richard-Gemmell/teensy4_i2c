@@ -59,7 +59,7 @@ public:
         TEST_ASSERT_EQUAL_UINT8(BYTE_A, rx);
 
         uint32_t measurements[54] = {
-                0, 0, 295, 214, 248,
+                0, 0, 456, 214, 248,
                 535, 210, 255, 536, 216, // 9
                 248, 536, 210, 256, 534,
                 456, 536, 214, 248, 536, // 19
@@ -69,7 +69,7 @@ public:
                 22, 444, 536, 462, 538, // 39
                 10, 458, 536, 462, 536,
                 464, 538, 20, 440, 536, // 49
-                208, 258, 418, 416
+                208, 258, 584, 416
         };
         // Anything gap between 2 edges gets recorded as 64 nanos however
         // short it was. We have to allow errors this big when both edges
