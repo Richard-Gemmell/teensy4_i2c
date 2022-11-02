@@ -78,6 +78,7 @@ public:
     static analysis::MasterDesignParameters master_design_parameters;
 
     static void print_trace(const bus_trace::BusTrace& trace) {
+        // TODO: Use base class method instead
         Serial.println(trace);
 //        for (size_t i = 0; i < trace.event_count(); ++i) {
 //            Serial.printf("Index %d: delta %d ns\n", i, common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks));
@@ -263,8 +264,8 @@ public:
         slave = &Slave1;
         fast_sda_rise_time = fast_sda;
         fast_scl_rise_time = fast_scl;
-//        RUN_TEST(start_hold_time);
-        RUN_TEST(setup_time_for_repeated_start);
+        RUN_TEST(start_hold_time);
+//        RUN_TEST(setup_time_for_repeated_start);
 //        RUN_TEST(stop_setup_time);
 //        RUN_TEST(clock_high_time);
 //        RUN_TEST(clock_low_time);

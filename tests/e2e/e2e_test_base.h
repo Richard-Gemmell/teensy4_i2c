@@ -21,12 +21,12 @@ public:
     // WARNING: Changing pins can affect the order of edges.
     // SDA on pin 23 and SCL on pin 22 works Ok.
     // SDA on pin 21 and SCL on pin 20 works Ok.
-    const static uint32_t PIN_SNIFF_SDA = 21;
-    const static uint32_t PIN_SNIFF_SCL = 20;
+    constexpr static uint32_t PIN_SNIFF_SDA = 21;   // GPIO1 and GPIO6 bit 27
+    constexpr static uint32_t PIN_SNIFF_SCL = 20;   // GPIO1 and GPIO6 bit 26
 
     static bus_trace::BusRecorder recorder;
     static common::hal::TeensyClock clock;
-    static const size_t MAX_EVENTS = 1024;
+    constexpr static size_t MAX_EVENTS = 1024;
     static bus_trace::BusEvent events[MAX_EVENTS];
 
     explicit E2ETestBase(const char* test_file_name)
@@ -34,7 +34,7 @@ public:
     };
 
     void setUp() override {
-        recorder.set_callbacks([](){recorder.add_event(false);}, [](){recorder.add_event(true);});
+        recorder.set_callback([](){recorder.add_event();});
         pinMode(PIN_SNIFF_SDA, INPUT);
         pinMode(PIN_SNIFF_SCL, INPUT);
     }
@@ -80,6 +80,13 @@ public:
         recorder.stop();
     }
 
+    static void print_detailed_trace(const bus_trace::BusTrace& trace) {
+        Serial.println(trace);
+        for (size_t i = 0; i < trace.event_count(); ++i) {
+            Serial.printf("  Index %d: delta %d ns\n", i, common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks));
+        }
+    }
+
     static void print_traces(bus_trace::BusTrace& actual, bus_trace::BusTrace& expected) {
         Serial.println("Actual:");
         Serial.print(actual.to_message());
@@ -99,7 +106,7 @@ public:
 };
 }
 // Define statics
-bus_trace::BusRecorder e2e::E2ETestBase::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL); // NOLINT(cppcoreguidelines-interfaces-global-init)
+bus_trace::BusRecorder e2e::E2ETestBase::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL);
 common::hal::TeensyClock e2e::E2ETestBase::clock;
 bus_trace::BusEvent e2e::E2ETestBase::events[MAX_EVENTS];
 #endif //TEENSY4_I2C_E2E_TEST_BASE_H

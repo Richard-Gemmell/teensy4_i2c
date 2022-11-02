@@ -1,0 +1,3 @@
+# Supress checks here when it doesn't work in the IDE config
+---
+Checks: '-bugprone-dynamic-static-initializers'

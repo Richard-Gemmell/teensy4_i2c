@@ -14,6 +14,10 @@ namespace e2e {
 namespace loopback {
 namespace bus_trace_tests {
 
+/**
+ * This test is just a check that that the BusRecorder is working
+ * the way we assume.
+ */
 class BusRecorderTest : public LoopbackTestBase {
     const static uint8_t ADDRESS = 0x53;
     const static uint8_t BYTE_A = 0x58; // 0101 1000
@@ -58,27 +62,25 @@ public:
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, compare);
         TEST_ASSERT_EQUAL_UINT8(BYTE_A, rx);
 
-        uint32_t measurements[54] = {
+        const int expected_num_measurements = 47;
+        // Entries where both lines change have an apostrophe like this 4'69
+        uint32_t measurements[expected_num_measurements] = {
                 0, 0, 456, 214, 248,
                 535, 210, 255, 536, 216, // 9
-                248, 536, 210, 256, 534,
-                456, 536, 214, 248, 536, // 19
-                466, 536, 462, 536, 10,
-                458, 536, 464, 534, 20, // 29
-                442, 538, 10, 456, 535,
-                22, 444, 536, 462, 538, // 39
-                10, 458, 536, 462, 536,
-                464, 538, 20, 440, 536, // 49
-                208, 258, 584, 416
+                256, 536, 210, 256, 534,
+                468, 536, 214, 248, 536, // 19
+                466, 536, 462, 536, 4'69,
+                536, 464, 5'34, 468, 5'24, // 29
+                476, 5'28, 472, 536, 472,
+                5'38, 472, 528, 472, 536, // 39
+                464, 5'28, 472, 536, 208,
+                258, 584
         };
-        // Anything gap between 2 edges gets recorded as 64 nanos however
-        // short it was. We have to allow errors this big when both edges
-        // fall in quick succession
-        uint32_t allowed_error = 65;
+        uint32_t allowed_error = 15;    // Error measuring gaps with a scope is < 10 nanos
         bool failed = false;
         // Ignore the first 2 events. The second is the first edge of the message.
         // The third is the first one where we can predict the delay
-        for (size_t i = 2; i < expected_trace.event_count(); ++i) {
+        for (size_t i = 2; i < expected_num_measurements; ++i) {
             uint32_t actual = common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks);
             auto error = (uint32_t)fabs(measurements[i]*1.0 - actual*1.0);
             if(error > allowed_error) {
@@ -91,38 +93,9 @@ public:
         }
     }
 
-    // If both lines are changed in quick succession
-    // then the BusRecorder gets the order of SDA and SCL wrong.
-    // Note: I wasn't able to make edges disappear entirely with this trick.
-    static void test_reorder_events() {
-        pinMode(PIN_WIRE_SCL, OUTPUT_OPENDRAIN);
-        pinMode(PIN_WIRE_SDA, OUTPUT_OPENDRAIN);
-        Loopback::enable_pullup(Loopback::PIN_SCL_FASTEST);
-        Loopback::enable_pullup(Loopback::PIN_SDA_FASTEST);
-
-        bus_trace::BusTrace trace(MAX_EVENTS);
-        // It takes about 30 ns for the line to rise to the point where the edge is detectable
-        int interval = 14;  // Edges are 35 ns apart. BusRecorder flips the order of the pins.
-//        int interval = 16;  // Edges are 40 ns apart. BusRecorder gets pin order correct.
-
-        // WHEN we record 2 edges in quick succession
-        recorder.start(trace);
-        digitalWriteFast(PIN_WIRE_SDA, true);
-        delayNanoseconds(interval);
-        digitalWriteFast(PIN_WIRE_SCL, true);
-        delayNanoseconds(300);
-        recorder.stop();
-
-        // THEN the BusRecorder gets the order of SDA and SCL wrong.
-//        trace.printTo(Serial);
-        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
-        TEST_ASSERT_NOT_EQUAL(bus_trace::BusEventFlags::SDA_LINE_CHANGED | bus_trace::BusEventFlags::SDA_LINE_STATE, trace.event(1)->flags);
-    }
-
     // Include all the tests here
     void test() final {
         RUN_TEST(test_i2c_timings);
-        RUN_TEST(test_reorder_events);
     }
 
     BusRecorderTest() : LoopbackTestBase(__FILE__) {};

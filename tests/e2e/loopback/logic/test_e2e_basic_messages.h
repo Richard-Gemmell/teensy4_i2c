@@ -23,7 +23,7 @@ public:
     // so one byte is the inverse of the other.
     const static uint8_t BYTE_A = 0x58; // 0101 1000
     const static uint8_t BYTE_B = 0xA7; // 1010 0111
-    const static uint8_t ADDRESS = 0x53;
+    const static uint8_t ADDRESS = 0x53;// 0101 0011
     const static bool WRITE = bus_trace::BusTraceBuilder::WRITE;
     const static bool READ = bus_trace::BusTraceBuilder::READ;
     static I2CMaster* master;
@@ -72,8 +72,10 @@ public:
                 // See I2C Specification section 3.1.6 item 5
                 .data_byte(BYTE_B).nack()
                 .stop_bit();
-//        print_traces(trace, expected_trace);
-        size_t compare = trace.compare_messages(expected_trace);
+//        print_detailed_trace(trace);
+        bus_trace::BusTrace normalised_trace = trace.to_message();
+//        print_traces(normalised_trace, expected_trace);
+        size_t compare = normalised_trace.compare_messages(expected_trace);
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, compare);
         TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
     }
