@@ -143,6 +143,7 @@ message. (A partial read bug).
 ## Data Sheets and References
 * https://www.i2c-bus.org/
 * https://www.pjrc.com/teensy/IMXRT1060RM_rev2.pdf
+* [I2C Specification Rev. 6](documentation/references/UM10204.v6.pdf)
 * https://www.nxp.com/docs/en/application-note/AN5078.pdf
 * https://www.nxp.com/docs/en/application-note/AN10216.pdf
 
