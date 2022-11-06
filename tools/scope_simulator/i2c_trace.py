@@ -83,6 +83,16 @@ class I2CTrace:
             title, xy=(x_pos, ((stop-start)/2)+start), xycoords='data',
             xytext=(5, -5), textcoords='offset points', fontsize='x-small')
 
+    def measure_between_edges(self, title: str, y_pos: float, left: [str, int, float], right: [str, int, float], lines: bool = True):
+        start = self.get_time_from_edge(left)
+        stop = self.get_time_from_edge(right)
+        self.add_measurement(title, y_pos, start, stop, lines)
+
+    def get_time_from_edge(self, edge: [int, float]) -> int:
+        if edge[0] == 'SCL':
+            return self.scl.get_time_from_edge(index=edge[1], v=edge[2])
+        return self.sda.get_time_from_edge(index=edge[1], v=edge[2])
+
     def add_measurement(self, title: str, y_pos: float, start: int, stop: int, lines: bool = True):
         if lines:
             self.ax.axvline(start, linewidth=1, color='grey', linestyle='--')
