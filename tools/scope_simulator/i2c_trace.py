@@ -1,7 +1,10 @@
-from typing import List
+from typing import List, Callable
 
 import matplotlib as mpl
+import numpy as np
 from matplotlib import pyplot as plt
+
+from i2c_line import I2CLine
 
 mpl.rcParams['lines.linewidth'] = 2
 mpl.rcParams['font.size'] = 22
@@ -12,6 +15,8 @@ class I2CTrace:
         self.stop = stop
         self.start = start
         self.title = title
+        self.sda = I2CLine()
+        self.scl = I2CLine()
 
         # A4 Size
         self.page_color = '#C2D7FF'
@@ -32,20 +37,28 @@ class I2CTrace:
         plt.grid(axis='y', which='minor', color='grey', linestyle='--')
         plt.grid(visible=True)
 
+    def plot(self):
+        timestamps = np.arange(self.start, self.stop, 1)
+        self.plot_line(timestamps, self.sda, "SDA", 'blue')
+        self.plot_line(timestamps, self.scl, "SCL", 'red')
+
+    def plot_line(self, timestamps, line: I2CLine, label: str, color: str):
+        if not line.show:
+            return
+        voltages = np.zeros_like(timestamps, dtype=float)
+        for i in range(len(timestamps)):
+            voltages[i] = line.get_voltage_at(timestamps[i])
+        self.ax.plot(timestamps, voltages, label=label, color=color)
+
     def set_events(self, values: List[int], lables: List[str]):
         self.ax.set_xticks(values, lables)
-
-    def sda(self, y_values: List[float], x_values: List[int]):
-        self.ax.plot(x_values, y_values, label="SDA", color='blue')
-
-    def scl(self, y_values: List[float], x_values: List[int]):
-        self.ax.plot(x_values, y_values, label="SCL", color='red')
 
     def show(self):
         self.ax.legend(facecolor=self.page_color, fontsize='small', loc='upper left', borderpad=0.2)
         plt.show()
 
-    def save(self, filename: str):
+    @staticmethod
+    def save(filename: str):
         plt.savefig(filename, format='png')
 
     def add_voltage_measurement(self, title: str, x_pos: int, start: float, stop: float, lines: bool = False):
