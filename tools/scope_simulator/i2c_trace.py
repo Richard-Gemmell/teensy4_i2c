@@ -1,8 +1,9 @@
-from typing import List, Callable
+from typing import List
 
 import matplotlib as mpl
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.ticker import ScalarFormatter, AutoLocator
 
 from i2c_line import I2CLine
 
@@ -14,7 +15,6 @@ class I2CTrace:
     def __init__(self, title: str, start: int, stop: int):
         self.stop = stop
         self.start = start
-        self.title = title
         self.sda = I2CLine()
         self.scl = I2CLine()
 
@@ -23,24 +23,31 @@ class I2CTrace:
         plot_color = '#FEFDC3'
         self.fig, self.ax = plt.subplots(figsize=(15.98, 11.23/2), facecolor=self.page_color)
         self.ax.set_facecolor(plot_color)
-        plt.tight_layout(rect=[0.04, 0.04, 1, 0.98])
+        self.fig.tight_layout(rect=[0.04, 0.04, 1, 0.96])
 
         # General Styling
-        self.ax.set_title(title)
+        self.ax.set_title(title, pad=15)
         self.ax.set_ylabel("Voltage (Vdd)")
         self.ax.set_xlabel("Time (nanoseconds)")
+        self.ax.grid(visible=True)
 
-        # Tick marks and Grid lines
+        # Voltage ticks marks and grid lines
         self.ax.set_yticks([0, 1.0], ["GND", "Vdd"])
         self.ax.set_yticks([0.3, 0.7], ["0.3", "0.7"], minor=True)
-        plt.grid(axis='y', which='major', color='black')
-        plt.grid(axis='y', which='minor', color='grey', linestyle='--')
-        plt.grid(visible=True)
+        self.ax.grid(axis='y', which='major', color='black')
+        self.ax.grid(axis='y', which='minor', color='grey', linestyle='--')
+
+        # Time tick marks and grid lines
+        self.ax.tick_params(axis='x', which='major')
+        self.ax.tick_params(axis='x', which='minor', labelsize='small')
+        self.ax.xaxis.set_minor_locator(AutoLocator())
+        self.ax.xaxis.set_minor_formatter(ScalarFormatter())
 
     def plot(self):
         timestamps = np.arange(self.start, self.stop, 1)
         self.plot_line(timestamps, self.sda, "SDA", 'blue')
         self.plot_line(timestamps, self.scl, "SCL", 'red')
+        self.ax.legend(facecolor=self.page_color, fontsize='small', loc='upper left', borderpad=0.2)
 
     def plot_line(self, timestamps, line: I2CLine, label: str, color: str):
         if not line.show:
@@ -50,16 +57,19 @@ class I2CTrace:
             voltages[i] = line.get_voltage_at(timestamps[i])
         self.ax.plot(timestamps, voltages, label=label, color=color)
 
-    def set_events(self, values: List[int], lables: List[str]):
-        self.ax.set_xticks(values, lables)
+    def set_events_from_edges(self):
+        values = self.sda.get_edge_triggers() + self.scl.get_edge_triggers()
+        labels = self.sda.get_edge_directions() + self.scl.get_edge_directions()
+        self.set_events(values, labels)
+
+    def set_events(self, values: List[int], labels: List[str]):
+        self.ax.set_xticks(values, labels, minor=False)
 
     def show(self):
-        self.ax.legend(facecolor=self.page_color, fontsize='small', loc='upper left', borderpad=0.2)
-        plt.show()
+        self.fig.show()
 
-    @staticmethod
-    def save(filename: str):
-        plt.savefig(filename, format='png')
+    def save(self, filename: str):
+        self.fig.savefig(filename, format='png')
 
     def add_voltage_measurement(self, title: str, x_pos: int, start: float, stop: float, lines: bool = False):
         if lines:

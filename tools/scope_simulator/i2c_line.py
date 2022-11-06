@@ -10,16 +10,18 @@ class I2CLine:
         self.rise_time = rise_time
         self.tau_ratio = math.log(0.7, math.e) - math.log(0.3, math.e)
         self.show = True
+        self.edges = []
+        self.edge_directions = []
 
     def hide(self) -> 'I2CLine':
         self.show = False
         return self
 
-    def tRise(self, rise_time: int) -> 'I2CLine':
+    def set_rise_time(self, rise_time: int) -> 'I2CLine':
         self.rise_time = rise_time
         return self
 
-    def tFall(self, fall_time: int) -> 'I2CLine':
+    def set_fall_time(self, fall_time: int) -> 'I2CLine':
         self.fall_time = fall_time
         return self
 
@@ -31,21 +33,33 @@ class I2CLine:
         self.events.append([at, lambda t: self.LOW])
         return self
 
+    def get_edge_triggers(self):
+        return list(map(lambda r: r[0], self.edges))
+
+    def get_edge_directions(self):
+        return self.edge_directions
+
     def fall_at(self, at: int) -> 'I2CLine':
+        self.edge_directions.append('↓')
         tau = self.fall_time / self.tau_ratio
-        self.events.append([at, lambda t: self.rc(tau, t - at)])
+        edge = [at, lambda t: self.rc(tau, t - at)]
+        self.edges.append(edge)
+        self.events.append(edge)
         return self
 
     def rise_at(self, at: int) -> 'I2CLine':
+        self.edge_directions.append('↑')
         tau = self.rise_time / self.tau_ratio
-        self.events.append([at, lambda t: self.HIGH - self.rc(tau, t - at)])
+        edge = [at, lambda t: self.HIGH - self.rc(tau, t - at)]
+        self.edges.append(edge)
+        self.events.append(edge)
         return self
 
     def get_voltage_at(self, at: int) -> float:
         num_events = len(self.events)
         for i in range(num_events):
             event = self.events[num_events - i - 1]
-            if at >= event[0]:
+            if at > event[0]:
                 return event[1](at)
         if len(self.events) > 0:
             return self.events[0][1](at)
