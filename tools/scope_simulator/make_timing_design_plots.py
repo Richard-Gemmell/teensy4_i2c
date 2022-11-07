@@ -38,7 +38,6 @@ def setup_start_time() -> I2CTrace:
     trace = I2CTrace("$t_{SU;STA}$ - Setup Start Time", start, end)
     trace.sda.high().fall_at(0)
     trace.scl.high().fall_at(5330)
-    trace.save("generated/clock_high.png")
     return trace
 
 

@@ -1,20 +1,32 @@
-# I2C Timing Registers for the iMXRT 1062
+# I2C Timing Registers for the i.MX RT1062
+The Teensy 4 and Teensy 4.1 use the i.MX RT1062 processor.
+
+This document describes how the processor's registers map to the I2C
+Specification timings. All results have been confirmed by experiment
+unless stated otherwise.
 
 ## References
-### iMXRT 1062
-The Teensy 4 and Teensy 4.1 use the iMXRT 1062 processor.
-
-Information in here is based on the **IMXRT1060RM_rev2.pdf** datasheet;
-**i.MX RT1060 Processor Reference Manual, Rev. 2, 12/2019**. References
-to this datasheet are given like this `47.4.1.24`.
-
-All results have been confirmed by experiment unless stated otherwise.
+### i.MX RT1062
+Information on the i.MX RT1062 is taken from the datasheet;
+[i.MX RT1060 Processor Reference Manual, Rev. 3 - 07/2021](../references/IMXRT1060RM_rev3.pdf).
+References to this datasheet are given like this `47.5.1.24 Slave Configuration 2 (SCFGR2)`.
 
 Relevant sections:
-* Chapter 47 - Low Power Inter-Integrated Circuit (LPI2C)
+* `Chapter 47 - Low Power Inter-Integrated Circuit (LPI2C)`
+
+### I2C Specification
+Details of the I2C Specification are taken from the spec itself.
+[I<sup>2</sup>C-bus specification and user manual Rev. 6 - 4 April 2014](../references/UM10204.v6.pdf)
+References to the spec are given like this
+`I2C Spec. 3.1 Standard-mode, Fast-mode and Fast-mode Plus I2C-bus protocols`.
+
+There is a more [recent version of the spec](../references/UM10204.v7.pdf).
+The only significant difference is that v7 replaces the terms "master" and "slave"
+for "controller" and "target". I've decided to keep using the old terms as
+they're so widely used.
 
 ## Symbols
-All symbols are taken from the I2C specification except for:
+All symbols are taken from the I2C Specification except for:
 * t<sub>r0</sub> - time for signal to rise from 0 to 0.3 V<sub>dd</sub>
   - for an RC curve this = 0.4 x t<sub>r</sub> 
 * t<sub>f1</sub> - time for signal to fall from V<sub>dd</sub> to 0.7 V<sub>dd</sub>
@@ -26,12 +38,41 @@ All symbols are taken from the I2C specification except for:
 ## Units
 All durations are given in nanoseconds (ns).
 
-# I2C Master Registers
-* MCCR0 `47.4.1.13`
-  - CLKLO - sets low period of the SCL clock pulse (t<sub>low</sub>)
-  - CLKHI - sets high period of the SCL clock pulse (t<sub>high</sub>)
-  - DATAVD
-  - SETHOLD
+# Index
+<!-- TOC -->
+* [I2C Timing Registers for the i.MX RT1062](#i2c-timing-registers-for-the-imx-rt1062)
+  * [References](#references)
+    * [i.MX RT1062](#imx-rt1062)
+    * [I2C Specification](#i2c-specification)
+  * [Symbols](#symbols)
+  * [Units](#units)
+* [Index](#index)
+* [i.MX RT 1060 Registers](#imx-rt-1060-registers)
+  * [I2C Master Registers](#i2c-master-registers)
+* [Calculations](#calculations)
+  * [scale](#scale)
+  * [t<sub>HD;STA</sub>](#t-sub-hdsta-sub)
+  * [t<sub>SU;STO</sub>](#t-sub-susto-sub)
+    * [t<sub>SU;STO</sub> Ideal Value](#t-sub-susto-sub-ideal-value)
+    * [t<sub>SU;STO</sub> Minimum Value](#t-sub-susto-sub-minimum-value)
+    * [t<sub>SU;STO</sub> Maximum Value](#t-sub-susto-sub-maximum-value)
+  * [t<sub>low</sub>](#t-sub-low-sub)
+  * [t<sub>high</sub>](#t-sub-high-sub)
+    * [t<sub>high</sub> Minimum Value](#t-sub-high-sub-minimum-value)
+    * [t<sub>high</sub> Max Value](#t-sub-high-sub-max-value)
+  * [t<sub>fall</sub>](#t-sub-fall-sub)
+<!-- TOC -->
+
+# i.MX RT 1060 Registers
+## I2C Master Registers
+* MCCR0 `47.5.1.13 Master Clock Configuration 0 (MCCR0)`
+  - CLKLO - controls t<sub>low</sub>, low period of the SCL clock pulse
+  - CLKHI - controls t<sub>high</sub>, high period of the SCL clock pulse
+  - DATAVD - controls t<sub>HD;DAT</sub>, data hold time
+  - SETHOLD - controls 
+    - t<sub>HD;STA</sub>, hold time for START condition
+    - t<sub>SU;STA</sub>, setup time for repeated START condition
+    - t<sub>SU;STO</sub>, setup time for STOP condition
 
 # Calculations
 ## scale
@@ -57,7 +98,7 @@ reaching 0.7 V<sub>dd</sub> and SDA reaching 0.3 V<sub>dd</sub>. It specifies
 a minimum value but not a maximum.
 * The worst case scenario is that the SCL rise time is very long and the SDA
 rise time is very short.
-* The duration is affected by SCL_LATENCY as described in section `47.3.2.4`.
+* The duration is affected by SCL_LATENCY as described in section `47.3.1.4 Timing Parameters`.
 
 ### t<sub>SU;STO</sub> Ideal Value
 **t<sub>SU;STO</sub> = ((CLKHI + 1 + SCL_LATENCY) x scale)</sub>**
