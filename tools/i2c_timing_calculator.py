@@ -75,7 +75,7 @@ class TeensyConfig:
     def stop_setup(self):
         nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY())
         i2c_value = nominal - (self.scl_risetime * time_to_rise_to_0_7_vdd) + (self.sda_risetime * time_to_rise_to_0_3_vdd)
-        return [i2c_value, nominal]
+        return [int(i2c_value), int(nominal)]
 
     def clock_high_min(self):
         """Minimum value for tHIGH"""
