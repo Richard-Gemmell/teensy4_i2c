@@ -378,7 +378,7 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 
 // Supports 100 kHz, 400 kHz and 1 MHz modes.
 void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
-    if (frequency < 400000) {
+    if (frequency < 400'000) {
         // Use Standard Mode - up to 100 kHz
         // TODO: Increase SETHOLD by 150 ns
         port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
@@ -387,7 +387,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
                        LPI2C_MCFGR2_BUSIDLE(2 * (59 + 40 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
         port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1);
-    } else if (frequency < 1000000) {
+    } else if (frequency < 1'000'000) {
         // Use Fast Mode - up to 400 kHz
         port->MCCR0 = LPI2C_MCCR0_CLKHI(26) | LPI2C_MCCR0_CLKLO(28) |
                       LPI2C_MCCR0_DATAVD(12) | LPI2C_MCCR0_SETHOLD(25);

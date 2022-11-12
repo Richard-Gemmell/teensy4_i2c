@@ -33,7 +33,7 @@ class I2CTrace:
 
         # Voltage ticks marks and grid lines
         self.ax.set_yticks([0, 1.0], ["GND", "Vdd"])
-        self.ax.set_yticks([0.3, 0.7], ["0.3", "0.7"], minor=True)
+        self.ax.set_yticks([0.3, 0.5, 0.7], ["0.3", "0.5", "0.7"], minor=True)
         self.ax.grid(axis='y', which='major', color='black')
         self.ax.grid(axis='y', which='minor', color='grey', linestyle='--')
 

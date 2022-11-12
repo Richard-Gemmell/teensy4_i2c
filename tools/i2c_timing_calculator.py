@@ -1,5 +1,9 @@
 import math
 
+time_to_rise_to_0_3_vdd = 0.421
+time_to_rise_to_0_7_vdd = 1.421
+time_to_rise_to_teensy_trigger_voltage = 0.911
+
 
 # Config parameters
 class TeensyConfig:
@@ -14,8 +18,10 @@ class TeensyConfig:
         self.period = (1000.0 / self.frequency)
         self.PRESCALE = prescale
         self.scale = self.period * (2 ** self.PRESCALE)
-        self.SCL_RISETIME = scl_risetime
-        self.SDA_RISETIME = sda_risetime
+        self.scl_risetime = scl_risetime
+        self.sda_risetime = sda_risetime
+        self.SCL_RISETIME = (scl_risetime * time_to_rise_to_teensy_trigger_voltage) / self.period
+        self.SDA_RISETIME = (sda_risetime * time_to_rise_to_teensy_trigger_voltage) / self.period
         self.DATAVD = datavd
         self.SETHOLD = sethold
         self.FILTSDA = filtsda
@@ -35,6 +41,11 @@ class TeensyConfig:
     def scl_latency(self):
         # Validated for tHIGH. Do NOT attempt to add SCL_RISETIME
         return math.trunc((2.0 + self.FILTSCL) / (2 ** self.PRESCALE))
+
+    def SCL_LATENCY(self):
+        """As defined in the data sheet"""
+        value = (2.0 + self.FILTSCL + self.SCL_RISETIME) / (2 ** self.PRESCALE)
+        return math.floor(value)
 
     def sda_latency(self):
         return math.trunc((2.0 + self.FILTSDA) / (2 ** self.PRESCALE))
@@ -62,10 +73,9 @@ class TeensyConfig:
         return [ideal, min_value, max_value]
 
     def stop_setup(self):
-        ideal = self.scale * (self.SETHOLD + 1 + self.scl_latency())
-        min_value = ideal - self.SCL_RISETIME
-        max_value = ideal + self.pre_rise(self.SDA_RISETIME)
-        return [ideal, min_value, max_value]
+        nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY())
+        i2c_value = nominal - (self.scl_risetime * time_to_rise_to_0_7_vdd) + (self.sda_risetime * time_to_rise_to_0_3_vdd)
+        return [i2c_value, nominal]
 
     def clock_high_min(self):
         """Minimum value for tHIGH"""
@@ -92,6 +102,7 @@ class TeensyConfig:
 
 master_100k_config = TeensyConfig(
     name="Master 100k",
+
     scl_risetime=490, sda_risetime=490,
     # scl_risetime=1000, sda_risetime=1000,
     frequency=24, prescale=1,
@@ -152,15 +163,19 @@ def print_range(description, range):
     print(f"{description} {range[0]:.0f} ({range[1]:.0f} to {range[2]:.0f}) nanos")
 
 
+def print_i2c_and_nominal(description, range):
+    print(f"{description} I2C {range[0]:.0f} nanos (Nominal {range[1]:.0f})")
+
+
 def print_master_timings(config: TeensyConfig):
     print(f"{config.name}")
     print(f"Period {config.period:.0f}. Scale {config.scale:.0f} nanos")
     # print(f"SDA Rise Time {config.SDA_RISETIME:.2f} clocks")
     # print(f"SDA Latency {config.sda_latency():.0f} clocks")
-    # print(f"SCL Latency {config.scl_latency():.0f} clocks")
+    # print(f"SCL Latency {config.scl_latency():.0f} clocks {config.scl_latency() * config.period:.0f} nanos")
     print(f"START Hold Time (tHD:STA) {config.start_hold():.0f} nanos")
     print_range("Repeated START (tSU:STA)", config.repeated_start())
-    print_range("STOP Setup Time (tSU:STO)", config.stop_setup())
+    print_i2c_and_nominal("STOP Setup Time (tSU:STO)", config.stop_setup())
     print(f"Data Setup Time (tSU:DAT) {config.data_setup():.0f} nanos")
     print(f" Data Hold Time (tHD:DAT) {config.data_hold():.0f} nanos")
     print(f"Data Valid 0->1 (tVD:DAT) {config.data_valid_rise():.0f} nanos")
@@ -173,8 +188,8 @@ def print_master_timings(config: TeensyConfig):
 
 
 if __name__ == '__main__':
-    # master_config = master_100k_config
+    master_config = master_100k_config
     # master_config = master_400k_config
-    master_config = master_1M_config
+    # master_config = master_1M_config
     master_config.validate()
     print_master_timings(master_config)
