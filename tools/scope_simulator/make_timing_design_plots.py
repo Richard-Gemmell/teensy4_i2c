@@ -70,7 +70,7 @@ def hold_start_time() -> I2CTrace:
     trace.scl.set_fall_time(150).high().fall_at(4000)
     trace.measure_between_edges("$t_{SU;STO}$: I2C Spec", left=['SDA', 0, V_IL], right=['SCL', 0, V_IH], y_pos=0.7)
     trace.measure_between_edges("Δt: BusRecorder", left=['SDA', 0, V_MID], right=['SCL', 0, V_MID], y_pos=0.5)
-    trace.measure_between_edges("Other Device Worst Case", left=['SDA', 0, V_IL], right=['SCL', 0, V_IH], y_pos=0.3)
+    trace.measure_between_edges("Worst Case: Slow SDA, Fast SCL", left=['SDA', 0, V_IL], right=['SCL', 0, V_IH], y_pos=0.3)
     trace.measure_between_edges("Nominal: Datasheet", left=['SDA', 0, HIGH], right=['SCL', 0, HIGH], y_pos=0.1)
     return trace
 
@@ -81,7 +81,7 @@ def setup_stop_time() -> I2CTrace:
     trace.scl.set_rise_time(1000).low().rise_at(0)
     trace.measure_between_edges("$t_{SU;STO}$: I2C Spec", left=['SCL', 0, V_IH], right=['SDA', 0, V_IL], y_pos=0.70)
     trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SDA', 0, V_MID], y_pos=0.5)
-    trace.measure_between_edges("Other Device Worst Case", left=['SCL', 0, V_IH], right=['SDA', 0, V_IL], y_pos=0.3)
+    trace.measure_between_edges("Worst Case: Slow SCL, Fast SDA", left=['SCL', 0, V_IH], right=['SDA', 0, V_IL], y_pos=0.3)
     trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, LOW], right=['SDA', 0, 0], y_pos=0.1)
     return trace
 

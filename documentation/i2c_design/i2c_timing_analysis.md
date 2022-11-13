@@ -16,6 +16,7 @@ and the [actual values](default_i2c_profile.md) for the I2C parameters
 used in this driver.
 
 # Table of Contents
+TODO: Add ToC
 
 # References
 ## i.MX RT1062
@@ -154,8 +155,14 @@ As mentioned above, devices are entitle to detect edges anywhere between
 0.3 V<sub>dd</sub> and 0.7 V<sub>dd</sub>. This means that different
 devices see these intervals differently.
 
-The "Worst Case" device in the diagram sees the shortest possible interval.
-The "Best Case" device thinks it's much longer.
+The I2C Specification is written to account for this. For example,
+t<sub>HD;DAT</sub> has a minimum duration but no maximum. It's defined so that
+different devices will see only slightly longer durations than expected.
+
+The only exceptions to this rule are t<sub>VD;DAT</sub> and t<sub>VD;ACK</sub>.
+These are defined as maximum durations starting with a falling edge on SCL.
+A device can see a slightly longer duration than expected by reading the
+falling edge early. As of Nov 2022, I'm not sure if this is significant or not.
 
 # i.MX RT 1060 Registers
 ## LPI2C Clock
@@ -258,18 +265,28 @@ set by the Teensy. They're very fast so they can't have any significant
 effect.
 
 #### Other Device Worst Case
-The worst case is identical to the I2C definition.
-Depends on:
-* FILTSCL
-Does not depend on:
-* FILTSDA
-
+* according to the datasheet, the `i.MX RT1062` does not compensate for
+  the fall times of SDA or SCL
+* for a particular set of register settings the worst case scenario is that
+  the SDA fall time is very long and the SCL fall time is very short
+* both of these edges are controlled by the `i.MX RT1062` itself and they're
+  both very short (< 8 ns) and nearly identical
+* it's therefore safe to ignore the worst case scenario when configuring
+  the device
 
 ### t<sub>SU;STO</sub> Setup Time for STOP Condition
 ![t<sub>SU;STO</sub> Setup Stop Time](images/setup_stop.png)
 
 #### Notes
 * controlled entirely by the master device
+
+Confirmed it depends on:
+* PRESCALE
+* SCL rise time
+* FILTSCL
+
+Confirmed it does not depend on:
+* FILTSDA
 
 #### I2C Specification
 * occurs before a STOP
@@ -299,9 +316,9 @@ Sensitivity to SCL rise time:
   - the setup time increases as FILTSCL increases
 
 #### Other Device Worst Case
-* the worst case scenario is that the SCL rise time is very long and the SDA
-  rise time is very short
-* the driver does not compensate for the whole SCL rise time automatically
+* the `i.MX RT1062` does not compensate for the whole SCL rise time
+* so the worst case scenario is that the SCL rise time is very long and
+  the SDA rise time is very short
 
 ### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
 
@@ -310,22 +327,26 @@ Sensitivity to SCL rise time:
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
+#### Other Device Worst Case
 
 ### t<sub>HD;DAT</sub> Data Hold Time
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
+#### Other Device Worst Case
 
 ### t<sub>VD;DAT</sub> Data Valid Time
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
+#### Other Device Worst Case
 
 ## ACKs and Spikes
 ### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
+#### Other Device Worst Case
 
 ### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter
 #### Notes
