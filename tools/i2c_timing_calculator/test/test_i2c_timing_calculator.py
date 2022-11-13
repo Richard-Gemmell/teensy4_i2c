@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from i2c_timing_calculator import TeensyConfig, Parameter
+from i2c_timing_calculator.teensy_config import TeensyConfig, Parameter
 
 
 class TestI2CTimingCalculator(TestCase):
