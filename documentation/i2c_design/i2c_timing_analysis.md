@@ -240,7 +240,48 @@ units are LPI2C clock cycles
 
 ## Start and Stop Conditions
 ### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
-TODO: Fill in
+![t<sub>SU;STA</sub> Setup Time for Repeated Start](images/setup_start.png)
+
+#### Notes
+* controlled entirely by the master device
+* fall time can be neglected
+* there's a minimum value but no maximum value
+
+#### I2C Specification
+* occurs during a repeated START
+  - a repeated START allows the master to send another message without sending a STOP
+  - this reduces latency as there's no need for the STOP or "bus free time" periods
+* starts when SCL rises to 0.7 V<sub>dd</sub>
+* ends when SDA falls to 0.7 V<sub>dd</sub>
+
+#### Datasheet Nominal
+From the datasheet:
+
+**t<sub>SU;STA</sub> = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale**
+
+Behaviour:
+* the processor releases the SCL pin allowing SCL to rise
+* when it detects that SCL has risen it waits for a time derived from SETHOLD
+  * this provides limited compensation for different rise times
+* when the time has passed it pulls SDA low
+
+Definition:
+* starts when the master releases SCL and it starts to rise
+  * i.e. master sets SCL pin to 1
+* ends when the master pulls SDA LOW and it starts to fall
+  * i.e. master sets SDA pin to 0
+
+Sensitivity to SCL rise time:
+* for a fixed SETHOLD
+  - the setup time falls as the rise time increases
+  - the setup time increases as FILTSCL increases
+
+#### Other Device Worst Case
+* the `i.MX RT1062` does not compensate for the whole SCL rise time
+* so the worst case scenario is that the SCL rise time is very long and
+  the SDA fall time is very short
+* the fall time is controlled by the `i.MX RT1062` and is very short.
+  This means the fall time has a negligible effect and can be ignored.
 
 ### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
 ![t<sub>HD;STA</sub> Hold Start Time](images/hold_start.png)
@@ -256,6 +297,7 @@ TODO: Fill in
 
 #### Datasheet Nominal
 From the datasheet:
+
 **t<sub>HD;STA</sub> = (SETHOLD + 1) x scale**
 
 In theory, the fall time, t<sub>f</sub>, might affect the calculation.
@@ -296,6 +338,7 @@ Confirmed it does not depend on:
 
 #### Datasheet Nominal
 From the datasheet:
+
 **t<sub>SU;STO</sub> = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale**
 
 Behaviour:

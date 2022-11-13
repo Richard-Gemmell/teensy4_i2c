@@ -3,6 +3,8 @@ import math
 time_to_rise_to_0_3_vdd = 0.421
 time_to_rise_to_0_7_vdd = 1.421
 time_to_rise_to_teensy_trigger_voltage = 0.911
+time_to_fall_to_0_7_vdd = time_to_rise_to_0_3_vdd
+time_to_fall_to_0_3_vdd = time_to_rise_to_0_7_vdd
 
 
 class Parameter:
@@ -80,11 +82,16 @@ class TeensyConfig:
         # as Teensy controls both fall times, and they're both very short
         return Parameter(i2c_value, nominal, i2c_value)
 
-    def repeated_start(self):
-        ideal = self.scale * (self.SETHOLD + 1 + self.scl_latency())
-        min_value = ideal - self.SCL_RISETIME
-        max_value = ideal + self.pre_rise(self.SDA_RISETIME)
-        return [ideal, min_value, max_value]
+    def setup_repeated_start(self):
+        # ideal = self.scale * (self.SETHOLD + 1 + self.scl_latency())
+        # min_value = ideal - self.SCL_RISETIME
+        # max_value = ideal + self.pre_rise(self.SDA_RISETIME)
+        # return [ideal, min_value, max_value]
+        nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY(self.scl_risetime))
+        i2c_value = nominal - (self.scl_risetime * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
+        worst_case_nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY(self.max_rise))
+        worst_case = worst_case_nominal - (self.max_rise * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
+        return Parameter(i2c_value, nominal, worst_case)
 
     def stop_setup(self):
         nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY(self.scl_risetime))

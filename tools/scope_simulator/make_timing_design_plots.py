@@ -56,16 +56,18 @@ def illustrate_different_edge_detection_points():
 
 
 def setup_start_time() -> I2CTrace:
-    start = -1000
-    end = 7550
-    trace = I2CTrace("$t_{SU;STA}$ - Setup Start Time", start, end)
-    trace.sda.high().fall_at(0)
-    trace.scl.high().fall_at(5330)
+    trace = I2CTrace("$t_{SU;STA}$ - Setup Time for Repeated Start", -700, 6000)
+    trace.sda.set_fall_time(150).high().fall_at(5500)
+    trace.scl.set_rise_time(1000).low().rise_at(0)
+    trace.measure_between_edges("$t_{SU;STA}$: I2C Spec", left=['SCL', 0, V_IH], right=['SDA', 0, V_IH], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SDA', 0, V_MID], y_pos=0.5)
+    trace.measure_between_edges("Worst Case: Slow SCL, Fast SDA", left=['SCL', 0, V_IH], right=['SDA', 0, V_IH], y_pos=0.3)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, LOW], right=['SDA', 0, HIGH], y_pos=0.1)
     return trace
 
 
 def hold_start_time() -> I2CTrace:
-    trace = I2CTrace("$t_{HD;STA}$ - Hold Start Time", -1000, 5000)
+    trace = I2CTrace("$t_{HD;STA}$ - Hold Start Time", -600, 5000)
     trace.sda.set_fall_time(150).high().fall_at(0)
     trace.scl.set_fall_time(150).high().fall_at(4000)
     trace.measure_between_edges("$t_{SU;STO}$: I2C Spec", left=['SDA', 0, V_IL], right=['SCL', 0, V_IH], y_pos=0.7)
@@ -76,13 +78,13 @@ def hold_start_time() -> I2CTrace:
 
 
 def setup_stop_time() -> I2CTrace:
-    trace = I2CTrace("$t_{SU;STO}$ - Setup Stop Time", -1000, 5000)
+    trace = I2CTrace("$t_{SU;STO}$ - Setup Stop Time", -600, 5000)
     trace.sda.set_rise_time(200).low().rise_at(4000)
     trace.scl.set_rise_time(1000).low().rise_at(0)
     trace.measure_between_edges("$t_{SU;STO}$: I2C Spec", left=['SCL', 0, V_IH], right=['SDA', 0, V_IL], y_pos=0.70)
     trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SDA', 0, V_MID], y_pos=0.5)
     trace.measure_between_edges("Worst Case: Slow SCL, Fast SDA", left=['SCL', 0, V_IH], right=['SDA', 0, V_IL], y_pos=0.3)
-    trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, LOW], right=['SDA', 0, 0], y_pos=0.1)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, LOW], right=['SDA', 0, LOW], y_pos=0.1)
     return trace
 
 
@@ -109,8 +111,8 @@ if __name__ == '__main__':
     output_dir = "../../documentation/i2c_design/images"
     # plot(illustrate_rise_and_fall_times, f"{output_dir}/rise_and_fall_times.png", show=False)
     # plot(illustrate_different_edge_detection_points, f"{output_dir}/different_intervals_for_different_devices.png", show=True)
-    # plot(setup_start_time, f"{output_dir}/setup_start.png", show=True)
-    plot(hold_start_time, f"{output_dir}/hold_start.png", show=True)
-    plot(setup_stop_time, f"{output_dir}/setup_stop.png", show=True)
+    plot(setup_start_time, f"{output_dir}/setup_start.png", show=True)
+    # plot(hold_start_time, f"{output_dir}/hold_start.png", show=True)
+    # plot(setup_stop_time, f"{output_dir}/setup_stop.png", show=True)
     # plot(high_time, f"{output_dir}//clock_high.png", show=False)
     # plot(data_bit_example, f"{output_dir}/data_bit_example.png", show=False)
