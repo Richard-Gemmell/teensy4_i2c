@@ -53,14 +53,19 @@ master_100k_config = TeensyConfig(
     name="Master 100k",
 
     # scl_risetime=490, sda_risetime=490, max_rise=1100,
+    # scl_risetime=1100, sda_risetime=32, max_rise=1100,
     scl_risetime=1384, sda_risetime=32, max_rise=1100,
-    # scl_risetime=434, sda_risetime=32,
-    # scl_risetime=182, sda_risetime=32,
-    # scl_risetime=32, sda_risetime=32,
+    # scl_risetime=434, sda_risetime=32, max_rise=1100,
+    # scl_risetime=182, sda_risetime=32, max_rise=1100,
+    # scl_risetime=32, sda_risetime=32, max_rise=1100,
+
+    # scl_risetime=32, sda_risetime=1420, max_rise=1100,
+    # scl_risetime=32, sda_risetime=444, max_rise=1100,
+    # scl_risetime=32, sda_risetime=188, max_rise=1100,
+    # scl_risetime=32, sda_risetime=31, max_rise=1100,
+
     frequency=24, prescale=1,
-    # frequency=24, prescale=1,
     datavd=25, sethold=63,
-    # filtscl=1, filtsda=1,
     filtscl=5, filtsda=5,
     clkhi=55, clklo=59)
 
@@ -80,15 +85,15 @@ def print_master_timings(config: TeensyConfig):
     # print(f"SDA Latency {config.sda_latency():.0f} clocks")
     # print(f"SCL Latency {config.scl_latency():.0f} clocks {config.scl_latency() * config.period:.0f} nanos")
     # print_parameter(f"START Hold Time (tHD:STA)", config.start_hold())
-    print_parameter("Setup Repeated START (tSU:STA)", config.setup_repeated_start())
+    # print_parameter("Setup Repeated START (tSU:STA)", config.setup_repeated_start())
     print_parameter("STOP Setup Time (tSU:STO)", config.stop_setup())
     # print(f"Data Setup Time (tSU:DAT) {config.data_setup():.0f} nanos")
     # print(f" Data Hold Time (tHD:DAT) {config.data_hold():.0f} nanos")
     # print(f"Data Valid 0->1 (tVD:DAT) {config.data_valid_rise():.0f} nanos")
     # print(f"Data Valid 1->0 (tVD:DAT) {config.data_valid():.0f} nanos")
     # print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
-    # print(f"Clock High Time (tHIGH) {config.clock_high_min():.0f} to {config.clock_high_max():.0f} nanos")
-    # print(f"Clock Low Time (tLOW) {config.clock_low():.0f} nanos")
+    # print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
+    # print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
     # print(f"Bus Free Time (tBUF) {config.bus_free():.0f} nanos")
     print()
 

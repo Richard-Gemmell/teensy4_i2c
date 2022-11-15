@@ -59,13 +59,21 @@ this section.
 
 ## Additional Symbols
 The following symbols are not defined in either the I2C Specification or the datasheet.
-* t<sub>r0</sub> - time for signal to rise from 0 to 0.3 V<sub>dd</sub>
+* t<sub>rH</sub> - time for signal to rise from 0 to 0.7 V<sub>dd</sub>
+    - for an RC curve this = 1.421 t<sub>r</sub>
+* t<sub>rL</sub> - time for signal to rise from 0 to 0.3 V<sub>dd</sub>
     - for an RC curve this = 0.421 t<sub>r</sub>
-* t<sub>f1</sub> - time for signal to fall from V<sub>dd</sub> to 0.7 V<sub>dd</sub>
+* t<sub>fH</sub> - time for signal to fall from V<sub>dd</sub> to 0.7 V<sub>dd</sub>
     - for an RC curve this = 0.421 t<sub>f</sub>
+* t<sub>fL</sub> - time for signal to fall from V<sub>dd</sub> to 0.3 V<sub>dd</sub>
+    - for an RC curve this = 1.421 t<sub>f</sub>
 * t<sub>LPI2C</sub> - period of the LPI2C functional clock on the `i.MX RT1062`
 * t<sub>SCL</sub> - period of the SCL clock. Equal to the inverse of the clock frequency = 1/f<sub>SCL</sub>
 * SCALE - scaling factor applied to I2C register values
+
+Where it's necessary to specify the rise or fall time for a specific line
+then the line is given in a suffix. So t<sub>rH;SCL</sub> is the time
+for SCL to rise from GND to V<sub>dd</sub>.
 
 # Measuring and Comparing Durations
 The I2C Specification allows devices to detect edges anywhere between
@@ -214,33 +222,120 @@ as intermediate variables in the I2C timing equations.
 See Table 47-6 in `47.3.2.4 Timing Parameters` for the master calculations.
 
 ### SCALE
-**SCALE = (2 ^ PRESCALE) x t<sub>LPI2C</sub>**
+> SCALE = (2 ^ PRESCALE) x t<sub>LPI2C</sub>
 
 ### SDA_RISETIME
 Given t<sub>rt(SDA)</sub> = time for SDA to rise to the trigger voltage
-
-**SDA_RISETIME = t<sub>rt(SDA)</sub> / t<sub>LPI2C</sub>**
+then the rise time in LPI2C clock cycles is
+> SDA_RISETIME = t<sub>r;SDA</sub> / t<sub>LPI2C</sub>
 
 ### SCL_RISETIME
 Given t<sub>rt(SCL)</sub> = time for SCL to rise to the trigger voltage
-
-**SCL_RISETIME = t<sub>rt(SCL)</sub> / t<sub>LPI2C</sub>**
-units are LPI2C clock cycles
+then the rise time in LPI2C clock cycles is
+> SCL_RISETIME = t<sub>r;SCL</sub> / t<sub>LPI2C</sub>
  
 ### SDA_LATENCY
-**SDA_LATENCY = ROUNDDOWN ( (2 + FILTSDA + SDA_RISETIME) / (2 ^ PRESCALE) )**
+> SDA_LATENCY = ROUNDDOWN ( (2 + FILTSDA + SDA_RISETIME) / (2 ^ PRESCALE) )
 
 ### SCL_LATENCY
-**SCL_LATENCY = ROUNDDOWN ( (2 + FILTSCL + SCL_RISETIME) / (2 ^ PRESCALE) )**
+> SCL_LATENCY = ROUNDDOWN ( (2 + FILTSCL + SCL_RISETIME) / (2 ^ PRESCALE) )
 
 ## SCL Clock Frequency
 ### f<sub>SCL</sub> SCL Clock Frequency
+#### Notes
+#### I2C Specification
+#### Datasheet Nominal
+#### Other Device Worst Case
+
 ### t<sub>LOW</sub> LOW Period of the SCL Clock
+![t<sub>LOW</sub>LOW Period of the SCL Clock](images/clock_low.png)
+
+#### Equations
+> nominal = (CLKLO + 1) x scale
+>
+> t<sub>LOW</sub> = nominal - t<sub>fL;SCL</sub> + t<sub>rL;SCL</sub>
+
+#### Notes
+* controlled entirely by the master device
+* confirmed that it's not affected by:
+  - FILTSCL
+  - FILTSDA
+  - CLKHI
+  - DATAVD
+  - SETHOLD
+  - IOMUXC_PAD_HYS
+
+#### I2C Specification
+* starts when SCL falls to 0.3 V<sub>dd</sub>
+* ends when SCL rises to 0.3 V<sub>dd</sub>
+* defines a minimum value but not a maximum
+  - this allows the bus to be slower than the nominal speed.
+    e.g. running a Standard-mode bus at 50 kHz.
+
+#### Datasheet Nominal
+Behaviour:
+* the processor
+  * pulls SCL low
+  * waits for a fixed time
+  * then releases SCL again
+* there's no compensation for rise or fall times
+
+#### Other Device Worst Case
+The worst case scenario is that SCL has a slow fall time and a very fast
+rise time. The fall time is controlled entirely by the `i.MX RT1062`and is
+very short so this isn't significant.
+
 ### t<sub>HIGH</sub> HIGH Period of the SCL Clock
+![t<sub>LOW</sub>HIGH Period of the SCL Clock](images/clock_high.png)
+
+#### Equations
+> nominal = (CLKHI + 1 + SCL_LATENCY) * scale
+>
+> t<sub>HIGH</sub> = nominal - t<sub>rH;SCL</sub> + t<sub>fH;SCL</sub>
+
+#### Notes
+* controlled entirely by the master device
+* fall time can be neglected
+* there's a minimum value but no maximum value
+* confirmed that t<sub>high</sub> is also affected by:
+  * IOMUXC_PAD_HYS
+* confirmed that t<sub>high</sub> is not affected by:
+  - FILTSDA
+  - CLKLO
+  - DATAVD
+  - SETHOLD
+  - BUSIDLE
+
+#### I2C Specification
+* starts when SCL rises to 0.3 V<sub>dd</sub>
+* ends when SCL falls to 0.7 V<sub>dd</sub>
+* defines a minimum value but not a maximum
+  - this allows the bus to be slower than the nominal speed. e.g.
+    running a Standard-mode bus at 50 kHz.
+
+#### Datasheet Nominal
+Behaviour:
+* the processor
+  * release SCL
+  * waits for SCL to rise to the trigger voltage (just over 0.5 V<sub>dd</sub>)
+  * waits for fixed time
+  * pulls SCL LOW again
+* there's no compensation for the SCL fall time but this is short and can be
+  neglected
+
+#### Other Device Worst Case
+The worst case scenario is that SCL has a slow rise time and a very fast
+fall time. The fall time is controlled entirely by the `i.MX RT1062`and is
+very short so this isn't significant.
 
 ## Start and Stop Conditions
 ### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
 ![t<sub>SU;STA</sub> Setup Time for Repeated Start](images/setup_start.png)
+
+#### Equations
+> nominal = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale
+>
+> t<sub>SU;STA</sub> = nominal - t<sub>rH;SCL</sub> + t<sub>fH;SDA</sub>
 
 #### Notes
 * controlled entirely by the master device
@@ -255,10 +350,6 @@ units are LPI2C clock cycles
 * ends when SDA falls to 0.7 V<sub>dd</sub>
 
 #### Datasheet Nominal
-From the datasheet:
-
-**t<sub>SU;STA</sub> = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale**
-
 Behaviour:
 * the processor releases the SCL pin allowing SCL to rise
 * when it detects that SCL has risen it waits for a time derived from SETHOLD
@@ -286,6 +377,11 @@ Sensitivity to SCL rise time:
 ### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
 ![t<sub>HD;STA</sub> Hold Start Time](images/hold_start.png)
 
+#### Equations
+> nominal = (SETHOLD + 1) x scale
+>
+> t<sub>HD;STA</sub> = nominal - t<sub>fL;SDA</sub> + t<sub>fH;SCL</sub>
+
 #### Notes
 * Controlled entirely by the master device.
 * Fall time can be neglected.
@@ -296,10 +392,6 @@ Sensitivity to SCL rise time:
 * ends when SCL falls to 0.7 V<sub>dd</sub>
 
 #### Datasheet Nominal
-From the datasheet:
-
-**t<sub>HD;STA</sub> = (SETHOLD + 1) x scale**
-
 In theory, the fall time, t<sub>f</sub>, might affect the calculation.
 In practice, it doesn't matter because this calculation is only relevant
 when the Teensy is acting as a master. In that mode, the fall times are
@@ -319,6 +411,11 @@ effect.
 ### t<sub>SU;STO</sub> Setup Time for STOP Condition
 ![t<sub>SU;STO</sub> Setup Stop Time](images/setup_stop.png)
 
+#### Equations
+> nominal = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale
+>
+> t<sub>SU;STO</sub> = nominal - t<sub>rH;SCL</sub> + t<sub>rL;SDA</sub>
+
 #### Notes
 * controlled entirely by the master device
 
@@ -337,10 +434,6 @@ Confirmed it does not depend on:
 * there's a minimum value but no maximum value
 
 #### Datasheet Nominal
-From the datasheet:
-
-**t<sub>SU;STO</sub> = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale**
-
 Behaviour:
 * the processor releases the SCL pin allowing SCL to rise
 * when it detects that SCL has risen it waits for a time derived from SETHOLD

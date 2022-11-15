@@ -83,10 +83,6 @@ class TeensyConfig:
         return Parameter(i2c_value, nominal, i2c_value)
 
     def setup_repeated_start(self):
-        # ideal = self.scale * (self.SETHOLD + 1 + self.scl_latency())
-        # min_value = ideal - self.SCL_RISETIME
-        # max_value = ideal + self.pre_rise(self.SDA_RISETIME)
-        # return [ideal, min_value, max_value]
         nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY(self.scl_risetime))
         i2c_value = nominal - (self.scl_risetime * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
         worst_case_nominal = self.scale * (self.SETHOLD + 1 + self.SCL_LATENCY(self.max_rise))
@@ -100,17 +96,18 @@ class TeensyConfig:
         worst_case = worst_case_nominal - (self.max_rise * time_to_rise_to_0_7_vdd)
         return Parameter(i2c_value, nominal, worst_case)
 
-    def clock_high_min(self):
-        """Minimum value for tHIGH"""
-        return self.clock_high_max() - self.SCL_RISETIME
-
-    def clock_high_max(self):
-        """Max value of tHIGH"""
-        return self.scale * (self.CLKHI + 1 + self.scl_latency())
+    def clock_high(self):
+        nominal = self.scale * (self.CLKHI + 1 + self.SCL_LATENCY(self.scl_risetime))
+        i2c_value = nominal - (self.scl_risetime * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
+        worst_case_nominal = self.scale * (self.CLKHI + 1 + self.SCL_LATENCY(self.max_rise))
+        worst_case = worst_case_nominal - (self.max_rise * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
+        return Parameter(i2c_value, nominal, worst_case)
 
     def clock_low(self):
-        # Tested only with 0 fall time
-        return (self.scale * (self.CLKLO + 1)) + self.pre_rise(self.SCL_RISETIME)
+        nominal = self.scale * (self.CLKLO + 1)
+        worst_case = nominal - (self.fall_time * time_to_rise_to_0_3_vdd)
+        i2c_value = worst_case + self.pre_rise(self.scl_risetime) - (self.fall_time * time_to_rise_to_0_3_vdd)
+        return Parameter(i2c_value, nominal, worst_case)
 
     def bus_free(self):
         # Reality seems to be wildly different.
