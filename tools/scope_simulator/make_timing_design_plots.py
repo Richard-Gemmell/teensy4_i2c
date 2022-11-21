@@ -96,9 +96,6 @@ def low_time() -> I2CTrace:
     trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SCL', 1, V_MID], y_pos=0.5)
     trace.measure_between_edges("Worst Case: Slow Fall, Fast Rise", left=['SCL', 0, V_IL], right=['SCL', 1, V_IL], y_pos=0.3)
     trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, HIGH], right=['SCL', 1, LOW], y_pos=0.1)
-    # trace.measure_between_edges("$t_{LOW}$ worst", left=['SCL', 0, V_IH], right=['SCL', 1, V_IH], y_pos=0.6)
-    # trace.measure_between_edges("$t_{LOW}$ best", left=['SCL', 0, V_IL], right=['SCL', 1, V_IL], y_pos=0.4)
-    # trace.measure_between_edges("$t_{LOW}$ nominal", left=['SCL', 0, LOW], right=['SCL', 1, HIGH], y_pos=0.2, lines=False)
     return trace
 
 
@@ -110,9 +107,18 @@ def high_time() -> I2CTrace:
     trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SCL', 1, V_MID], y_pos=0.5)
     trace.measure_between_edges("Worst Case: Slow Rise, Fast Fall", left=['SCL', 0, V_IH], right=['SCL', 1, V_IH], y_pos=0.3)
     trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, LOW], right=['SCL', 1, HIGH], y_pos=0.1)
-    # trace.measure_between_edges("$t_{HIGH}$ worst", left=['SCL', 0, V_IH], right=['SCL', 1, V_IH], y_pos=0.6)
-    # trace.measure_between_edges("$t_{HIGH}$ best", left=['SCL', 0, V_IL], right=['SCL', 1, V_IL], y_pos=0.4)
-    # trace.measure_between_edges("$t_{HIGH}$ nominal", left=['SCL', 0, LOW], right=['SCL', 1, HIGH], y_pos=0.2, lines=False)
+    return trace
+
+
+def frequency() -> I2CTrace:
+    trace = I2CTrace("$f_{SCL}$ - SCL Clock Frequency", -800, 11000)
+    trace.sda.hide()
+    trace.scl.set_fall_time(150).set_rise_time(500)\
+        .high().fall_at(0).rise_at(5000).fall_at(10000)
+    trace.measure_between_edges("1/$f_{SCL}$: I2C Spec", left=['SCL', 0, V_IL], right=['SCL', 2, V_IL], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SCL', 2, V_MID], y_pos=0.5)
+    # trace.measure_between_edges("Worst Case: Slow Rise, Fast Fall", left=['SCL', 0, V_IH], right=['SCL', 1, V_IH], y_pos=0.3)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, HIGH], right=['SCL', 2, HIGH], y_pos=0.1)
     return trace
 
 
@@ -132,6 +138,7 @@ if __name__ == '__main__':
     # plot(setup_start_time, f"{output_dir}/setup_start.png", show=True)
     # plot(hold_start_time, f"{output_dir}/hold_start.png", show=True)
     # plot(setup_stop_time, f"{output_dir}/setup_stop.png", show=True)
-    plot(low_time, f"{output_dir}/clock_low.png", show=True)
+    # plot(low_time, f"{output_dir}/clock_low.png", show=True)
+    plot(frequency, f"{output_dir}/frequency.png", show=True)
     # plot(high_time, f"{output_dir}/clock_high.png", show=True)
     # plot(data_bit_example, f"{output_dir}/data_bit_example.png", show=False)

@@ -242,10 +242,34 @@ then the rise time in LPI2C clock cycles is
 
 ## SCL Clock Frequency
 ### f<sub>SCL</sub> SCL Clock Frequency
+The frequency is the inverse of the period t<sub>LPI2C</sub>. I'll describe everything
+in terms of the period as that's what we control and measure.
+
+![f<sub>SCL</sub>SCL Clock Frequency](images/frequency.png)
+
+#### Equations
+> nominal = (CLKHI + CLKLO + 2 + SCL_LATENCY) x scale
+>
+> f<sub>SCL</sub> = 1 / nominal
+
+
 #### Notes
+* controlled entirely by the master device
+* NOT the same as adding the clock HIGH and clock LOW periods
+
 #### I2C Specification
+* starts when SCL falls to 0.3 V<sub>dd</sub>
+* ends when SCL falls to 0.3 V<sub>dd</sub> for a second time
+* specifies a maximum frequency (i.e. a minimum period)
+
 #### Datasheet Nominal
+Behaviour:
+* the processor pulses SCL regularly
+
 #### Other Device Worst Case
+* the `i.MX RT1062` does not compensate for the SCL rise time
+* the worst case scenario is that the SCL rise time is very fast
+
 
 ### t<sub>LOW</sub> LOW Period of the SCL Clock
 ![t<sub>LOW</sub>LOW Period of the SCL Clock](images/clock_low.png)

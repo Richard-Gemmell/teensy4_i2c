@@ -105,9 +105,16 @@ class TeensyConfig:
 
     def clock_low(self):
         nominal = self.scale * (self.CLKLO + 1)
-        worst_case = nominal - (self.fall_time * time_to_rise_to_0_3_vdd)
-        i2c_value = worst_case + self.pre_rise(self.scl_risetime) - (self.fall_time * time_to_rise_to_0_3_vdd)
+        worst_case = nominal - (self.fall_time * time_to_fall_to_0_3_vdd)
+        i2c_value = worst_case + (self.scl_risetime * time_to_rise_to_0_3_vdd)
         return Parameter(i2c_value, nominal, worst_case)
+
+    def clock_frequency(self):
+        period_nominal = self.scale * (self.CLKHI + self.CLKLO + 2 + self.SCL_LATENCY(self.scl_risetime))
+        worst_case_period_nominal = self.scale * (self.CLKHI + self.CLKLO + 2 + self.SCL_LATENCY(0))
+        nominal = 1.0 / (period_nominal / 1e9)
+        worst_case = 1.0 / (worst_case_period_nominal / 1e9)
+        return Parameter(nominal, nominal, worst_case)
 
     def bus_free(self):
         # Reality seems to be wildly different.
