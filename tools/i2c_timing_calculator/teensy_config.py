@@ -128,10 +128,10 @@ class TeensyConfig:
         # and some sort of rounding to integers
         def get_nominal_and_i2c_value(rise_time: int) -> tuple[int, int]:
             if rise_time > 1000:
-                latency = ((rise_time - 1000) * time_to_rise_to_0_7_vdd) / self.scale
+                offset = (((rise_time - 1000) * time_to_rise_to_0_7_vdd) / self.scale) + 1
             else:
-                latency = 1 + int((rise_time * time_to_rise_to_0_7_vdd) * 2 / self.period) % 2 % (2 ** self.PRESCALE)
-            nominal = 1000 + self.scale * (self.CLKLO + 2 + latency)
+                offset = 2
+            nominal = 1000 + (self.CLKLO + 1 + offset) * self.scale
             i2c_value = nominal - (rise_time * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
             return nominal, i2c_value
         nominal, i2c_value = get_nominal_and_i2c_value(self.sda_risetime)

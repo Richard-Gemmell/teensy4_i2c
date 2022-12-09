@@ -492,10 +492,10 @@ if BUSIDLE > 0:
   TODO: not known yet
 else:
   if SDA_RISETIME > 1000:
-    latency = ((SDA_RISETIME - 1000) * time_to_rise_to_0_7_vdd) / SCALE
+    offset = 1 + ((SDA_RISETIME - 1000) * time_to_rise_to_0_7_vdd) / SCALE
   else:
-    latency = 1 + int((SDA_RISETIME * time_to_rise_to_0_7_vdd) * 2 / PERIOD) % 2 % (2 ^ PRESCALE)
-  nominal = 1000 + SCALE * (CLKLO + 2 + latency)
+    offset = 2
+  nominal = 1000 + SCALE * (CLKLO + 1 + offset)
   tBUF = nominal - (SDA_RISETIME * time_to_rise_to_0_7_vdd) + (tf * time_to_fall_to_0_7_vdd)
 ```
 
@@ -503,8 +503,8 @@ else:
 * controlled entirely by the master device
 * t<sub>BUF</sub> does NOT behave as described in thd datasheet when BUSIDLE == 0
   * does NOT depend on FILTSDA
-  * behaviour is different when SDA_RISETIME > 1000 nanoseconds
-  * SDA latency calculattion does not match the datasheet
+  * behaviour seems different when SDA_RISETIME > 1000 nanoseconds
+  * calculation does not appear to involve SDA_LATENCY at all
   * the equations above were deduced by fitting measured results
 * if BUSIDLE > 0 then the t<sub>BUF</sub> is equal to the bus idle time
 

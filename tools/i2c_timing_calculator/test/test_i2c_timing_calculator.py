@@ -391,12 +391,12 @@ class TestI2CTimingCalculator(TestCase):
              'expected': Parameter(i2c=2992, nominal=3583, worst_case=2124)},
             {'sda_rise': 439, 'prescale': 2, 'busidle': 0,
              # Bus Free Time (tBUF) raw: 11094 adjusted 10826
-             'measured': Parameter(i2c=10820, nominal=11400, worst_case=9749),
-             'expected': Parameter(i2c=10879, nominal=11500, worst_case=9749)},
-            {'sda_rise': 439, 'prescale': 3, 'busidle': 0, 'delta': 275,
+             'measured': Parameter(i2c=10743, nominal=11340, worst_case=9749),
+             'expected': Parameter(i2c=10712, nominal=11333, worst_case=9749)},
+            {'sda_rise': 439, 'prescale': 3, 'busidle': 0, 'delta': 250,
              # Bus Free Time (tBUF) raw: 21593 adjusted 21325
-             'measured': Parameter(i2c=21320, nominal=21920, worst_case=19915),
-             'expected': Parameter(i2c=21379, nominal=22000, worst_case=19915)},
+             'measured': Parameter(i2c=21283, nominal=21880, worst_case=19915),
+             'expected': Parameter(i2c=21046, nominal=21666, worst_case=19915)},
             {'sda_rise': 180, 'prescale': 0, 'busidle': 0,
              # Bus Free Time (tBUF) raw: 3379 adjusted 3262
              'measured': Parameter(i2c=3260, nominal=3500, worst_case=2124),
@@ -406,7 +406,7 @@ class TestI2CTimingCalculator(TestCase):
              # Setting rise to 175 gets very close to measured
              'measured': Parameter(i2c=11100, nominal=11320, worst_case=9749),
              'expected': Parameter(i2c=11082, nominal=11333, worst_case=9749)},
-            {'sda_rise': 179, 'prescale': 3, 'busidle': 0, 'delta': 200,
+            {'sda_rise': 179, 'prescale': 3, 'busidle': 0, 'delta': 190,
              # Bus Free Time (tBUF) raw: 21711 adjusted 21599
              'measured': Parameter(i2c=21600, nominal=21840, worst_case=19915),
              'expected': Parameter(i2c=21415, nominal=21666, worst_case=19915)},
