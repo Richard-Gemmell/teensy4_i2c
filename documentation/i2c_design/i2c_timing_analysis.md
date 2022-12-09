@@ -252,7 +252,6 @@ in terms of the period as that's what we control and measure.
 >
 > f<sub>SCL</sub> = 1 / nominal
 
-
 #### Notes
 * controlled entirely by the master device
 * NOT the same as adding the clock HIGH and clock LOW periods
@@ -269,7 +268,6 @@ Behaviour:
 #### Other Device Worst Case
 * the `i.MX RT1062` does not compensate for the SCL rise time
 * the worst case scenario is that the SCL rise time is very fast
-
 
 ### t<sub>LOW</sub> LOW Period of the SCL Clock
 ![t<sub>LOW</sub>LOW Period of the SCL Clock](images/clock_low.png)
@@ -357,7 +355,7 @@ very short so this isn't significant.
 ![t<sub>SU;STA</sub> Setup Time for Repeated Start](images/setup_start.png)
 
 #### Equations
-> nominal = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale
+> nominal = (SETHOLD + 1 + SCL_LATENCY) x scale
 >
 > t<sub>SU;STA</sub> = nominal - t<sub>rH;SCL</sub> + t<sub>fH;SDA</sub>
 
@@ -436,7 +434,7 @@ effect.
 ![t<sub>SU;STO</sub> Setup Stop Time](images/setup_stop.png)
 
 #### Equations
-> nominal = (SETHOLD + 1 + SCL_LATENCY) x (2 ^ PRESCALE) x scale
+> nominal = (SETHOLD + 1 + SCL_LATENCY) x scale
 >
 > t<sub>SU;STO</sub> = nominal - t<sub>rH;SCL</sub> + t<sub>rL;SDA</sub>
 
@@ -480,22 +478,81 @@ Sensitivity to SCL rise time:
 * so the worst case scenario is that the SCL rise time is very long and
   the SDA rise time is very short
 
-### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
+### t<sub>BUF</sub> Bus Free Time Between a STOP and START Condition
+![t<sub>BUF</sub> Bus Free Time](images/bus_free.png)
+
+#### Equations
+WARNING: The actual behaviour of the `i.MX RT1062` seems to be significantly
+different to the equations given in `47.3.1.4 Timing Parameters`.
+
+```
+time_to_rise_to_0_7_vdd = 1.421
+time_to_fall_to_0_7_vdd = 0.421
+if BUSIDLE > 0:
+  TODO: not known yet
+else:
+  if SDA_RISETIME > 1000:
+    latency = ((SDA_RISETIME - 1000) * time_to_rise_to_0_7_vdd) / SCALE
+  else:
+    latency = 1 + int((SDA_RISETIME * time_to_rise_to_0_7_vdd) * 2 / PERIOD) % 2 % (2 ^ PRESCALE)
+  nominal = 1000 + SCALE * (CLKLO + 2 + latency)
+  tBUF = nominal - (SDA_RISETIME * time_to_rise_to_0_7_vdd) + (tf * time_to_fall_to_0_7_vdd)
+```
+
+#### Notes
+* controlled entirely by the master device
+* t<sub>BUF</sub> does NOT behave as described in thd datasheet when BUSIDLE == 0
+  * does NOT depend on FILTSDA
+  * behaviour is different when SDA_RISETIME > 1000 nanoseconds
+  * SDA latency calculattion does not match the datasheet
+  * the equations above were deduced by fitting measured results
+* if BUSIDLE > 0 then the t<sub>BUF</sub> is equal to the bus idle time
+
+#### I2C Specification
+* occurs between a STOP and a START
+* SCL is released during the STOP condition
+* starts when SDA rises to 0.7 V<sub>dd</sub>
+* ends when SDA falls to 0.7 V<sub>dd</sub>
+* there's a minimum value but no maximum value
+
+#### Datasheet Nominal
+Behaviour:
+* the processor releases the SDA pin allowing SDA to rise
+* when it detects that SDA has risen it waits for a time derived from CLKLO
+  * this provides limited compensation for different rise times
+* when the time has passed it pulls SDA LOW again signalling
+
+Definition:
+* starts when the master releases SDA, and it starts to rise
+  * i.e. master sets SCL pin to 1
+* ends when the master pulls SDA LOW, and it starts to fall
+  * i.e. master sets SDA pin to 0
+
+#### Other Device Worst Case
+* the `i.MX RT1062` does not compensate for the whole SDA rise time
+* so the worst case scenario is that the SDA rise time is very long and
+  the SDA fall time is very short
+* the fall time is controlled by the `i.MX RT1062` and is very short.
+  This means the fall time has a negligible effect and can be ignored.
+
 
 ## Data Bits
 ### t<sub>SU;DAT</sub> Data Setup Time
+#### Equations
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
 #### Other Device Worst Case
 
 ### t<sub>HD;DAT</sub> Data Hold Time
+#### Equations
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
 #### Other Device Worst Case
 
 ### t<sub>VD;DAT</sub> Data Valid Time
+#### Equations
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
@@ -503,15 +560,18 @@ Sensitivity to SCL rise time:
 
 ## ACKs and Spikes
 ### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
+#### Equations
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
 #### Other Device Worst Case
 
 ### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter
+#### Equations
 #### Notes
 #### I2C Specification
 #### Datasheet Nominal
+#### Other Device Worst Case
 
 ~~~~~~~~
 #### Notes

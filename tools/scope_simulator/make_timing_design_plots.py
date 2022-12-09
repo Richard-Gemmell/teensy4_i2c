@@ -110,6 +110,15 @@ def high_time() -> I2CTrace:
     return trace
 
 
+def data_bit_example() -> I2CTrace:
+    trace = I2CTrace("Typical Data Bit", -200, 7500)
+    trace.sda.set_rise_time(300).set_fall_time(10) \
+        .high().fall_at(800).rise_at(5500)
+    trace.scl.set_rise_time(300).set_fall_time(10)\
+        .low().rise_at(1000).fall_at(5000)
+    return trace
+
+
 def frequency() -> I2CTrace:
     trace = I2CTrace("$f_{SCL}$ - SCL Clock Frequency", -800, 11000)
     trace.sda.hide()
@@ -117,17 +126,21 @@ def frequency() -> I2CTrace:
         .high().fall_at(0).rise_at(5000).fall_at(10000)
     trace.measure_between_edges("1/$f_{SCL}$: I2C Spec", left=['SCL', 0, V_IL], right=['SCL', 2, V_IL], y_pos=0.70)
     trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SCL', 2, V_MID], y_pos=0.5)
-    # trace.measure_between_edges("Worst Case: Slow Rise, Fast Fall", left=['SCL', 0, V_IH], right=['SCL', 1, V_IH], y_pos=0.3)
     trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, HIGH], right=['SCL', 2, HIGH], y_pos=0.1)
     return trace
 
 
-def data_bit_example() -> I2CTrace:
-    trace = I2CTrace("Typical Data Bit", -200, 7500)
-    trace.sda.set_rise_time(300).set_fall_time(10) \
-        .high().fall_at(800).rise_at(5500)
-    trace.scl.set_rise_time(300).set_fall_time(10)\
-        .low().rise_at(1000).fall_at(5000)
+def bus_free() -> I2CTrace:
+    trace = I2CTrace("$t_{BUF}$ - Bus Free Time", -1000, 8000)
+    trace.sda.set_fall_time(150).set_rise_time(500)\
+        .low().rise_at(0).fall_at(6700)
+    # trace.scl.hide()
+    trace.scl.set_fall_time(30).set_rise_time(100)\
+        .low().rise_at(-500).fall_at(7500)
+    trace.measure_between_edges("1/$t_{BUF}$: I2C Spec", left=['SDA', 0, V_IH], right=['SDA', 1, V_IH], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SDA', 0, V_MID], right=['SDA', 1, V_MID], y_pos=0.5)
+    trace.measure_between_edges("Worst Case: Slow Rise, Fast Fall", left=['SDA', 0, V_IH], right=['SDA', 1, V_IH], y_pos=0.3)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SDA', 0, LOW], right=['SDA', 1, HIGH], y_pos=0.1)
     return trace
 
 
@@ -139,6 +152,7 @@ if __name__ == '__main__':
     # plot(hold_start_time, f"{output_dir}/hold_start.png", show=True)
     # plot(setup_stop_time, f"{output_dir}/setup_stop.png", show=True)
     # plot(low_time, f"{output_dir}/clock_low.png", show=True)
-    plot(frequency, f"{output_dir}/frequency.png", show=True)
     # plot(high_time, f"{output_dir}/clock_high.png", show=True)
+    # plot(frequency, f"{output_dir}/frequency.png", show=True)
     # plot(data_bit_example, f"{output_dir}/data_bit_example.png", show=False)
+    plot(bus_free, f"{output_dir}/bus_free.png", show=True)

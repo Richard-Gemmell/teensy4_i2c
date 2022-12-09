@@ -19,7 +19,7 @@ class TeensyConfig:
     def __init__(self, name,
                  scl_risetime, sda_risetime, max_rise,
                  frequency, prescale,
-                 datavd, sethold,
+                 datavd, sethold, busidle,
                  filtsda, filtscl,
                  clkhi, clklo):
         self.name = name
@@ -37,6 +37,7 @@ class TeensyConfig:
         self.SETHOLD = sethold
         self.FILTSDA = filtsda
         self.FILTSCL = filtscl
+        self.BUSIDLE = busidle
         self.CLKHI = clkhi
         self.CLKLO = clklo
 
@@ -49,14 +50,16 @@ class TeensyConfig:
         if self.FILTSDA < 0 or self.FILTSDA > 15:
             raise ValueError("FILTSDA is out range")
 
-    def scl_latency(self):
-        # Validated for tHIGH. Do NOT attempt to add SCL_RISETIME
-        return math.trunc((2.0 + self.FILTSCL) / (2 ** self.PRESCALE))
-
     def SCL_LATENCY(self, scl_risetime):
         """As defined in the data sheet"""
         SCL_RISETIME = (scl_risetime * time_to_rise_to_teensy_trigger_voltage) / self.period
         value = (2.0 + self.FILTSCL + SCL_RISETIME) / (2 ** self.PRESCALE)
+        return math.floor(value)
+
+    def SDA_LATENCY(self, sda_risetime):
+        """As defined in the data sheet"""
+        SDA_RISETIME = (sda_risetime * time_to_rise_to_teensy_trigger_voltage) / self.period
+        value = (2.0 + self.FILTSDA + SDA_RISETIME) / (2 ** self.PRESCALE)
         return math.floor(value)
 
     def sda_latency(self):
@@ -117,9 +120,23 @@ class TeensyConfig:
         return Parameter(nominal, nominal, worst_case)
 
     def bus_free(self):
-        # Reality seems to be wildly different.
-        # Calc says 5'600 nanos but actually comes out at 22'800 nanos
-        return self.scale * (self.CLKLO + 1 + self.sda_latency())
+        # There are 2 different modes. One uses BUSIDLE.
+        if self.BUSIDLE == 0:
+            return Parameter(-1, -1, -1)
+
+        # I've no idea what the actual algorithm is, but it definitely involves capping rise time
+        # and some sort of rounding to integers
+        def get_nominal_and_i2c_value(rise_time: int) -> tuple[int, int]:
+            if rise_time > 1000:
+                latency = ((rise_time - 1000) * time_to_rise_to_0_7_vdd) / self.scale
+            else:
+                latency = 1 + int((rise_time * time_to_rise_to_0_7_vdd) * 2 / self.period) % 2 % (2 ** self.PRESCALE)
+            nominal = 1000 + self.scale * (self.CLKLO + 2 + latency)
+            i2c_value = nominal - (rise_time * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
+            return nominal, i2c_value
+        nominal, i2c_value = get_nominal_and_i2c_value(self.sda_risetime)
+        worst_case_nominal, worst_case_i2c_value = get_nominal_and_i2c_value(self.max_rise)
+        return Parameter(i2c_value, nominal, worst_case_i2c_value)
 
     def sda_glitch_filter(self):
         return self.FILTSDA * self.period

@@ -20,10 +20,10 @@ namespace signals {
 
 const analysis::MasterDesignParameters StandardModeDesignParameters = {
         {100'000, 100'000}, // clock_frequency - maximum allowed
-        {5'000, 5'350}, // start_hold_time - max includes measurement error allowance
+        {5'000, 5'350}, // tHD;STA - start_hold_time - max includes measurement error allowance
         {1, 1}, // scl_low_time  // TODO: What values to use for tHIGH and tLOW
         {1, 1}, // scl_high_time
-        {5'875, 7'000}, // start_setup_time
+        {5'875, 7'000}, // tSU;STA - start_setup_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
         {5'000, 6'500}, // stop_setup_time
@@ -32,10 +32,10 @@ const analysis::MasterDesignParameters StandardModeDesignParameters = {
 
 const analysis::MasterDesignParameters FastModeDesignParameters = {
         {400'000, 400'000}, // clock_frequency - maximum allowed
-        {750, 1'095}, // start_hold_time - max includes measurement error allowance
+        {750, 1'095}, // tHD;STA - start_hold_time - max includes measurement error allowance
         {1, 1}, // scl_low_time
         {1, 1}, // scl_high_time
-        {750, 1'095}, // start_setup_time
+        {750, 1'095}, // tSU;STA - start_setup_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
         {750, 1'400}, // stop_setup_time
@@ -44,10 +44,10 @@ const analysis::MasterDesignParameters FastModeDesignParameters = {
 
 const analysis::MasterDesignParameters FastModePlusDesignParameters = {
         {1'000'000, 1'000'000}, // clock_frequency - maximum allowed
-        {325, 465}, // start_hold_time - min allowed by spec +5% rounded up i.e. >(260*1.05)
+        {325, 465}, // tHD;STA - start_hold_time - min allowed by spec +5% rounded up i.e. >(260*1.05)
         {1, 1}, // scl_low_time
         {1, 1}, // scl_high_time
-        {325, 465}, // start_setup_time
+        {325, 465}, // tSU;STA - start_setup_time
         {1, 1}, // data_hold_time
         {1, 1}, // data_setup_time
         {380, 600}, // stop_setup_time
@@ -77,14 +77,6 @@ public:
     static common::i2c_specification::I2CParameters parameters;
     static analysis::MasterDesignParameters master_design_parameters;
 
-    static void print_trace(const bus_trace::BusTrace& trace) {
-        // TODO: Use base class method instead
-        Serial.println(trace);
-//        for (size_t i = 0; i < trace.event_count(); ++i) {
-//            Serial.printf("Index %d: delta %d ns\n", i, common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks));
-//        }
-    }
-
     void setUp() override {
         LoopbackTestBase::setUp();
         master->set_internal_pullups(InternalPullup::disabled);
@@ -96,7 +88,14 @@ public:
         } else {
             if (frequency == 100'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_1000_ns);
-                sda_rise_time = Loopback::SDA_1000_RISE_TIME;
+//                sda_rise_time = Loopback::SDA_1000_RISE_TIME;
+                sda_rise_time = 770;
+//                Loopback::enable_pullup(Loopback::PIN_SDA_300_ns);
+//                sda_rise_time = Loopback::SDA_300_RISE_TIME;
+//                Loopback::enable_pullup(Loopback::PIN_SDA_120_ns);
+//                sda_rise_time = Loopback::SDA_120_RISE_TIME;
+//                Loopback::enable_pullup(Loopback::PIN_SDA_FASTEST);
+//                sda_rise_time = Loopback::SDA_FASTEST_RISE_TIME;
             } else if (frequency == 400'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_300_ns);
                 sda_rise_time = Loopback::SDA_300_RISE_TIME;
@@ -112,6 +111,12 @@ public:
             if (frequency == 100'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_1000_ns);
                 scl_rise_time = Loopback::SCL_1000_RISE_TIME;
+//                Loopback::enable_pullup(Loopback::PIN_SCL_300_ns);
+//                scl_rise_time = Loopback::SCL_300_RISE_TIME;
+//                Loopback::enable_pullup(Loopback::PIN_SCL_120_ns);
+//                scl_rise_time = Loopback::SCL_120_RISE_TIME;
+//                Loopback::enable_pullup(Loopback::PIN_SCL_FASTEST);
+//                scl_rise_time = Loopback::SCL_FASTEST_RISE_TIME;
             } else if (frequency == 400'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_300_ns);
                 scl_rise_time = Loopback::SCL_300_RISE_TIME;
@@ -135,18 +140,15 @@ public:
         // Master reads from slave
         trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [&rx_buffer](){
             master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
-// HACK to trigger a restart and bus idle behaviours
-//            finish(*master);
-//            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
         });
-//        print_trace(trace);
+//        print_detailed_trace(trace);
         // Ensure the read succeeded
         TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
 
         return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
     }
 
-    static analysis::I2CTimingAnalysis analyse_repeated_read_transaction() {
+    static analysis::I2CTimingAnalysis analyse_repeated_read_transaction(bool stop_after_first_read = false) {
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
 
         const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
@@ -154,12 +156,12 @@ public:
         uint8_t rx_buffer[] = {0x00, 0x00};
 
         // Master reads from slave
-        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [&rx_buffer](){
-            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), false);
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [&rx_buffer, &stop_after_first_read](){
+            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), stop_after_first_read);
             finish(*master);
             master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
         });
-//        print_trace(trace);
+//        print_detailed_trace(trace);
         // Ensure the read succeeded
         TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
 
@@ -173,25 +175,11 @@ public:
 
         // THEN the startup hold time (tHD;STA) meets the I2C Specification
         auto start_hold_time = analysis.start_hold_time;
-//        log_value("Start hold (tHD;STA)", master_design_parameters.start_hold_time, start_hold_time);
+        log_value("Start hold (tHD;STA)", master_design_parameters.start_hold_time, start_hold_time);
         TEST_ASSERT_TRUE(start_hold_time.meets_specification(parameters.times.start_hold_time));
 
         // AND the startup hold time fits the design of this driver
         TEST_ASSERT_TRUE(start_hold_time.meets_specification(master_design_parameters.start_hold_time));
-    }
-
-    // Checks tSU;STO - the setup time for STOP condition
-    static void stop_setup_time() {
-        // WHEN the master reads data from the slave
-        auto analysis = analyse_read_transaction();
-
-        // THEN the startup hold time (tHD;STA) meets the I2C Specification
-        auto stop_setup_time = analysis.stop_setup_time;    // This is the actual time at which the Teensy detected the edges at approx 0.5 Vdd.
-//        log_value("Stop setup time (tSU;STO)", master_design_parameters.stop_setup_time, stop_setup_time);
-        TEST_ASSERT_TRUE(stop_setup_time.meets_specification(parameters.times.stop_setup_time));
-
-        // AND the setup stop time fits the design of this driver
-        TEST_ASSERT_TRUE(stop_setup_time.meets_specification(master_design_parameters.stop_setup_time));
     }
 
     // Checks tSU;STA - the startup hold time after a repeated start bit
@@ -206,6 +194,20 @@ public:
 
         // AND the setup time for repeated start time fits the design of this driver
         TEST_ASSERT_TRUE(start_setup_time.meets_specification(master_design_parameters.start_setup_time));
+    }
+
+    // Checks tSU;STO - the setup time for STOP condition
+    static void stop_setup_time() {
+        // WHEN the master reads data from the slave
+        auto analysis = analyse_read_transaction();
+
+        // THEN the startup hold time (tHD;STA) meets the I2C Specification
+        auto stop_setup_time = analysis.stop_setup_time;    // This is the actual time at which the Teensy detected the edges at approx 0.5 Vdd.
+        log_value("Stop setup time (tSU;STO)", master_design_parameters.stop_setup_time, stop_setup_time);
+//        TEST_ASSERT_TRUE(stop_setup_time.meets_specification(parameters.times.stop_setup_time));
+
+        // AND the setup stop time fits the design of this driver
+//        TEST_ASSERT_TRUE(stop_setup_time.meets_specification(master_design_parameters.stop_setup_time));
     }
 
     // Checks tHIGH - the HIGH period of the SCL clock
@@ -258,18 +260,33 @@ public:
         TEST_FAIL_MESSAGE("What do we expect?");
     }
 
+    // Checks tBUF - bus free time between a STOP and START condition
+    static void bus_free_time() {
+        // WHEN the master reads data from the slave
+        auto analysis = analyse_repeated_read_transaction(true);
+
+        // THEN the bus free time meets the I2C Specification
+        auto bus_free_time = analysis.bus_free_time;
+        log_value("Bus free time (tBUF)", master_design_parameters.bus_free_time, bus_free_time);
+        TEST_ASSERT_TRUE(bus_free_time.meets_specification(parameters.times.bus_free_time));
+
+        // AND the bus free time fits the design of this driver
+        TEST_ASSERT_TRUE(bus_free_time.meets_specification(master_design_parameters.bus_free_time));
+    }
+
     static void test_suite(const char* message, bool fast_sda, bool fast_scl) {
         Serial.println(message);
         master = &Master;
         slave = &Slave1;
         fast_sda_rise_time = fast_sda;
         fast_scl_rise_time = fast_scl;
-        RUN_TEST(start_hold_time);
+//        RUN_TEST(start_hold_time);
 //        RUN_TEST(setup_time_for_repeated_start);
 //        RUN_TEST(stop_setup_time);
 //        RUN_TEST(clock_high_time);
 //        RUN_TEST(clock_low_time);
 //        RUN_TEST(master_clock_frequency);
+        RUN_TEST(bus_free_time);
     }
 
     static void log_value(const char* msg, common::i2c_specification::TimeRange expected, const analysis::DurationStatistics& actual) {
@@ -288,11 +305,12 @@ public:
         frequency = 100'000;
         parameters = common::i2c_specification::StandardMode;
         master_design_parameters = StandardModeDesignParameters;
-        test_suite("100 kHz - Fast Rise Times", FAST_SDA, FAST_SCL);
-        test_suite("100 kHz - Fast SDA, Slow SCL", FAST_SDA, SLOW_SCL);
+//        test_suite("100 kHz - Fast Rise Times", FAST_SDA, FAST_SCL);
+//        test_suite("100 kHz - Fast SDA, Slow SCL", FAST_SDA, SLOW_SCL);
         test_suite("100 kHz - Slow SDA, Fast SCL", SLOW_SDA, FAST_SCL);
-        test_suite("100 kHz - Slow Rise Times", SLOW_SDA, SLOW_SCL);
+//        test_suite("100 kHz - Slow Rise Times", SLOW_SDA, SLOW_SCL);
         Serial.println(".");
+        return;
 
         frequency = 400'000;
         parameters = common::i2c_specification::FastMode;

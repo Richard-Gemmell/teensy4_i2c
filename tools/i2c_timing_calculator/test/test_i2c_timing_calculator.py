@@ -6,14 +6,15 @@ from i2c_timing_calculator.teensy_config import TeensyConfig, Parameter
 class TestI2CTimingCalculator(TestCase):
     def build_config(self, scl_risetime=1000, sda_risetime=1000,
                      filtscl=5, filtsda=5,
-                     frequency=24, prescale=1) -> TeensyConfig:
+                     frequency=24, prescale=1,
+                     busidle=248) -> TeensyConfig:
         return TeensyConfig(
             name="Test - Master 100k A",
             scl_risetime=scl_risetime,
             sda_risetime=sda_risetime,
             max_rise=1100,
             frequency=frequency, prescale=prescale,
-            datavd=25, sethold=63,
+            datavd=25, sethold=63, busidle=busidle,
             filtscl=filtscl, filtsda=filtsda,
             clkhi=55, clklo=59)
 
@@ -331,3 +332,89 @@ class TestI2CTimingCalculator(TestCase):
             config = self.build_config(prescale=t['prescale'], scl_risetime=1384, sda_risetime=32)
             actual = config.stop_setup()
             self.assert_i2c_nominal_equal(actual, t)
+
+    def test_bus_free_time_no_busidle_depends_on_sda_rise_time(self):
+        # All 'measured' I2C and nominal values were measured with an oscilloscope
+        # GIVEN BUSIDLE is 0 - so we use the tBUF calculation
+        test_cases = [
+            {'sda_rise': 1446, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 5544 adjusted 4698
+             'measured': Parameter(i2c=4680, nominal=6720, worst_case=4665),
+             'expected': Parameter(i2c=4665, nominal=6717, worst_case=4665)},
+            {'sda_rise': 1158, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 5496 adjusted 4650
+             'measured': Parameter(i2c=4650, nominal=6297, worst_case=4665),
+             'expected': Parameter(i2c=4665, nominal=6307, worst_case=4665)},
+            {'sda_rise': 770, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 5468 adjusted 5000
+             'measured': Parameter(i2c=5000, nominal=6080, worst_case=4665),
+             'expected': Parameter(i2c=5075, nominal=6166, worst_case=4665)},
+            {'sda_rise': 446, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 5468 adjusted 5000
+             'measured': Parameter(i2c=5510, nominal=6150, worst_case=4665),
+             'expected': Parameter(i2c=5536, nominal=6166, worst_case=4665)},
+            {'sda_rise': 184, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 5961 adjusted 5844
+             'measured': Parameter(i2c=5850, nominal=6080, worst_case=4665),
+             'expected': Parameter(i2c=5908, nominal=6166, worst_case=4665)},
+            {'sda_rise': 32, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 6153 adjusted 6149
+             'measured': Parameter(i2c=6120, nominal=6160, worst_case=4665),
+             'expected': Parameter(i2c=6124, nominal=6166, worst_case=4665)},
+        ]
+        for t in test_cases:
+            config = self.build_config(scl_risetime=32, sda_risetime=t['sda_rise'])
+            actual = config.bus_free()
+            self.assert_i2c_nominal_equal(actual, t)
+
+    def test_bus_free_time_no_busidle_depends_on_prescale(self):
+        # All 'measured' I2C and nominal values were measured with an oscilloscope
+        # GIVEN BUSIDLE is 0 - so we use the tBUF calculation
+        test_cases = [
+            # Behaviour when rise time > 1,000 nanos is different
+            {'sda_rise': 1446, 'prescale': 0, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 2953 adjusted 2107
+             'measured': Parameter(i2c=2092, nominal=4160, worst_case=2124),
+             'expected': Parameter(i2c=2124, nominal=4175, worst_case=2124)},
+            {'sda_rise': 1446, 'prescale': 2, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 10616 adjusted 9770
+             'measured': Parameter(i2c=9800, nominal=11780, worst_case=9749),
+             'expected': Parameter(i2c=9749, nominal=11800, worst_case=9749)},
+           {'sda_rise': 1446, 'prescale': 3, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 20761 adjusted 19915
+             'measured': Parameter(i2c=19840, nominal=21920, worst_case=19915),
+             'expected': Parameter(i2c=19915, nominal=21967, worst_case=19915)},
+            # Time is more or less fixed if rise time  < 1000 ns
+            {'sda_rise': 418, 'prescale': 0, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 3261 adjusted 3005
+             'measured': Parameter(i2c=3008, nominal=3580, worst_case=2124),
+             'expected': Parameter(i2c=2992, nominal=3583, worst_case=2124)},
+            {'sda_rise': 439, 'prescale': 2, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 11094 adjusted 10826
+             'measured': Parameter(i2c=10820, nominal=11400, worst_case=9749),
+             'expected': Parameter(i2c=10879, nominal=11500, worst_case=9749)},
+            {'sda_rise': 439, 'prescale': 3, 'busidle': 0, 'delta': 275,
+             # Bus Free Time (tBUF) raw: 21593 adjusted 21325
+             'measured': Parameter(i2c=21320, nominal=21920, worst_case=19915),
+             'expected': Parameter(i2c=21379, nominal=22000, worst_case=19915)},
+            {'sda_rise': 180, 'prescale': 0, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 3379 adjusted 3262
+             'measured': Parameter(i2c=3260, nominal=3500, worst_case=2124),
+             'expected': Parameter(i2c=3330, nominal=3583, worst_case=2124)},
+            {'sda_rise': 179, 'prescale': 2, 'busidle': 0,
+             # Bus Free Time (tBUF) raw: 11211 adjusted 11099
+             # Setting rise to 175 gets very close to measured
+             'measured': Parameter(i2c=11100, nominal=11320, worst_case=9749),
+             'expected': Parameter(i2c=11082, nominal=11333, worst_case=9749)},
+            {'sda_rise': 179, 'prescale': 3, 'busidle': 0, 'delta': 200,
+             # Bus Free Time (tBUF) raw: 21711 adjusted 21599
+             'measured': Parameter(i2c=21600, nominal=21840, worst_case=19915),
+             'expected': Parameter(i2c=21415, nominal=21666, worst_case=19915)},
+        ]
+        for t in test_cases:
+            config = self.build_config(scl_risetime=32, sda_risetime=t['sda_rise'], prescale=t['prescale'])
+            actual = config.bus_free()
+            if 'delta' in t:
+                self.assert_i2c_nominal_equal(actual, t, delta=t['delta'])
+            else:
+                self.assert_i2c_nominal_equal(actual, t)
