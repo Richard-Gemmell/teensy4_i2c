@@ -88,14 +88,7 @@ public:
         } else {
             if (frequency == 100'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_1000_ns);
-//                sda_rise_time = Loopback::SDA_1000_RISE_TIME;
-                sda_rise_time = 770;
-//                Loopback::enable_pullup(Loopback::PIN_SDA_300_ns);
-//                sda_rise_time = Loopback::SDA_300_RISE_TIME;
-//                Loopback::enable_pullup(Loopback::PIN_SDA_120_ns);
-//                sda_rise_time = Loopback::SDA_120_RISE_TIME;
-//                Loopback::enable_pullup(Loopback::PIN_SDA_FASTEST);
-//                sda_rise_time = Loopback::SDA_FASTEST_RISE_TIME;
+                sda_rise_time = Loopback::SDA_1000_RISE_TIME;
             } else if (frequency == 400'000) {
                 Loopback::enable_pullup(Loopback::PIN_SDA_300_ns);
                 sda_rise_time = Loopback::SDA_300_RISE_TIME;
@@ -111,12 +104,6 @@ public:
             if (frequency == 100'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_1000_ns);
                 scl_rise_time = Loopback::SCL_1000_RISE_TIME;
-//                Loopback::enable_pullup(Loopback::PIN_SCL_300_ns);
-//                scl_rise_time = Loopback::SCL_300_RISE_TIME;
-//                Loopback::enable_pullup(Loopback::PIN_SCL_120_ns);
-//                scl_rise_time = Loopback::SCL_120_RISE_TIME;
-//                Loopback::enable_pullup(Loopback::PIN_SCL_FASTEST);
-//                scl_rise_time = Loopback::SCL_FASTEST_RISE_TIME;
             } else if (frequency == 400'000) {
                 Loopback::enable_pullup(Loopback::PIN_SCL_300_ns);
                 scl_rise_time = Loopback::SCL_300_RISE_TIME;

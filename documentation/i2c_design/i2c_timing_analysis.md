@@ -482,31 +482,36 @@ Sensitivity to SCL rise time:
 ![t<sub>BUF</sub> Bus Free Time](images/bus_free.png)
 
 #### Equations
-WARNING: The actual behaviour of the `i.MX RT1062` seems to be significantly
-different to the equations given in `47.3.1.4 Timing Parameters`.
+WARNING: The actual behaviour of the `i.MX RT1062` is significantly different
+to the equations given in `47.3.1.4 Timing Parameters`.
 
 ```
 time_to_rise_to_0_7_vdd = 1.421
 time_to_fall_to_0_7_vdd = 0.421
-if BUSIDLE > 0:
-  TODO: not known yet
+if SDA_RISETIME > 1000:
+  offset = 1 + ((SDA_RISETIME - 1000) * time_to_rise_to_0_7_vdd) / SCALE
 else:
-  if SDA_RISETIME > 1000:
-    offset = 1 + ((SDA_RISETIME - 1000) * time_to_rise_to_0_7_vdd) / SCALE
-  else:
-    offset = 2
-  nominal = 1000 + SCALE * (CLKLO + 1 + offset)
-  tBUF = nominal - (SDA_RISETIME * time_to_rise_to_0_7_vdd) + (tf * time_to_fall_to_0_7_vdd)
+  offset = 2
+  if BUSIDLE > 1
+    offset = BUSIDLE + 1
+nominal = 1000 + SCALE * (CLKLO + 1 + offset)
+tBUF = nominal - (SDA_RISETIME * time_to_rise_to_0_7_vdd) + (tf * time_to_fall_to_0_7_vdd)
 ```
 
 #### Notes
 * controlled entirely by the master device
-* t<sub>BUF</sub> does NOT behave as described in thd datasheet when BUSIDLE == 0
+* t<sub>BUF</sub> does NOT behave as described in the datasheet
   * does NOT depend on FILTSDA
-  * behaviour seems different when SDA_RISETIME > 1000 nanoseconds
-  * calculation does not appear to involve SDA_LATENCY at all
+  * does not appear to depend on SDA_LATENCY at all
+  * behaviour is qualitatively different when SDA_RISETIME > 1000 nanoseconds
   * the equations above were deduced by fitting measured results
-* if BUSIDLE > 0 then the t<sub>BUF</sub> is equal to the bus idle time
+* BUSIDLE does NOT behave as described in the datasheet
+  * the minimum value given in `47.3.1.4 Timing Parameters` doesn't seem to matter
+  * BUSIDLE is ignored when set to 0
+  * BUSIDLE does not affect t<sub>BUF</sub> when SDA_RISETIME > 1000 nanoseconds
+  * BUSIDLE increases t<sub>BUF</sub> when SDA_RISETIME < 1000 nanoseconds
+  * Setting BUSIDLE to 0 does not prevent the driver from deciding that the
+    bus is idle if another master aborts a transaction without a STOP condition
 
 #### I2C Specification
 * occurs between a STOP and a START
@@ -517,10 +522,9 @@ else:
 
 #### Datasheet Nominal
 Behaviour:
-* the processor releases the SDA pin allowing SDA to rise
-* when it detects that SDA has risen it waits for a time derived from CLKLO
-  * this provides limited compensation for different rise times
-* when the time has passed it pulls SDA LOW again signalling
+* the processor releases the SDA pin allowing SDA to rise (STOP condition)
+* waits for a period of time which is a function CLKLO and BUSIDLE
+* pulls SDA LOW again (START condition)
 
 Definition:
 * starts when the master releases SDA, and it starts to rise

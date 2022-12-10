@@ -12,6 +12,7 @@
 #include "e2e/loopback/driver_config/test_pullup_config.h"
 #include "e2e/loopback/driver_config/test_pullup_config_wire.h"
 #include "e2e/loopback/logic/test_e2e_basic_messages.h"
+#include "e2e/loopback/logic/test_e2e_bus_recovery.h"
 //#include "e2e/loopback/signals/test_e2e_slave_signals.h"
 #include "e2e/loopback/signals/test_e2e_master_signals.h"
 #include "e2e/loopback/signals/test_e2e_rise_times.h"
@@ -45,6 +46,7 @@ void run_all_tests() {
     test(new e2e::loopback::driver_config::PullupConfigTest());
     test(new e2e::loopback::driver_config::PullupConfigWireTest());
     test(new e2e::loopback::logic::BasicMessagesTest());
+    test(new e2e::loopback::logic::BusRecoveryTest());
     test(new e2e::loopback::signals::MasterSignalsTest());
     test(new e2e::loopback::signals::RiseTimeTest());
 //    test(new e2e::loopback::signals::SlaveSignalTest());

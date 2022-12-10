@@ -120,10 +120,6 @@ class TeensyConfig:
         return Parameter(nominal, nominal, worst_case)
 
     def bus_free(self):
-        # There are 2 different modes. One uses BUSIDLE.
-        if self.BUSIDLE == 0:
-            return Parameter(-1, -1, -1)
-
         # I've no idea what the actual algorithm is, but it definitely involves capping rise time
         # and some sort of rounding to integers
         def get_nominal_and_i2c_value(rise_time: int) -> tuple[int, int]:
@@ -131,6 +127,8 @@ class TeensyConfig:
                 offset = (((rise_time - 1000) * time_to_rise_to_0_7_vdd) / self.scale) + 1
             else:
                 offset = 2
+                if self.BUSIDLE > 1:
+                    offset = self.BUSIDLE + 1
             nominal = 1000 + (self.CLKLO + 1 + offset) * self.scale
             i2c_value = nominal - (rise_time * time_to_rise_to_0_7_vdd) + (self.fall_time * time_to_fall_to_0_7_vdd)
             return nominal, i2c_value
