@@ -90,6 +90,8 @@ static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control
 void initialise_common(IMX_RT1060_I2CBase::Config hardware, uint32_t pad_control_config, InternalPullup pullup) {
     // Set LPI2C Clock to 24MHz. Required by slaves as well as masters.
     CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63)) | CCM_CSCDR2_LPI2C_CLK_SEL;
+    // TODO: Swap to 60 MHz clock use:
+    // CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63));
     hardware.clock_gate_register |= hardware.clock_gate_mask;
 
     // Setup SDA and SCL pins and registers
@@ -380,12 +382,11 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     if (frequency < 400'000) {
         // Use Standard Mode - up to 100 kHz
-        // TODO: Increase SETHOLD by 150 ns
         port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
                       LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(63);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(1);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
-                       LPI2C_MCFGR2_BUSIDLE(2 * (59 + 40 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
+                       LPI2C_MCFGR2_BUSIDLE(6);
         port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1);
     } else if (frequency < 1'000'000) {
         // Use Fast Mode - up to 400 kHz
@@ -393,7 +394,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
                       LPI2C_MCCR0_DATAVD(12) | LPI2C_MCCR0_SETHOLD(25);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(2) | LPI2C_MCFGR2_FILTSCL(2) |
-                       LPI2C_MCFGR2_BUSIDLE(2 * (28 + 18 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
+                       LPI2C_MCFGR2_BUSIDLE(3);
         port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1);
     } else {
         // Use Fast Mode Plus - up to 1 MHz
@@ -401,7 +402,7 @@ void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
                       LPI2C_MCCR0_DATAVD(4) | LPI2C_MCCR0_SETHOLD(10);
         port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
         port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(1) | LPI2C_MCFGR2_FILTSCL(1) |
-                       LPI2C_MCFGR2_BUSIDLE(2 * (10 + 7 + 2)); // Min BUSIDLE = (CLKLO+SETHOLD+2) × 2
+                       LPI2C_MCFGR2_BUSIDLE(1);
         port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1);
     }
     port->MCCR1 = port->MCCR0;
