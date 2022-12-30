@@ -144,6 +144,32 @@ def bus_free() -> I2CTrace:
     return trace
 
 
+def setup_data_time_low_to_high() -> I2CTrace:
+    trace = I2CTrace("$t_{SU;DAT}$ - Setup Data Time (LOW to HIGH)", -10, 700)
+    trace.sda.set_rise_time(50).set_fall_time(10) \
+        .low().rise_at(50)
+    trace.scl.set_rise_time(50).set_fall_time(10)\
+        .low().rise_at(500)
+    trace.measure_between_edges("$t_{SU;DAT}$: I2C Spec", left=['SDA', 0, V_IH], right=['SCL', 0, V_IL], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SDA', 0, V_MID], right=['SCL', 0, V_MID], y_pos=0.5)
+    trace.measure_between_edges("Worst Case: SDA Slow Rise, SCL Fast Rise", left=['SDA', 0, V_IH], right=['SCL', 0, V_IL], y_pos=0.3)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SDA', 0, LOW], right=['SCL', 0, LOW], y_pos=0.1)
+    return trace
+
+
+def setup_data_time_high_to_low() -> I2CTrace:
+    trace = I2CTrace("$t_{SU;DAT}$ - Setup Data Time (HIGH to LOW)", -10, 700)
+    trace.sda.set_rise_time(50).set_fall_time(10) \
+        .high().fall_at(50)
+    trace.scl.set_rise_time(50).set_fall_time(10)\
+        .low().rise_at(500)
+    trace.measure_between_edges("$t_{SU;DAT}$: I2C Spec", left=['SDA', 0, V_IL], right=['SCL', 0, V_IL], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SDA', 0, V_MID], right=['SCL', 0, V_MID], y_pos=0.5)
+    trace.measure_between_edges("Worst Case: SDA Slow Fall, SCL Fast Rise", left=['SDA', 0, V_IL], right=['SCL', 0, V_IL], y_pos=0.3)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SDA', 0, HIGH], right=['SCL', 0, LOW], y_pos=0.1)
+    return trace
+
+
 if __name__ == '__main__':
     output_dir = "../../documentation/i2c_design/images"
     # plot(illustrate_rise_and_fall_times, f"{output_dir}/rise_and_fall_times.png", show=False)
@@ -155,4 +181,6 @@ if __name__ == '__main__':
     # plot(high_time, f"{output_dir}/clock_high.png", show=True)
     # plot(frequency, f"{output_dir}/frequency.png", show=True)
     # plot(data_bit_example, f"{output_dir}/data_bit_example.png", show=False)
-    plot(bus_free, f"{output_dir}/bus_free.png", show=True)
+    # plot(bus_free, f"{output_dir}/bus_free.png", show=True)
+    plot(setup_data_time_low_to_high, f"{output_dir}/setup_data_low_to_high.png", show=True)
+    plot(setup_data_time_high_to_low, f"{output_dir}/setup_data_high_to_low.png", show=True)

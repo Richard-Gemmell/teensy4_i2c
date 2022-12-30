@@ -542,11 +542,37 @@ Definition:
 
 ## Data Bits
 ### t<sub>SU;DAT</sub> Data Setup Time
+![t<sub>SU;DAT</sub> Data Setup Time](images/setup_data_low_to_high.png)
+![t<sub>SU;DAT</sub> Data Setup Time](images/setup_data_high_to_low.png)
+
 #### Equations
 #### Notes
+* controlled by the master if it's transmitting
+* could be controlled by the master when the slave is transmitting
+  but the master cannot guarantee this time as the slave could change
+  SDA *after* the master starts to change SCL
+
+
 #### I2C Specification
+* defined as the minimum time allowed between SDA changing value and SCL starting to rise
+* starts when SDA reaches a new value
+  * if SDA rises then time starts at 0.7 V<sub>dd</sub>
+  * if SDA falls then time starts at 0.3 V<sub>dd</sub>
+* ends when SDA rises to 0.3 V<sub>dd</sub>
+* the spec doesn't say whether this applies to ACKs or the setup to a STOP
+  bit. I assume it does as SDA needs to be stable in these cases as well.
+
 #### Datasheet Nominal
+* it's likely that t<sub>SU;DAT</sub> is not controlled directly by the driver
+  * when the master is transmitting then it's a side effect of t<sub>VD;DAT</sub>
+  * when a slave transmits then it's determined by when the slave changes
+    SDA. The master probably toggles SCL on schedule regardless.
+
 #### Other Device Worst Case
+* if SDA is rising, then the worst case occurs when the SDA rise time is very large
+* if SDA is falling, then the worst case is when the SDA fall time is very large
+  * SDA might be controlled by a slave device with a long fall time
+* in either case, the worst case happens when the SCL rise time is fast
 
 ### t<sub>HD;DAT</sub> Data Hold Time
 #### Equations

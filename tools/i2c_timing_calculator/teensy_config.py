@@ -69,7 +69,8 @@ class TeensyConfig:
         return self.scale * (self.DATAVD + 1)
 
     def data_setup(self):
-        return self.scale * (self.sda_latency() + 1)
+        nominal = self.scale * (self.sda_latency() + 1)
+        return Parameter(-1, nominal, -1)
 
     def data_valid(self):
         return self.data_hold()

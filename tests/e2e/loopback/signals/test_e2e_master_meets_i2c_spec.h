@@ -108,6 +108,24 @@ public:
         return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
     }
 
+    static analysis::I2CTimingAnalysis analyse_write_transaction() {
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+
+        const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
+        uint8_t rx_buffer[] = {0x00, 0x00};
+        slave->set_receive_buffer(rx_buffer, sizeof(rx_buffer));
+
+        // Master writes to the slave
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [&tx_buffer](){
+            master->write_async(ADDRESS, tx_buffer, sizeof(tx_buffer), true);
+        });
+//        print_detailed_trace(trace);
+        // Ensure the write succeeded
+        TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
+
+        return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
+    }
+
     static analysis::I2CTimingAnalysis analyse_repeated_read_transaction(bool stop_after_first_read = false) {
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
 
@@ -208,6 +226,30 @@ public:
         TEST_ASSERT_TRUE(bus_free_time.meets_specification(parameters.times.bus_free_time));
     }
 
+    // Checks tSU;DAT - data setup time
+    static void setup_data_time_read() {
+        // Check tSU;DAT when the slave controls SDA to send data to the master
+        // WHEN the master reads data from the slave
+        auto analysis = analyse_read_transaction();
+
+        // THEN the setup data time meets the I2C Specification
+        auto data_setup_time = analysis.data_setup_time;
+        log_value("Data setup time (tSU;DAT)", parameters.times.data_setup_time, data_setup_time);
+        TEST_ASSERT_TRUE(data_setup_time.meets_specification(parameters.times.data_setup_time));
+    }
+
+    // Checks tSU;DAT - data setup time
+    static void setup_data_time_write() {
+        // Check tSU;DAT when the master has full control of SDA
+        // WHEN the master writes to the slave
+        auto analysis = analyse_write_transaction();
+
+        // THEN the setup data time meets the I2C Specification
+        auto data_setup_time = analysis.data_setup_time;
+        log_value("Data setup time (tSU;DAT)", parameters.times.data_setup_time, data_setup_time);
+        TEST_ASSERT_TRUE(data_setup_time.meets_specification(parameters.times.data_setup_time));
+    }
+
     static void test_suite(const char* message, bool fast_sda, bool fast_scl) {
         Serial.println(message);
         master = &Master;
@@ -221,6 +263,8 @@ public:
         RUN_TEST(clock_low_time);
         RUN_TEST(master_clock_frequency);
         RUN_TEST(bus_free_time);
+        RUN_TEST(setup_data_time_read);
+        RUN_TEST(setup_data_time_write);
     }
 
     static void log_value(const char* msg, common::i2c_specification::TimeRange expected, const analysis::DurationStatistics& actual) {
