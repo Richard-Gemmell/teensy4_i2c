@@ -42,16 +42,29 @@ public:
     const static uint8_t PIN_SDA_120_ns = 41;
     const static uint8_t PIN_SDA_300_ns = 14;
     const static uint8_t PIN_SDA_1000_ns = 23;
+#endif
 
+//#define WITH_OSCILLOSCOPE
+#ifdef WITH_OSCILLOSCOPE
+    const static uint32_t SCL_FASTEST_RISE_TIME = 31;
+    const static uint32_t SCL_120_RISE_TIME = 176;
+    const static uint32_t SCL_300_RISE_TIME = 412;
+    const static uint32_t SCL_1000_RISE_TIME = 1349;
+
+    const static uint32_t SDA_FASTEST_RISE_TIME = 31;
+    const static uint32_t SDA_120_RISE_TIME = 176;
+    const static uint32_t SDA_300_RISE_TIME = 418;
+    const static uint32_t SDA_1000_RISE_TIME = 1398;
+#else
     const static uint32_t SCL_FASTEST_RISE_TIME = 25;
     const static uint32_t SCL_120_RISE_TIME = 132;
-    const static uint32_t SCL_300_RISE_TIME = 352;
+    const static uint32_t SCL_300_RISE_TIME = 327;
     const static uint32_t SCL_1000_RISE_TIME = 1110;
 
     const static uint32_t SDA_FASTEST_RISE_TIME = 25;
     const static uint32_t SDA_120_RISE_TIME = 132;
     const static uint32_t SDA_300_RISE_TIME = 327;
-    const static uint32_t SDA_1000_RISE_TIME = 1158;
+    const static uint32_t SDA_1000_RISE_TIME = 1129;
 #endif
 
     static void enable_pullup(uint8_t pin) {
