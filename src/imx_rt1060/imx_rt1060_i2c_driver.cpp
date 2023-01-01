@@ -456,9 +456,8 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
 //    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(4) | LPI2C_SCFGR2_FILTSCL(4); // For 400 kHz clock
 //    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(1) | LPI2C_SCFGR2_FILTSCL(1); // For 1 MHz clock
 
-    // Clock Hold Time. Increases the
-    // I don't think it's needed
-//     port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_CLKHOLD(1);
+    // Clock Hold Time. Sets the mimimum clock hold time when clock stretching
+//     port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_CLKHOLD(5);
 
     // Set up interrupts
     attachInterruptVector(config.irq, isr);

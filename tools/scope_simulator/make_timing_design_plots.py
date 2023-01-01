@@ -170,6 +170,28 @@ def setup_data_time_high_to_low() -> I2CTrace:
     return trace
 
 
+def data_hold_master_low_to_high() -> I2CTrace:
+    trace = I2CTrace("$t_{HD;DAT}$ - Data Hold Time (Master LOW to HIGH)", -10, 700)
+    trace.scl.set_fall_time(8).high().fall_at(50)
+    trace.sda.set_rise_time(100).low().rise_at(500)
+    trace.measure_between_edges("$t_{HD;DAT}$: I2C Spec", left=['SCL', 0, V_IL], right=['SDA', 0, V_IL], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SDA', 0, V_MID], y_pos=0.5)
+    trace.measure_between_edges("Worst Case: SDA Slow Rise, SCL Fast Rise", left=['SCL', 0, V_IL], right=['SDA', 0, V_IL], y_pos=0.30)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, HIGH], right=['SDA', 0, LOW], y_pos=0.1)
+    return trace
+
+
+def data_hold_slave_high_to_low() -> I2CTrace:
+    trace = I2CTrace("$t_{HD;DAT}$ - Data Hold Time (Slave HIGH to LOW)", -10, 1650)
+    trace.scl.set_fall_time(100).high().fall_at(150)
+    trace.sda.set_fall_time(30).high().fall_at(1200)
+    trace.measure_between_edges("$t_{HD;DAT}$: I2C Spec", left=['SCL', 0, V_IL], right=['SDA', 0, V_IH], y_pos=0.70)
+    trace.measure_between_edges("Δt: BusRecorder", left=['SCL', 0, V_MID], right=['SDA', 0, V_MID], y_pos=0.5)
+    trace.measure_between_edges("Worst Case: SDA Slow Rise, SCL Fast Rise", left=['SCL', 0, V_IL], right=['SDA', 0, V_IH], y_pos=0.30)
+    trace.measure_between_edges("Nominal: Datasheet", left=['SCL', 0, HIGH], right=['SDA', 0, HIGH], y_pos=0.1)
+    return trace
+
+
 if __name__ == '__main__':
     output_dir = "../../documentation/i2c_design/images"
     # plot(illustrate_rise_and_fall_times, f"{output_dir}/rise_and_fall_times.png", show=False)
@@ -182,5 +204,7 @@ if __name__ == '__main__':
     # plot(frequency, f"{output_dir}/frequency.png", show=True)
     # plot(data_bit_example, f"{output_dir}/data_bit_example.png", show=False)
     # plot(bus_free, f"{output_dir}/bus_free.png", show=True)
-    plot(setup_data_time_low_to_high, f"{output_dir}/setup_data_low_to_high.png", show=True)
-    plot(setup_data_time_high_to_low, f"{output_dir}/setup_data_high_to_low.png", show=True)
+    # plot(setup_data_time_low_to_high, f"{output_dir}/setup_data_low_to_high.png", show=True)
+    # plot(setup_data_time_high_to_low, f"{output_dir}/setup_data_high_to_low.png", show=True)
+    plot(data_hold_master_low_to_high, f"{output_dir}/data_hold_master_low_to_high.png", show=True)
+    plot(data_hold_slave_high_to_low, f"{output_dir}/data_hold_slave_high_to_low.png", show=True)

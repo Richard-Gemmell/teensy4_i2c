@@ -5,6 +5,7 @@ time_to_rise_to_0_7_vdd = 1.421
 time_to_rise_to_teensy_trigger_voltage = 0.911
 time_to_fall_to_0_7_vdd = time_to_rise_to_0_3_vdd
 time_to_fall_to_0_3_vdd = time_to_rise_to_0_7_vdd
+time_to_fall_from_trigger_to_0_3_vdd = 0.603
 
 
 class Parameter:
@@ -17,7 +18,8 @@ class Parameter:
 # Config parameters
 class TeensyConfig:
     def __init__(self, name,
-                 scl_risetime, sda_risetime, max_rise,
+                 scl_risetime, sda_risetime,
+                 falltime, max_fall, max_rise,
                  frequency, prescale,
                  datavd, sethold, busidle,
                  filtsda, filtscl,
@@ -27,7 +29,8 @@ class TeensyConfig:
         self.period = (1000.0 / self.frequency)
         self.PRESCALE = prescale
         self.scale = self.period * (2 ** self.PRESCALE)
-        self.fall_time = 8  # Same for both pins when controlled by Teensy
+        self.fall_time = falltime  # Same for both pins when controlled by Teensy
+        self.max_fall = max_fall
         self.max_rise = max_rise
         self.scl_risetime = scl_risetime
         self.sda_risetime = sda_risetime
@@ -65,15 +68,30 @@ class TeensyConfig:
     def sda_latency(self):
         return math.trunc((2.0 + self.FILTSDA) / (2 ** self.PRESCALE))
 
-    def data_hold(self):
-        return self.scale * (self.DATAVD + 1)
+    def data_hold(self, master: bool, falling: bool):
+        adjustment = (self.fall_time * time_to_fall_to_0_7_vdd) if falling else (self.sda_risetime * time_to_rise_to_0_3_vdd)
+        if master:
+            nominal = self.scale * (self.DATAVD + 1)
+            i2c_value = nominal - (self.fall_time * time_to_fall_to_0_3_vdd) + adjustment
+            worst_case_adjustment = (self.fall_time * time_to_fall_to_0_7_vdd) if falling else (self.max_rise * time_to_rise_to_0_3_vdd)
+            worst_case = nominal - (self.fall_time * time_to_fall_to_0_3_vdd) + worst_case_adjustment
+        else:
+            nominal = self.period * (self.FILTSCL + self.DATAVD + 3)
+            i2c_value = nominal - (self.fall_time * time_to_fall_from_trigger_to_0_3_vdd) + adjustment
+            worst_case = nominal - (self.max_fall * time_to_fall_from_trigger_to_0_3_vdd)
+        return Parameter(i2c_value, nominal, worst_case)
 
     def data_setup(self):
         nominal = self.scale * (self.sda_latency() + 1)
         return Parameter(-1, nominal, -1)
 
-    def data_valid(self):
-        return self.data_hold()
+    def data_valid(self, master: bool, falling: bool):
+        data_hold = self.data_hold(master, falling)
+        nominal = data_hold.nominal
+        adjustment = self.fall_time if falling else self.sda_risetime
+        i2c_value = data_hold.i2c_value + adjustment
+        worst_case = data_hold.worst_case + adjustment
+        return Parameter(i2c_value, nominal, worst_case)
 
     def data_valid_rise(self):
         # Comes out a little low as it doesn't include the rise time from 0 to Vil

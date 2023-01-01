@@ -552,7 +552,6 @@ Definition:
   but the master cannot guarantee this time as the slave could change
   SDA *after* the master starts to change SCL
 
-
 #### I2C Specification
 * defined as the minimum time allowed between SDA changing value and SCL starting to rise
 * starts when SDA reaches a new value
@@ -563,7 +562,8 @@ Definition:
   bit. I assume it does as SDA needs to be stable in these cases as well.
 
 #### Datasheet Nominal
-* it's likely that t<sub>SU;DAT</sub> is not controlled directly by the driver
+* read description of [t<sub>HD;DAT</sub>](#tsubhddatsub-data-hold-time) first
+* t<sub>SU;DAT</sub> is not controlled directly by the driver
   * when the master is transmitting then it's a side effect of t<sub>VD;DAT</sub>
   * when a slave transmits then it's determined by when the slave changes
     SDA. The master probably toggles SCL on schedule regardless.
@@ -575,26 +575,90 @@ Definition:
 * in either case, the worst case happens when the SCL rise time is fast
 
 ### t<sub>HD;DAT</sub> Data Hold Time
+![t<sub>HD;DAT</sub> Data Hold Time - Master](images/data_hold_master_low_to_high.png)
+![t<sub>HD;DAT</sub> Data Hold Time - Slave](images/data_hold_slave_high_to_low.png)
+
 #### Equations
+##### Master Controls SDA
+> nominal = (DATAVD + 1) x scale
+>
+> t<sub>HD;DAT</sub> = nominal - t<sub>fL;SCL</sub> + (t<sub>rL;SDA</sub> **or** t<sub>fH;SDA</sub>)
+
+t<sub>fL;SCL</sub> is negligible on the Teensy and can be ignored in practice
+
+##### Slave Controls SDA
+given t<sub>ft;SCL</sub> is time to for SCL to fall from the trigger voltage to 0.3 V<sub>dd</sub>
+> nominal = (FILTSCL + DATAVD + 3) x t<sub>LPI2C</sub>
+>
+> t<sub>HD;DAT</sub> = nominal - t<sub>f;SCL</sub> + (t<sub>rL;SDA</sub> **or** t<sub>fH;SDA</sub>)
+
 #### Notes
+* the data hold time is determined by whichever device is changes SDA
+* the data hold time ensures that a device never sees SDA change unless SCL is LOW
+* note 3 of Table 10 of `I2C Spec. 6.1 Electrical specifications and timing for I/O stages and bus lines`
+  refers to an "internal" hold time. This is necessary to avoid the edge case where
+  SCL has a very slow fall time and SDA changes very fast. If one device decides
+  that SCL fell at 0.65 V<sub>dd</sub> and changes SDA, but the other device
+  doesn't decide SCL fell until it reaches 0.35 V<sub>dd</sub>, then the second
+  device could see the change on SDA before the change in SCL. This can't happen
+  if the first device waits for the maximum fall time before changing SDA.
+* in the edge case above, the "external" data hold time is negative
+* a slave device can probably get away with a very short or 0 length hold time. 
+  The master pulled SCL LOW and so presumably thinks SCL is LOW irrespective
+  of the fall time. It will almost certainly see any change to SDA as happening
+  when SCL is LOW irrespective of how fast the slave reacts.
+
 #### I2C Specification
+* time starts when SCL falls to 0.3 V<sub>dd</sub>
+* time ends when SDA starts to change. i.e. rises to 0.3 V<sub>dd</sub> or falls
+  to 0.7 V<sub>dd</sub>
+* the I2C Specification doesn't make it clear whether the hold time applies
+  after the START bit and before the STOP bit. I assume it does, because the
+  purpose of the data hold time is to make sure that data bits are not confused
+  with STOP or START bits.
+
 #### Datasheet Nominal
+There are 2 different conditions. In the first case, the Teensy is the master
+device, and it controls SDA. In the second, the Teensy is the slave device, and
+it controls SDA.
+
+Note that the Teensy configures DATAVD separately for master and slave modes.
+
+##### Master Controls SDA
+* starts when the processor pulls SCL LOW and SCL starts to fall
+* the processor waits for a period of time which depends on DATAVD
+* ends when the processor changes the value of SDA pin and SDA starts to change
+
+##### Slave Controls SDA
+* starts when the processor detects that SCL has fallen (approx
+  0.5 V<sub>dd</sub> on the Teensy)
+* the processor waits for a period of time which depends on DATAVD
+* ends when the processor changes the value of SDA pin and SDA starts to change
+
 #### Other Device Worst Case
+##### Master Controls SDA
+The worst case occurs when SCL falls very slowly and SDA changes very fast.
+Fall times are usually much faster than rise times, so this probably involves
+SDA falling.
+
+##### Slave Controls SDA
+The worst case also happens when SCL falls very slowly and SDA changes very
+fast. It probably doesn't matter though because the master already thinks SCL
+is LOW and so can't confuse the order of the edges.
 
 ### t<sub>VD;DAT</sub> Data Valid Time
+
 #### Equations
 #### Notes
 #### I2C Specification
-#### Datasheet Nominal
+#### Datasheet Nominal - Master
+#### Datasheet Nominal - Slave
 #### Other Device Worst Case
 
 ## ACKs and Spikes
 ### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
-#### Equations
-#### Notes
-#### I2C Specification
-#### Datasheet Nominal
-#### Other Device Worst Case
+t<sub>VD;ACK</sub> is identical to t<sub>VD;DAT</sub> except that it
+applies to an ACK rather than a data bit.
 
 ### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter
 #### Equations

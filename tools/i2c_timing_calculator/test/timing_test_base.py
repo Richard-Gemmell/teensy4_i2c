@@ -5,16 +5,21 @@ from i2c_timing_calculator.teensy_config import TeensyConfig, Parameter
 
 class TimingTestBase(TestCase):
     def build_config(self, scl_risetime=1000, sda_risetime=1000,
+                     falltime=8,
                      filtscl=5, filtsda=5,
                      frequency=24, prescale=1,
+                     datavd=25, sethold=63,
                      busidle=248) -> TeensyConfig:
         return TeensyConfig(
             name="Test - Master 100k A",
             scl_risetime=scl_risetime,
             sda_risetime=sda_risetime,
+            falltime=falltime,
+            max_fall=300,
             max_rise=1100,
             frequency=frequency, prescale=prescale,
-            datavd=25, sethold=63, busidle=busidle,
+            datavd=datavd, sethold=sethold,
+            busidle=busidle,
             filtscl=filtscl, filtsda=filtsda,
             clkhi=55, clklo=59)
 
