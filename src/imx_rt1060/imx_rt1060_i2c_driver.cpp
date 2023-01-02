@@ -1,4 +1,4 @@
-// Copyright © 2019-2022 Richard Gemmell
+// Copyright © 2019-2023 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 //
 // Fragments of this code copied from WireIMXRT.cpp © Paul Stoffregen.

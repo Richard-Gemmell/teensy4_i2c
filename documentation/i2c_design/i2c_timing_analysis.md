@@ -546,6 +546,8 @@ Definition:
 ![t<sub>SU;DAT</sub> Data Setup Time](images/setup_data_high_to_low.png)
 
 #### Equations
+> t<sub>LOW</sub> = t<sub>VD;DAT</sub> + t<sub>SU;DAT<sub>
+
 #### Notes
 * controlled by the master if it's transmitting
 * could be controlled by the master when the slave is transmitting
@@ -575,6 +577,13 @@ Definition:
 * in either case, the worst case happens when the SCL rise time is fast
 
 ### t<sub>HD;DAT</sub> Data Hold Time
+The data hold time applies whether SDA changes from HIGH to LOW or vice versa.
+The first of these graphs shows SDA rising and the second shows SDA falling.
+
+We know that SCL will fall very fast for a Teensy in master mode as it controls
+SCL. A Teensy slave might see a very slow falling edge. These 2 graphs highlight
+this difference.
+
 ![t<sub>HD;DAT</sub> Data Hold Time - Master](images/data_hold_master_low_to_high.png)
 ![t<sub>HD;DAT</sub> Data Hold Time - Slave](images/data_hold_slave_high_to_low.png)
 
@@ -647,13 +656,36 @@ fast. It probably doesn't matter though because the master already thinks SCL
 is LOW and so can't confuse the order of the edges.
 
 ### t<sub>VD;DAT</sub> Data Valid Time
+t<sub>VD;DAT</sub> is identical to t<sub>HD;DAT</sub> except that includes the
+time for SDA to finish changing. Please read the section for 
+[Data Hold Time](#tsubhddatsub-data-hold-time) first.
+
+![t<sub>VD;DAT</sub> Valid Hold Time - Master](images/data_valid_master_low_to_high.png)
+![t<sub>VD;DAT</sub> Valid Hold Time - Slave](images/data_valid_slave_high_to_low.png)
 
 #### Equations
+The nominal time is identical to the nominal for t<sub>HD;DAT</sub>. The I2C
+time is identical to the I2C time for t<sub>HD;DAT</sub> plus the SDA rise time
+if SDA is rising, or the fall time if SDA is falling.
+
+##### Master Controls SDA
+> nominal = (DATAVD + 1) x scale
+>
+> t<sub>VD;DAT</sub> = t<sub>HD;DAT</sub> + (t<sub>f<sub> or t<sub>r</sub>)
+
+##### Slave Controls SDA
+given t<sub>ft;SCL</sub> is time to for SCL to fall from the trigger voltage to 0.3 V<sub>dd</sub>
+> nominal = (FILTSCL + DATAVD + 3) x t<sub>LPI2C</sub>
+>
+> t<sub>VD;DAT</sub> = t<sub>HD;DAT</sub> + (t<sub>f<sub> or t<sub>r</sub>)
+
 #### Notes
-#### I2C Specification
-#### Datasheet Nominal - Master
-#### Datasheet Nominal - Slave
-#### Other Device Worst Case
+* the I2C Specification sets a maximum value for data valid time. It doesn't
+  explain why this is required.
+* the limitation on t<sub>VD;DAT</sub> applies only if the clock is not stretched
+* t<sub>VD;ACK</sub> is identical to t<sub>VD;DAT</sub> except that it applies
+  to ACKs instead of data bits
+* t<sub>LOW</sub> = t<sub>VD;DAT</sub> + t<sub>SU;DAT<sub>
 
 ## ACKs and Spikes
 ### t<sub>VD;ACK</sub> Data Valid Acknowledge Time

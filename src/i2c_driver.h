@@ -1,4 +1,4 @@
-// Copyright © 2019-2020 Richard Gemmell
+// Copyright © 2019-2023 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #ifndef I2C_DRIVER_H
@@ -134,7 +134,7 @@ public:
     virtual void listen(uint8_t first_address, uint8_t second_address) = 0;
 
     // Like listen(uint8_t) except that the slave will listen on every address
-    // in the range first_address to last_address inclusive.
+    // in the range from 'first_address' to 'last_address' inclusive.
     virtual void listen_range(uint8_t first_address, uint8_t last_address) = 0;
 
     // Sets a callback to be called by the ISR each time
