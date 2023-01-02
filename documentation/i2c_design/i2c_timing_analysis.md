@@ -574,6 +574,8 @@ Definition:
 * if SDA is rising, then the worst case occurs when the SDA rise time is very large
 * if SDA is falling, then the worst case is when the SDA fall time is very large
   * SDA might be controlled by a slave device with a long fall time
+  * if the Teensy is the master then the worst case is identical to the I2C value
+    as the Teensy controls the fall time
 * in either case, the worst case happens when the SCL rise time is fast
 
 ### t<sub>HD;DAT</sub> Data Hold Time

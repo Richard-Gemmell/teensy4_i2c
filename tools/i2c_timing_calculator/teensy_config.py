@@ -81,9 +81,17 @@ class TeensyConfig:
             worst_case = nominal - (self.max_fall * time_to_fall_from_trigger_to_0_3_vdd)
         return Parameter(i2c_value, nominal, worst_case)
 
-    def data_setup(self):
-        nominal = self.scale * (self.sda_latency() + 1)
-        return Parameter(-1, nominal, -1)
+    def data_setup(self, master: bool, falling: bool):
+        # tLow = tVD;DAT + tSU;DAT
+        low = self.clock_low()
+        dv = self.data_valid(master, falling)
+        i2c_value = low.i2c_value - dv.i2c_value
+        nominal = low.nominal - dv.nominal
+        if falling:
+            worst_case = i2c_value if master else nominal - (self.max_fall * time_to_fall_to_0_3_vdd)
+        else:
+            worst_case = i2c_value - (self.max_rise - self.sda_risetime) * time_to_rise_to_0_7_vdd
+        return Parameter(i2c_value, nominal, worst_case)
 
     def data_valid(self, master: bool, falling: bool):
         data_hold = self.data_hold(master, falling)
@@ -92,10 +100,6 @@ class TeensyConfig:
         i2c_value = data_hold.i2c_value + adjustment
         worst_case = data_hold.worst_case + adjustment
         return Parameter(i2c_value, nominal, worst_case)
-
-    def data_valid_rise(self):
-        # Comes out a little low as it doesn't include the rise time from 0 to Vil
-        return self.scale * (self.DATAVD + 1 + self.SDA_RISETIME)
 
     def start_hold(self):
         nominal = (self.SETHOLD + 1) * self.scale

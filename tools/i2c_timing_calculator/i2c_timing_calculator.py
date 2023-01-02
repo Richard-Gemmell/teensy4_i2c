@@ -55,31 +55,6 @@ master_example_1M_config_2 = TeensyConfig(
     clkhi=11, clklo=15)
 
 
-master_100k_config = TeensyConfig(
-    name="Master 100k",
-
-    # scl_risetime=490, sda_risetime=490,
-    # scl_risetime=1100, sda_risetime=32,
-    # scl_risetime=1384, sda_risetime=32,
-    # scl_risetime=434, sda_risetime=32,
-    # scl_risetime=182, sda_risetime=32,
-    # scl_risetime=32, sda_risetime=32,
-
-    # scl_risetime=32, sda_risetime=1480,
-    # scl_risetime=32, sda_risetime=1380,
-    # scl_risetime=32, sda_risetime=1158,
-    # scl_risetime=32, sda_risetime=770,
-    scl_risetime=32, sda_risetime=440,
-    # scl_risetime=32, sda_risetime=179,
-    # scl_risetime=32, sda_risetime=31,
-
-    falltime=8, max_fall=300, max_rise=1100,
-    frequency=24, prescale=1,
-    datavd=25, sethold=63, busidle=6,
-    filtscl=5, filtsda=5,
-    clkhi=55, clklo=59)
-
-
 def print_range(description, range):
     print(f"{description} {range[0]:.0f} ({range[1]:.0f} to {range[2]:.0f}) nanos")
 
@@ -97,15 +72,19 @@ def print_master_timings(config: TeensyConfig):
     # print_parameter(f"START Hold Time (tHD:STA)", config.start_hold())
     # print_parameter("Setup Repeated START (tSU:STA)", config.setup_repeated_start())
     # print_parameter("STOP Setup Time (tSU:STO)", config.stop_setup())
-    # print(f"Data Setup Time (tSU:DAT) {config.data_setup():.0f} nanos")
-    # print_parameter(f"Data Hold Time (tHD:DAT) - master 1->0", config.data_hold(master=True, falling=True))
-    # print_parameter(f"Data Hold Time (tHD:DAT) - master 0->1", config.data_hold(master=True, falling=False))
-    # print_parameter(f"Data Hold Time (tHD:DAT) - slave 1->0", config.data_hold(master=False, falling=True))
-    # print_parameter(f"Data Hold Time (tHD:DAT) - master 0->1", config.data_hold(master=False, falling=False))
-    print_parameter(f"Data Valid Time (tHD:DAT) - master 1->0", config.data_valid(master=True, falling=True))
-    print_parameter(f"Data Valid Time (tHD:DAT) - master 0->1", config.data_valid(master=True, falling=False))
-    print_parameter(f"Data Valid Time (tHD:DAT) - slave 1->0", config.data_valid(master=False, falling=True))
-    print_parameter(f"Data Valid Time (tHD:DAT) - master 0->1", config.data_valid(master=False, falling=False))
+    # print_parameter(f"Data Hold Time (tHD:DAT) - Master 1->0", config.data_hold(master=True, falling=True))
+    # print_parameter(f"Data Hold Time (tHD:DAT) - Master 0->1", config.data_hold(master=True, falling=False))
+    # print_parameter(f"Data Hold Time (tHD:DAT) - Slave 1->0", config.data_hold(master=False, falling=True))
+    # print_parameter(f"Data Hold Time (tHD:DAT) - Slave 0->1", config.data_hold(master=False, falling=False))
+    # print_parameter(f"Data Valid Time (tHD:DAT) - Master 1->0", config.data_valid(master=True, falling=True))
+    # print_parameter(f"Data Valid Time (tHD:DAT) - Master 0->1", config.data_valid(master=True, falling=False))
+    # print_parameter(f"Data Valid Time (tHD:DAT) - Slave 1->0", config.data_valid(master=False, falling=True))
+    # print_parameter(f"Data Valid Time (tHD:DAT) - Slave 0->1", config.data_valid(master=False, falling=False))
+    # print_parameter(f"Data Setup Time (tSU:DAT) - Master 1->0", config.data_setup(master=True, falling=True))
+    # print_parameter(f"Data Setup Time (tSU:DAT) - Master 0->1", config.data_setup(master=True, falling=False))
+    print_parameter(f"Data Setup Time (tSU:DAT) - Slave 1->0", config.data_setup(master=False, falling=True))
+    # print_parameter(f"Data Setup Time (tSU:DAT) - Slave 0->1", config.data_setup(master=False, falling=False))
+
     # print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
     # print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
     # print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
@@ -113,6 +92,30 @@ def print_master_timings(config: TeensyConfig):
     # print_parameter(f"Bus Free Time (tBUF)", config.bus_free())
     print()
 
+
+master_100k_config = TeensyConfig(
+    name="Master 100k",
+
+    # scl_risetime=490, sda_risetime=490,
+    # scl_risetime=1100, sda_risetime=32,
+    # scl_risetime=1384, sda_risetime=32,
+    # scl_risetime=434, sda_risetime=32,
+    # scl_risetime=182, sda_risetime=32,
+    # scl_risetime=32, sda_risetime=32,
+
+    scl_risetime=32, sda_risetime=1446,
+    # scl_risetime=32, sda_risetime=1380,
+    # scl_risetime=32, sda_risetime=1158,
+    # scl_risetime=32, sda_risetime=770,
+    # scl_risetime=32, sda_risetime=446,
+    # scl_risetime=32, sda_risetime=179,
+    # scl_risetime=32, sda_risetime=32,
+
+    falltime=8, max_fall=300, max_rise=1100,
+    frequency=24, prescale=1,
+    datavd=25, sethold=63, busidle=6,
+    filtscl=5, filtsda=5,
+    clkhi=55, clklo=59)
 
 if __name__ == '__main__':
     master_config = master_100k_config
