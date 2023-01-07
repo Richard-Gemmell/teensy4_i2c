@@ -34,6 +34,57 @@ static uint8_t empty_buffer[0];
 I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
 }
 
+struct I2CMasterConfiguration {
+    uint8_t PRESCALE;
+    uint8_t CLKHI;
+    uint8_t CLKLO;
+    uint8_t DATAVD;
+    uint8_t SETHOLD;
+    uint8_t FILTSDA;
+    uint8_t FILTSCL;
+    uint8_t BUSIDLE;
+    uint16_t PINLOW;
+};
+
+struct I2CSlaveConfiguration {
+    uint8_t DATAVD;
+    uint8_t FILTSDA;
+    uint8_t FILTSCL;
+    uint8_t CLKHOLD;
+};
+
+const I2CMasterConfiguration DefaultStandardModeMasterConfiguration = {
+    .PRESCALE = 1,
+    .CLKHI = 55, .CLKLO = 59,
+    .DATAVD = 25, .SETHOLD = 63,
+    .FILTSDA = 5, .FILTSCL = 5,
+    .BUSIDLE = 6, .PINLOW = CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1
+};
+
+const I2CMasterConfiguration DefaultFastModeMasterConfiguration = {
+    .PRESCALE = 0,
+    .CLKHI = 26, .CLKLO = 28,
+    .DATAVD = 12, .SETHOLD = 25,
+    .FILTSDA = 2, .FILTSCL = 2,
+    .BUSIDLE = 3, .PINLOW = CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1
+};
+
+const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
+    .PRESCALE = 0,
+    .CLKHI = 9, .CLKLO = 10,
+    .DATAVD = 4, .SETHOLD = 10,
+    .FILTSDA = 1, .FILTSCL = 1,
+    .BUSIDLE = 1, .PINLOW = CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1
+};
+
+const I2CSlaveConfiguration DefaultSlaveConfiguration = {
+    .DATAVD = 0, .FILTSDA = 0, .FILTSCL = 0, .CLKHOLD = 0
+};
+
+//const I2CSlaveConfiguration DefaultSlaveConfiguration = {
+//    .DATAVD = 37, .FILTSDA = 5, .FILTSCL = 5, .CLKHOLD = 0
+//};
+
 // NXP document the pad configuration in AN5078.pdf Rev 0.
 // https://www.nxp.com/docs/en/application-note/AN5078.pdf
 //
@@ -64,6 +115,7 @@ I2CBuffer::I2CBuffer() : buffer(empty_buffer) {
 // Suggested Value: disabled. Add IOMUXC_PAD_SRE to enable
 //
 #define PAD_CONTROL_CONFIG (IOMUXC_PAD_ODE | IOMUXC_PAD_DSE(2) | IOMUXC_PAD_SPEED(0) | IOMUXC_PAD_HYS)
+
 I2CDriver::I2CDriver()
     : pad_control_config(PAD_CONTROL_CONFIG), pullup_config(InternalPullup::enabled_22k_ohm) {
 }
@@ -380,31 +432,23 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 
 // Supports 100 kHz, 400 kHz and 1 MHz modes.
 void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
+    I2CMasterConfiguration timings;
     if (frequency < 400'000) {
         // Use Standard Mode - up to 100 kHz
-        port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
-                      LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(63);
-        port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(1);
-        port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
-                       LPI2C_MCFGR2_BUSIDLE(6);
-        port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1);
+        timings = DefaultStandardModeMasterConfiguration;
     } else if (frequency < 1'000'000) {
         // Use Fast Mode - up to 400 kHz
-        port->MCCR0 = LPI2C_MCCR0_CLKHI(26) | LPI2C_MCCR0_CLKLO(28) |
-                      LPI2C_MCCR0_DATAVD(12) | LPI2C_MCCR0_SETHOLD(25);
-        port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
-        port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(2) | LPI2C_MCFGR2_FILTSCL(2) |
-                       LPI2C_MCFGR2_BUSIDLE(3);
-        port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1);
+        timings = DefaultFastModeMasterConfiguration;
     } else {
         // Use Fast Mode Plus - up to 1 MHz
-        port->MCCR0 = LPI2C_MCCR0_CLKHI(9) | LPI2C_MCCR0_CLKLO(10) |
-                      LPI2C_MCCR0_DATAVD(4) | LPI2C_MCCR0_SETHOLD(10);
-        port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(0);
-        port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(1) | LPI2C_MCFGR2_FILTSCL(1) |
-                       LPI2C_MCFGR2_BUSIDLE(1);
-        port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 24 / 256 + 1);
+        timings = DefaultFastModePlusMasterConfiguration;
     }
+    port->MCCR0 = LPI2C_MCCR0_CLKHI(timings.CLKHI) | LPI2C_MCCR0_CLKLO(timings.CLKLO) |
+                  LPI2C_MCCR0_DATAVD(timings.DATAVD) | LPI2C_MCCR0_SETHOLD(timings.SETHOLD);
+    port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(timings.PRESCALE);
+    port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(timings.FILTSDA) | LPI2C_MCFGR2_FILTSCL(timings.FILTSCL) |
+                   LPI2C_MCFGR2_BUSIDLE(timings.BUSIDLE);
+    port->MCFGR3 = LPI2C_MCFGR3_PINLOW(timings.PINLOW);
     port->MCCR1 = port->MCCR0;
 }
 
@@ -438,26 +482,23 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     // Set the Slave Address
     port->SAMR = samr;
 
+    // Use the same timings for all modes
+    const I2CSlaveConfiguration timings = DefaultSlaveConfiguration;
+
     // Data Valid Time. Determines how long slave waits before changing
     // SDA value after the previous clock pulse in preparation for the next clock.
     // Affects slave ACK, NACK and data bits. (tVD:DAT, tVD;ACK in I2C Spec)
     // Requires SCR[FILTEN] to be set. Affected by SCR[FILTDZ]. Disabled if high speed mode is enabled.
-    // TODO: Value depends on clock speed. 100k values won't work at higher clock speeds
-//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(37); // For 100 kHz clock
-//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(6); // For 400 kHz clock
-//    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(2); // For 1 MHz clock
+    port->SCFGR2 = LPI2C_SCFGR2_DATAVD(timings.DATAVD);
 
     // Glitch Filter. Suppresses noise.
     // Rules for enabling/disabling are the same as for the data valid time. See above.
     // Note that FILTSDA must be >= FILTSCL
     // Seems to hang the Teensy if LPI2C_SCFGR2_FILTSDA is 5.
-    // TODO: Value depends on clock speed. 100k values won't work at higher clock speeds
-//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(10) | LPI2C_SCFGR2_FILTSCL(10); // For 100 kHz clock
-//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(4) | LPI2C_SCFGR2_FILTSCL(4); // For 400 kHz clock
-//    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(1) | LPI2C_SCFGR2_FILTSCL(1); // For 1 MHz clock
+    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_FILTSDA(timings.FILTSDA) | LPI2C_SCFGR2_FILTSCL(timings.FILTSCL);
 
-    // Clock Hold Time. Sets the mimimum clock hold time when clock stretching
-//     port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_CLKHOLD(5);
+    // Clock Hold Time. Sets the minimum clock hold time when clock stretching
+    port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_CLKHOLD(timings.CLKHOLD);
 
     // Set up interrupts
     attachInterruptVector(config.irq, isr);

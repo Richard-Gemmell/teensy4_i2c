@@ -25,12 +25,6 @@ namespace signals {
 // `tools/i2c_timing_calculator/profile_test` are finer grained.
 class TimingsMeetDesignTest : public LoopbackTestBase {
 public:
-    // These 2 byte values contain all four bit transitions 0->0, 0->1, 1->1 and 1->0
-    // The first and last bit of each byte affect the edges for ACKs
-    // so one byte is the inverse of the other.
-    const static uint8_t BYTE_A = 0x58; // 0101 1000
-    const static uint8_t BYTE_B = 0xA7; // 1010 0111
-    const static uint8_t ADDRESS = 0x53;
     static I2CMaster* master;
     static I2CSlave* slave;
     static uint32_t frequency;
