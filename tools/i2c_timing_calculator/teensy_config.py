@@ -44,6 +44,9 @@ class TeensyConfig:
         self.CLKHI = clkhi
         self.CLKLO = clklo
 
+    def __repr__(self) -> str:
+        return self.name
+
     def pre_rise(self, rise_time):
         return rise_time * 0.42
 
