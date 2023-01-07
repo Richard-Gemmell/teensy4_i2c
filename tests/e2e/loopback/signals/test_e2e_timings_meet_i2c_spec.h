@@ -17,7 +17,7 @@ namespace e2e {
 namespace loopback {
 namespace signals {
 
-class MasterMeetsI2CSpecificationTest : public LoopbackTestBase {
+class TimingsMeetI2CSpecificationTest : public LoopbackTestBase {
 public:
     const bool FAST_SDA = true;
     const bool SLOW_SDA = false;
@@ -365,18 +365,18 @@ public:
         test_suite("1 MHz - Slow Rise Times", SLOW_SDA, SLOW_SCL);
     }
 
-    MasterMeetsI2CSpecificationTest() : LoopbackTestBase(__FILE__) {};
+    TimingsMeetI2CSpecificationTest() : LoopbackTestBase(__FILE__) {};
 };
 
 // Define statics
-I2CMaster* e2e::loopback::signals::MasterMeetsI2CSpecificationTest::master;
-I2CSlave* e2e::loopback::signals::MasterMeetsI2CSpecificationTest::slave;
-uint32_t e2e::loopback::signals::MasterMeetsI2CSpecificationTest::frequency;
-bool e2e::loopback::signals::MasterMeetsI2CSpecificationTest::fast_sda_rise_time;
-bool e2e::loopback::signals::MasterMeetsI2CSpecificationTest::fast_scl_rise_time;
-uint32_t e2e::loopback::signals::MasterMeetsI2CSpecificationTest::sda_rise_time;
-uint32_t e2e::loopback::signals::MasterMeetsI2CSpecificationTest::scl_rise_time;
-common::i2c_specification::I2CParameters e2e::loopback::signals::MasterMeetsI2CSpecificationTest::parameters;
+I2CMaster* e2e::loopback::signals::TimingsMeetI2CSpecificationTest::master;
+I2CSlave* e2e::loopback::signals::TimingsMeetI2CSpecificationTest::slave;
+uint32_t e2e::loopback::signals::TimingsMeetI2CSpecificationTest::frequency;
+bool e2e::loopback::signals::TimingsMeetI2CSpecificationTest::fast_sda_rise_time;
+bool e2e::loopback::signals::TimingsMeetI2CSpecificationTest::fast_scl_rise_time;
+uint32_t e2e::loopback::signals::TimingsMeetI2CSpecificationTest::sda_rise_time;
+uint32_t e2e::loopback::signals::TimingsMeetI2CSpecificationTest::scl_rise_time;
+common::i2c_specification::I2CParameters e2e::loopback::signals::TimingsMeetI2CSpecificationTest::parameters;
 
 } // signals
 } // loopback

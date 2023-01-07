@@ -32,7 +32,7 @@ public:
         Loopback::disable_all_pullups();
         Loopback::enable_pullup(pullup_pin);
         auto result = line_test::LineTester::TestLine(line_pin);
-        uint32_t rise_time = result.get_estimated_rise_time().min();
+        uint32_t rise_time = result.get_estimated_rise_time().average();
 //        Serial.print(msg);result.get_estimated_rise_time().printTo(Serial);
         return rise_time;
     }
