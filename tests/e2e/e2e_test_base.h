@@ -13,6 +13,8 @@
 #include <bus_trace/bus_event.h>
 #include <bus_trace/bus_trace.h>
 #include <bus_trace/bus_recorder.h>
+#include <analysis/i2c_timing_analyser.h>
+#include <analysis/i2c_timing_analysis.h>
 
 namespace e2e {
 
@@ -23,6 +25,13 @@ public:
     // SDA on pin 21 and SCL on pin 20 works Ok.
     constexpr static uint32_t PIN_SNIFF_SDA = 21;   // GPIO1 and GPIO6 bit 27
     constexpr static uint32_t PIN_SNIFF_SCL = 20;   // GPIO1 and GPIO6 bit 26
+
+    // These 2 byte values contain all four bit transitions 0->0, 0->1, 1->1 and 1->0
+    // The first and last bit of each byte affect the edges for ACKs
+    // so one byte is the inverse of the other.
+    const static uint8_t BYTE_A = 0x58; // 0101 1000
+    const static uint8_t BYTE_B = 0xA7; // 1010 0111
+    const static uint8_t ADDRESS = 0x53;
 
     static bus_trace::BusRecorder recorder;
     static common::hal::TeensyClock clock;
@@ -78,6 +87,73 @@ public:
         slave.stop_listening();
         master.end();
         recorder.stop();
+    }
+
+    static analysis::I2CTimingAnalysis analyse_read_transaction(
+            I2CMaster* master, I2CSlave* slave,
+            uint32_t frequency,
+            uint32_t sda_rise_time, uint32_t scl_rise_time) {
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+
+        const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
+        slave->set_transmit_buffer(tx_buffer, sizeof(tx_buffer));
+        uint8_t rx_buffer[] = {0x00, 0x00};
+
+        // Master reads from slave
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [master, &rx_buffer](){
+            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
+        });
+//        print_detailed_trace(trace);
+        // Ensure the read succeeded
+        TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
+
+        bus_trace::BusTrace normalised = trace.to_message(false, true);
+        return analysis::I2CTimingAnalyser::analyse(normalised, sda_rise_time, scl_rise_time);
+    }
+
+    static analysis::I2CTimingAnalysis analyse_write_transaction(
+        I2CMaster* master, I2CSlave* slave,
+        uint32_t frequency,
+        uint32_t sda_rise_time, uint32_t scl_rise_time) {
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+
+        const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
+        uint8_t rx_buffer[] = {0x00, 0x00};
+        slave->set_receive_buffer(rx_buffer, sizeof(rx_buffer));
+
+        // Master writes to the slave
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [master, &tx_buffer](){
+            master->write_async(ADDRESS, tx_buffer, sizeof(tx_buffer), true);
+        });
+//        print_detailed_trace(trace);
+        // Ensure the write succeeded
+        TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
+
+        return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
+    }
+
+    static analysis::I2CTimingAnalysis analyse_repeated_read_transaction(
+        I2CMaster* master, I2CSlave* slave,
+        uint32_t frequency,
+        uint32_t sda_rise_time, uint32_t scl_rise_time,
+        bool stop_after_first_read = false) {
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+
+        const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};
+        slave->set_transmit_buffer(tx_buffer, sizeof(tx_buffer));
+        uint8_t rx_buffer[] = {0x00, 0x00};
+
+        // Master reads from slave
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [master, &rx_buffer, &stop_after_first_read](){
+            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), stop_after_first_read);
+            finish(*master);
+            master->read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
+        });
+//        print_detailed_trace(trace);
+        // Ensure the read succeeded
+        TEST_ASSERT_EQUAL_UINT8_ARRAY(tx_buffer, rx_buffer, sizeof(tx_buffer));
+
+        return analysis::I2CTimingAnalyser::analyse(trace, sda_rise_time, scl_rise_time);
     }
 
     static void print_detailed_trace(const bus_trace::BusTrace& trace) {
