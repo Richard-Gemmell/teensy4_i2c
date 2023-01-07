@@ -53,6 +53,8 @@ struct I2CSlaveConfiguration {
     uint8_t CLKHOLD;
 };
 
+//#define USE_OLD_CONFIG
+#ifdef USE_OLD_CONFIG
 const I2CMasterConfiguration DefaultStandardModeMasterConfiguration = {
     .PRESCALE = 1,
     .CLKHI = 55, .CLKLO = 59,
@@ -80,10 +82,42 @@ const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
 const I2CSlaveConfiguration DefaultSlaveConfiguration = {
     .DATAVD = 0, .FILTSDA = 0, .FILTSCL = 0, .CLKHOLD = 0
 };
+#else
+const I2CMasterConfiguration DefaultStandardModeMasterConfiguration = {
+    // Multiply by old value by 0.625
+    .PRESCALE = 3,
+    .CLKHI = 35, .CLKLO = 37,
+    .DATAVD = 16, .SETHOLD = 39,
+    .FILTSDA = 3, .FILTSCL = 3,
+    .BUSIDLE = 4, .PINLOW = CLOCK_STRETCH_TIMEOUT * 15 / (2 * 256) + 1
+};
+
+const I2CMasterConfiguration DefaultFastModeMasterConfiguration = {
+    // Multiply by old value by 1.25
+    .PRESCALE = 1,
+    .CLKHI = 33, .CLKLO = 35,
+    .DATAVD = 15, .SETHOLD = 32,
+    .FILTSDA = 3, .FILTSCL = 3,
+    .BUSIDLE = 4, .PINLOW = CLOCK_STRETCH_TIMEOUT * 30 / 256 + 1
+};
+
+const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
+    // Multiply by old value by 2.5
+    .PRESCALE = 0,
+    .CLKHI = 23, .CLKLO = 25,
+    .DATAVD = 10, .SETHOLD = 25,
+    .FILTSDA = 3, .FILTSCL = 3,
+    .BUSIDLE = 3, .PINLOW = CLOCK_STRETCH_TIMEOUT * 60 / 256 + 1
+};
+
+const I2CSlaveConfiguration DefaultSlaveConfiguration = {
+    .DATAVD = 0, .FILTSDA = 0, .FILTSCL = 0, .CLKHOLD = 0
+};
 
 //const I2CSlaveConfiguration DefaultSlaveConfiguration = {
 //    .DATAVD = 37, .FILTSDA = 5, .FILTSCL = 5, .CLKHOLD = 0
 //};
+#endif
 
 // NXP document the pad configuration in AN5078.pdf Rev 0.
 // https://www.nxp.com/docs/en/application-note/AN5078.pdf
@@ -140,10 +174,13 @@ static void initialise_pin(IMX_RT1060_I2CBase::PinInfo pin, uint32_t pad_control
 }
 
 void initialise_common(IMX_RT1060_I2CBase::Config hardware, uint32_t pad_control_config, InternalPullup pullup) {
-    // Set LPI2C Clock to 24MHz. Required by slaves as well as masters.
+#ifdef USE_OLD_CONFIG
+    // Set LPI2C Clock to 24 MHz. Required by slaves as well as masters.
     CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63)) | CCM_CSCDR2_LPI2C_CLK_SEL;
-    // TODO: Swap to 60 MHz clock use:
-    // CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63));
+#else
+    // Set LPI2C Clock to 60 MHz. Required by slaves as well as masters.
+    CCM_CSCDR2 = (CCM_CSCDR2 & ~CCM_CSCDR2_LPI2C_CLK_PODF(63));
+#endif
     hardware.clock_gate_register |= hardware.clock_gate_mask;
 
     // Setup SDA and SCL pins and registers
