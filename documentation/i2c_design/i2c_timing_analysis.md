@@ -16,10 +16,53 @@ and the [actual values](default_i2c_profile.md) for the I2C parameters
 used in this driver.
 
 # Table of Contents
-TODO: Add ToC
+<!-- TOC -->
+* [I2C Timing on the i.MX RT1062 (Teensy 4)](#i2c-timing-on-the-imx-rt1062-teensy-4)
+* [Table of Contents](#table-of-contents)
+* [References](#references)
+  * [i.MX RT1062](#imx-rt1062-references)
+  * [I2C Specification](#i2c-specification-references)
+* [Symbols and Units](#symbols-and-units)
+  * [Symbols from the Datasheet](#symbols-from-the-datasheet)
+  * [Additional Symbols](#additional-symbols)
+* [Measuring and Comparing Durations](#measuring-and-comparing-durations)
+  * [How the I2C Specification Specifies Durations](#how-the-i2c-specification-specifies-durations)
+  * [How the Datasheet Defines Durations](#how-the-datasheet-defines-durations)
+  * [How the BusRecorder Measures Durations](#how-the-busrecorder-measures-durations)
+  * [How I2CTimingAnalyser Reports Durations](#how-i2ctiminganalyser-reports-durations)
+  * [When the i.MX RT1062 Detects Edges](#when-the-imx-rt1062-detects-edges)
+  * [When Other Devices Detect Edges](#when-other-devices-detect-edges)
+* [i.MX RT 1060 Registers](#imx-rt-1060-registers)
+  * [LPI2C Clock](#lpi2c-clock)
+  * [I2C Master Registers](#i2c-master-registers)
+  * [I2C Slave Registers](#i2c-slave-registers)
+* [I2C Timing Parameters and Calculations](#i2c-timing-parameters-and-calculations)
+  * [Variables Defined in i.MX RT1062 Datasheet](#variables-defined-in-imx-rt1062-datasheet)
+    * [SCALE](#scale)
+    * [SDA_RISETIME](#sda_risetime)
+    * [SCL_RISETIME](#scl_risetime)
+    * [SDA_LATENCY](#sda_latency)
+    * [SCL_LATENCY](#scl_latency)
+  * [SCL Clock Frequency](#scl-clock-frequency)
+    * [f<sub>SCL</sub> SCL Clock Frequency](#fsubsclsub-scl-clock-frequency)
+    * [t<sub>LOW</sub> LOW Period of the SCL Clock](#tsublowsub-low-period-of-the-scl-clock)
+    * [t<sub>HIGH</sub> HIGH Period of the SCL Clock](#tsubhighsub-high-period-of-the-scl-clock)
+  * [Start and Stop Conditions](#start-and-stop-conditions)
+    * [t<sub>SU;STA</sub> Setup Time for a Repeated START Condition](#tsubsustasub-setup-time-for-a-repeated-start-condition)
+    * [t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition](#tsubhdstasub-hold-time-for-a-start-or-repeated-start-condition)
+    * [t<sub>SU;STO</sub> Setup Time for STOP Condition](#tsubsustosub-setup-time-for-stop-condition)
+    * [t<sub>BUF</sub> Bus Free Time Between a STOP and START Condition](#tsubbufsub-bus-free-time-between-a-stop-and-start-condition)
+  * [Data Bits](#data-bits)
+    * [t<sub>SU;DAT</sub> Data Setup Time](#tsubsudatsub-data-setup-time)
+    * [t<sub>HD;DAT</sub> Data Hold Time](#tsubhddatsub-data-hold-time)
+    * [t<sub>VD;DAT</sub> Data Valid Time](#tsubvddatsub-data-valid-time)
+  * [ACKs and Spikes](#acks-and-spikes)
+    * [t<sub>VD;ACK</sub> Data Valid Acknowledge Time](#tsubvdacksub-data-valid-acknowledge-time)
+    * [t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter](#tsubspsub-pulse-width-of-spikes-that-must-be-suppressed-by-the-input-filter)
+<!-- TOC -->
 
 # References
-## i.MX RT1062
+## i.MX RT1062 References
 Information on the i.MX RT1062 is taken from the datasheet;
 [i.MX RT1060 Processor Reference Manual, Rev. 3 - 07/2021](../references/IMXRT1060RM_rev3.pdf).
 References to this datasheet are given like this `47.5.1.24 Slave Configuration 2 (SCFGR2)`.
@@ -27,7 +70,7 @@ References to this datasheet are given like this `47.5.1.24 Slave Configuration 
 Relevant sections:
 * `Chapter 47 - Low Power Inter-Integrated Circuit (LPI2C)`
 
-## I2C Specification
+## I2C Specification References
 Details of the I2C Specification are taken from the spec itself.
 [I<sup>2</sup>C-bus specification and user manual Rev. 6 - 4 April 2014](../references/UM10204.v6.pdf)
 References to the spec are given like this

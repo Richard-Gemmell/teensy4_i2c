@@ -91,6 +91,7 @@ class TestDefaultSlaveProfile(TestCase):
             print()
 
         self.for_all_modes("log times", test)
+
     def for_all_modes(self, message, test):
         for (mode, spec) in [
             [self.standard_mode, standard_mode_spec],

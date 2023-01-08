@@ -41,11 +41,14 @@ In this case, the driver meets the I2C Specification even when SCL has the maxim
 allowed rise time and SDA has a fall time of 0 nanoseconds.
 
 ### Supported I2C Modes
-| I2C Mode       | Speed   | Min Rise Time | Max Rise Time | Min Fall Time | Max Fall Time |
-|----------------|---------|---------------|---------------|---------------|---------------|
-| Standard-mode  | 100 kHz | 30 ns         | 1000 ns       | 0             | 300           |
-| Fast-mode      | 400 kHz | 20 ns         | 300 ns        | 0             | 300           |
-| Fast-mode Plus | 1 MHz   | 10 ns         | 120 ns        | 0             | 120           |
+| I2C Mode       | Speed   | Min Rise Time | Max Rise Time | Min Fall Time | Max Fall Time (1) |
+|----------------|---------|---------------|---------------|---------------|-------------------|
+| Standard-mode  | 100 kHz | 30 ns         | 1000 ns       | 0             | 300               |
+| Fast-mode      | 400 kHz | 20 ns         | 300 ns        | 0             | 300               |
+| Fast-mode Plus | 1 MHz   | 10 ns         | 120 ns        | 0             | 120               |
+
+1. The Teensy controls the fall time of SCL when it's the master. In this case
+   the maximum fall time is 10 nanoseconds.
 
 ### Test Conditions
 The driver will be tested with:
@@ -54,6 +57,17 @@ The driver will be tested with:
 * fall time (t<sub>f</sub>) of approx 6 nanoseconds
 
 ## Design Decisions
+### Master Mode Timings
+#### f<sub>SCL</sub> SCL Clock Frequency
+* the clock frequency must meet the I2C with the [minimum rise and fall times](#supported-i2c-modes) 
+
+#### t<sub>LOW</sub> LOW Period of the SCL Clock
+* the low period should be larger than the minimum period in order to increase
+  t<sub>SU;DAT</sub>
+
+#### t<sub>HIGH</sub> HIGH Period of the SCL Clock
+* no additional requirements
+
 ### Slave Mode Timings
 By default, slave mode uses the same set of timing parameters for all I2C modes.
 This removes the need for the developer to specify the bus mode.

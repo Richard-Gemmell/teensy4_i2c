@@ -11,7 +11,7 @@ class Range:
 class I2CSpecification:
     # output_fall_time: Range
     spike_width: Range
-    # frequency: Range
+    frequency: Range
     # start_hold_time: Range
     scl_low_time: Range
     scl_high_time: Range
@@ -30,7 +30,7 @@ UNLIMITED = 1_000_000
 standard_mode_spec = I2CSpecification(
     # output_fall_time=Range(0, 250),
     spike_width=Range(0, UNLIMITED),  # Not applicable for standard mode
-    # frequency=Range(0, 100_000),
+    frequency=Range(0, 100_000),
     # start_hold_time=Range(4_000, UNLIMITED),
     scl_low_time=Range(4_700, UNLIMITED),
     scl_high_time=Range(4_000, UNLIMITED),
@@ -47,7 +47,7 @@ standard_mode_spec = I2CSpecification(
 fast_mode_spec = I2CSpecification(
     # output_fall_time=Range(12, 250),
     spike_width=Range(50, UNLIMITED),
-    # frequency=Range(0, 400_000),
+    frequency=Range(0, 400_000),
     # start_hold_time=Range(600, UNLIMITED),
     scl_low_time=Range(1_300, UNLIMITED),
     scl_high_time=Range(600, UNLIMITED),
@@ -64,7 +64,7 @@ fast_mode_spec = I2CSpecification(
 fast_mode_plus_spec = I2CSpecification(
     # output_fall_time=Range(12,120),
     spike_width=Range(50, UNLIMITED),
-    # frequency=Range(0,1_000_000),
+    frequency=Range(0, 1_000_000),
     # start_hold_time=Range(260,UNLIMITED),
     scl_low_time=Range(500, UNLIMITED),
     scl_high_time=Range(260, UNLIMITED),

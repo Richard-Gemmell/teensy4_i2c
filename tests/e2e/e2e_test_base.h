@@ -93,6 +93,7 @@ public:
             I2CMaster* master, I2CSlave* slave,
             uint32_t frequency,
             uint32_t sda_rise_time, uint32_t scl_rise_time) {
+        delayMicroseconds(100); // Necessary to avoid intermittent failures
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
 
         const uint8_t tx_buffer[] = {BYTE_A, BYTE_B};

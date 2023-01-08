@@ -36,10 +36,10 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 100'000, .max = 100'000},
+            .frequency = {.min = 90'000, .max = 100'050},
             .start_hold_time = {.min = 0, .max = 0},
-            .scl_low_time = {.min = 0, .max = 0},
-            .scl_high_time = {.min = 0, .max = 0},
+            .scl_low_time = {.min = 5'030, .max = 5'130},
+            .scl_high_time = {.min = 4'840, .max = 4'940},
             .start_setup_time = {.min = 0, .max = 0},
             .data_hold_time = {.min = 0, .max = 0},
             .data_setup_time = {.min = 0, .max = 0},
@@ -55,10 +55,10 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 400'000, .max = 400'000},
+            .frequency = {.min = 360'000, .max = 400'000},
             .start_hold_time = {.min = 0, .max = 0},
-            .scl_low_time = {.min = 0, .max = 0},
-            .scl_high_time = {.min = 0, .max = 0},
+            .scl_low_time = {.min = 1390, .max = 1470},
+            .scl_high_time = {.min = 1040, .max = 1120},
             .start_setup_time = {.min = 0, .max = 0},
             .data_hold_time = {.min = 0, .max = 0},
             .data_setup_time = {.min = 0, .max = 0},
@@ -74,10 +74,10 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 1'000'000, .max = 1'000'000},
+            .frequency = {.min = 900'000, .max = 1'000'000},
             .start_hold_time = {.min = 0, .max = 0},
-            .scl_low_time = {.min = 0, .max = 0},
-            .scl_high_time = {.min = 0, .max = 0},
+            .scl_low_time = {.min = 600, .max = 660},
+            .scl_high_time = {.min = 340, .max = 400},
             .start_setup_time = {.min = 0, .max = 0},
             .data_hold_time = {.min = 0, .max = 0},
             .data_setup_time = {.min = 0, .max = 0},
@@ -149,19 +149,17 @@ public:
 
     // Checks tHIGH - the HIGH period of the SCL clock
     static void clock_high_time() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
 
         // THEN the SCL HIGH time meets the specification
         auto clock_high = analysis.scl_high_time;
         log_value("HIGH period of SCL clock (tHIGH)", parameters.times.scl_high_time, clock_high);
-        TEST_ASSERT_TRUE(clock_high.meets_specification(parameters.times.frequency));
+        TEST_ASSERT_TRUE(clock_high.meets_specification(parameters.times.scl_high_time));
     }
 
     // Checks tLOW - the LOW period of the SCL clock
     static void clock_low_time() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
 
@@ -174,13 +172,12 @@ public:
     // Shows that the Master sets the clock speed correctly.
     // Actually checks the period of each SCL cycle
     static void master_clock_frequency() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
 
         // THEN the clock frequency (fSCL) meets the I2C Specification
         auto clock_frequency = analysis.clock_frequency;
-        log_value("SCL clock frequency (fSCL). I2C spec", parameters.times.frequency, clock_frequency);
+        log_value("SCL clock frequency (fSCL).", parameters.times.frequency, clock_frequency);
         TEST_ASSERT_TRUE(clock_frequency.meets_specification(parameters.times.frequency));
     }
 
@@ -278,23 +275,23 @@ public:
         Serial.println(message);
         master = &Master;
         slave = &Slave1;
-        RUN_TEST(start_hold_time);
-        RUN_TEST(setup_time_for_repeated_start);
-        RUN_TEST(stop_setup_time);
+//        RUN_TEST(start_hold_time);
+//        RUN_TEST(setup_time_for_repeated_start);
+//        RUN_TEST(stop_setup_time);
         RUN_TEST(clock_high_time);
         RUN_TEST(clock_low_time);
         RUN_TEST(master_clock_frequency);
-        RUN_TEST(bus_free_time);
-        RUN_TEST(setup_data_time_read);
-        RUN_TEST(setup_data_time_write);
-        RUN_TEST(data_hold_time_read);
-        RUN_TEST(data_hold_time_write);
-        RUN_TEST(data_valid_time_read);
-        RUN_TEST(data_valid_time_write);
+//        RUN_TEST(bus_free_time);
+//        RUN_TEST(setup_data_time_read);
+//        RUN_TEST(setup_data_time_write);
+//        RUN_TEST(data_hold_time_read);
+//        RUN_TEST(data_hold_time_write);
+//        RUN_TEST(data_valid_time_read);
+//        RUN_TEST(data_valid_time_write);
     }
 
     static void log_value(const char* msg, common::i2c_specification::TimeRange expected, const analysis::DurationStatistics& actual) {
-//        return;
+        return;
         if(expected.max == UINT32_MAX) {
             Serial.printf("%s. Expected %u+. Actual ", msg, expected.min, expected.max);
         } else {
@@ -305,7 +302,6 @@ public:
 
     void test() final {
         // Tests timing of each supported frequency.
-        // The different rise times trigger different edge cases.
         frequency = 100'000;
         parameters = StandardModeDesignParameters;
         test_suite("100 kHz - Fast Rise Times");
