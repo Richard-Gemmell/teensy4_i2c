@@ -111,12 +111,8 @@ const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
 };
 
 const I2CSlaveConfiguration DefaultSlaveConfiguration = {
-    .DATAVD = 0, .FILTSDA = 0, .FILTSCL = 0, .CLKHOLD = 0
+  .DATAVD = 3, .FILTSDA = 6, .FILTSCL = 6, .CLKHOLD = 0
 };
-
-//const I2CSlaveConfiguration DefaultSlaveConfiguration = {
-//    .DATAVD = 37, .FILTSDA = 5, .FILTSCL = 5, .CLKHOLD = 0
-//};
 #endif
 
 // NXP document the pad configuration in AN5078.pdf Rev 0.
@@ -546,8 +542,7 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
 
     // Enable Slave Mode
-    port->SCR = LPI2C_SCR_SEN;
-//    port->SCR = LPI2C_SCR_SEN | LPI2C_SCR_FILTEN;
+    port->SCR = LPI2C_SCR_SEN | LPI2C_SCR_FILTEN;
 }
 
 inline void IMX_RT1060_I2CSlave::stop_listening() {

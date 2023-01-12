@@ -5,6 +5,8 @@ from i2c_timing_calculator.profile_test.i2c_specification import fast_mode_plus_
 from i2c_timing_calculator.teensy_config import TeensyConfig, Parameter
 
 
+# This test proves that default Slave configuration works with a Master
+# that has tight timings.
 class TestDefaultSlaveProfile(TestCase):
     bus_recorder_resolution = 140
     frequency = 60

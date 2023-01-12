@@ -41,8 +41,8 @@ public:
             .scl_low_time = {.min = 5'030, .max = 5'130},
             .scl_high_time = {.min = 4'840, .max = 4'940},
             .start_setup_time = {.min = 0, .max = 0},
-            .data_hold_time = {.min = 0, .max = 0},
-            .data_setup_time = {.min = 0, .max = 0},
+            .data_hold_time = {.min = 170, .max = 1'000'000}, // Min determined by Slave. Max determined by Master.
+            .data_setup_time = {.min = 1, .max = 4'900}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
@@ -60,8 +60,8 @@ public:
             .scl_low_time = {.min = 1390, .max = 1470},
             .scl_high_time = {.min = 1040, .max = 1120},
             .start_setup_time = {.min = 0, .max = 0},
-            .data_hold_time = {.min = 0, .max = 0},
-            .data_setup_time = {.min = 0, .max = 0},
+            .data_hold_time = {.min = 170, .max = 1'000'000}, // Min determined by Slave. Max determined by Master.
+            .data_setup_time = {.min = 1, .max = 1'250}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
@@ -79,8 +79,8 @@ public:
             .scl_low_time = {.min = 600, .max = 660},
             .scl_high_time = {.min = 340, .max = 400},
             .start_setup_time = {.min = 0, .max = 0},
-            .data_hold_time = {.min = 0, .max = 0},
-            .data_setup_time = {.min = 0, .max = 0},
+            .data_hold_time = {.min = 170, .max = 1'000'000}, // Min determined by Slave. Max determined by Master.
+            .data_setup_time = {.min = 1, .max = 450}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
@@ -194,8 +194,10 @@ public:
     }
 
     // Checks tSU;DAT - data setup time
+    // WARNING: The setup data time is a side effect of the data hold time and the SCL low time.
+    // It's tested here just to make sure nothing changed by accident.
+    // Don't bother testing data valid time (tVD;DAT) as it's even more derivative.
     static void setup_data_time_read() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // Check tSU;DAT when the slave controls SDA to send data to the master
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
@@ -207,8 +209,10 @@ public:
     }
 
     // Checks tSU;DAT - data setup time
+    // WARNING: The setup data time is a side effect of the data hold time and the SCL low time.
+    // It's tested here just to make sure nothing changed by accident.
+    // Don't bother testing data valid time (tVD;DAT) as it's even more derivative.
     static void setup_data_time_write() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // Check tSU;DAT when the master has full control of SDA
         // WHEN the master writes to the slave
         auto analysis = analyse_write_transaction();
@@ -219,9 +223,8 @@ public:
         TEST_ASSERT_TRUE(data_setup_time.meets_specification(parameters.times.data_setup_time));
     }
 
-    // Checks tHD;DAT - data setup time
+    // Checks tHD;DAT - data hold time
     static void data_hold_time_read() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // Check tHD;DAT when the slave controls SDA to send data to the master
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
@@ -232,9 +235,8 @@ public:
         TEST_ASSERT_TRUE(data_hold_time.meets_specification(parameters.times.data_hold_time));
     }
 
-    // Checks tHD;DAT - data setup time
+    // Checks tHD;DAT - data hold time
     static void data_hold_time_write() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // Check tHD;DAT when the master has full control of SDA
         // WHEN the master writes to the slave
         auto analysis = analyse_write_transaction();
@@ -245,53 +247,25 @@ public:
         TEST_ASSERT_TRUE(data_hold_time.meets_specification(parameters.times.data_hold_time));
     }
 
-    // Checks tVD;DAT - data valid time
-    static void data_valid_time_read() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
-        // Check tVD;DAT when the slave controls SDA to send data to the master
-        // WHEN the master reads data from the slave
-        auto analysis = analyse_read_transaction();
-
-        // THEN the data valid time meets the I2C Specification
-        auto actual = analysis.data_valid_time;
-        log_value("Data valid time (tVD;DAT)", parameters.times.data_valid_time, actual);
-        TEST_ASSERT_TRUE(actual.meets_specification(parameters.times.data_valid_time));
-    }
-
-    // Checks tVD;DAT - data valid time
-    static void data_valid_time_write() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
-        // Check tVD;DAT when the master has full control of SDA
-        // WHEN the master writes to the slave
-        auto analysis = analyse_write_transaction();
-
-        // THEN the data valid time meets the I2C Specification
-        auto actual = analysis.data_valid_time;
-        log_value("Data valid time (tVD;DAT)", parameters.times.data_valid_time, actual);
-        TEST_ASSERT_TRUE(actual.meets_specification(parameters.times.data_valid_time));
-    }
-
     static void test_suite(const char* message) {
         Serial.println(message);
         master = &Master;
         slave = &Slave1;
-//        RUN_TEST(start_hold_time);
-//        RUN_TEST(setup_time_for_repeated_start);
-//        RUN_TEST(stop_setup_time);
+        RUN_TEST(start_hold_time);
+        RUN_TEST(setup_time_for_repeated_start);
+        RUN_TEST(stop_setup_time);
         RUN_TEST(clock_high_time);
         RUN_TEST(clock_low_time);
         RUN_TEST(master_clock_frequency);
-//        RUN_TEST(bus_free_time);
-//        RUN_TEST(setup_data_time_read);
-//        RUN_TEST(setup_data_time_write);
-//        RUN_TEST(data_hold_time_read);
-//        RUN_TEST(data_hold_time_write);
-//        RUN_TEST(data_valid_time_read);
-//        RUN_TEST(data_valid_time_write);
+        RUN_TEST(bus_free_time);
+        RUN_TEST(setup_data_time_read);
+        RUN_TEST(setup_data_time_write);
+        RUN_TEST(data_hold_time_read);
+        RUN_TEST(data_hold_time_write);
     }
 
     static void log_value(const char* msg, common::i2c_specification::TimeRange expected, const analysis::DurationStatistics& actual) {
-        return;
+//        return;
         if(expected.max == UINT32_MAX) {
             Serial.printf("%s. Expected %u+. Actual ", msg, expected.min, expected.max);
         } else {
