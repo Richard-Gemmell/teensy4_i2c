@@ -9,8 +9,8 @@ are used.
 [I2C Timing on the i.MX RT1062 (Teensy 4)](i2c_timing_analysis.md) describes
 the various settings and their effect on I2C.
 
-## Goals and Principals
-### Design Goals
+# Goals and Principals
+## Design Goals
 * 100% compatible with the I2C Specification
   * except that fall time (t<sub>f</sub>) is too fast
 * work with any device that also meets the I2C specification
@@ -30,7 +30,7 @@ Note that other configurations could:
 * support higher SCL clock speeds for specific circuits
 * filter out larger noise glitches
 
-### Timing Requirements
+## Timing Requirements
 It's possible that SDA and SCL have very different rise and fall times.
 In every case, the driver will meet the specification with the worst
 possible combination.
@@ -40,7 +40,7 @@ occurs when the SCL rise time is very long and the SDA fall time is very short.
 In this case, the driver meets the I2C Specification even when SCL has the maximum
 allowed rise time and SDA has a fall time of 0 nanoseconds.
 
-### Supported I2C Modes
+## Supported I2C Modes
 | I2C Mode       | Speed   | Min Rise Time | Max Rise Time | Min Fall Time | Max Fall Time (1) |
 |----------------|---------|---------------|---------------|---------------|-------------------|
 | Standard-mode  | 100 kHz | 30 ns         | 1000 ns       | 0             | 300               |
@@ -50,14 +50,60 @@ allowed rise time and SDA has a fall time of 0 nanoseconds.
 1. The Teensy controls the fall time of SCL when it's the master. In this case
    the maximum fall time is 10 nanoseconds.
 
-### Test Conditions
+## Test Conditions
 The driver will be tested with:
 * rise time (t<sub>r</sub>) between 30 ns and 110% of the maximum
   allowed in the spec. e.g. 330 ns for Fast-mode
 * fall time (t<sub>f</sub>) of approx 6 nanoseconds
 
-## Design Decisions
-### Master Mode Timings
+# Design Decisions
+## LPI2C Functional Clock Frequency and PRESCALE
+### Background
+In most cases, the `i.MX RT1062` register settings are multiplied by
+the LPI2C functional clock period and  (2 ^ PRESCALE) to give a time in
+nanoseconds. (PRESCALE is not use for filters).
+
+A higher LPI2C functional clock frequency gives finer control of I2C timing.
+A lower frequency gives a greater maximum range for these values.
+
+### Decision
+Set the clock to 60 MHz in all cases. This is the fastest possible clock
+speed. This decision gives the best precision for Fast-mode Plus (1 MHz).
+
+Set PRESCALE separately for Standard, Fast and Fast-Mode Plus. PRESCALE is set
+to the lowest value that can achieve the required timing values. This maximises
+the precision of each I2C timing value.
+
+## Glitch Filters
+### Background
+The I2C Specification requires devices to suppress spikes (AKA glitches)
+in Fast-mode and Fast-mode Plus. Spike suppression is not required in Standard
+mode.
+
+t<sub>SP</sub> is defined as having min and max values of 0 and 50 nanoseconds.
+I've interpreted this means that all spikes up to 50 nanoseconds must be suppressed.
+(An alternative interpretation would be that spike filters must be less than
+50 nanoseconds in these modes.)
+
+I'm not aware of any disadvantages for filtering larger spikes except that it
+increases the latency of the `i.MX RT1062` I2C implementation.
+
+### Decision
+Spike suppression is provided by the `i.MX RT1062` glitch filter. These are
+controlled by the FILTSCL and FILTSDA registers. These will be enabled in all
+modes.
+
+The glitch filters will be no more than 10% of the nominal clock period. This is
+to ensure that they don't introduce any appreciable latency. There isn't a strong
+reason for picking 10% specifically.
+
+The SDA and SCL filters will have the same value as there's no reason to make
+them different.
+
+## Master Mode Timings
+
+
+### SCL Clock Frequency
 #### f<sub>SCL</sub> SCL Clock Frequency
 * the clock frequency must meet the I2C with the [minimum rise and fall times](#supported-i2c-modes) 
 
@@ -68,10 +114,57 @@ The driver will be tested with:
 #### t<sub>HIGH</sub> HIGH Period of the SCL Clock
 * no additional requirements
 
-### Slave Mode Timings
-By default, slave mode uses the same set of timing parameters for all I2C modes.
-This removes the need for the developer to specify the bus mode.
+### Start and Stop Conditions
+#### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
+#### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
+#### t<sub>SU;STO</sub> Setup Time for STOP Condition
+#### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
 
+### Data Bits
+#### t<sub>HD;DAT</sub> Data Hold Time
+* the nominal value should be > 140 ns to enable the BusRecorder to capture
+  the SCL falling edge and the SDA edge as separate events
+* t<sub>SU;DAT</sub> is more critical than t<sub>HD;DAT</sub> so timings should
+  be more generous to t<sub>HD;DAT</sub>
+
+I've picked the following target values to meet these design requirements. The
+times are very arbitrary.
+
+| Mode           | Nominal Clock Period (ns) | Worst Case Data Hold Time (ns) |
+|----------------|---------------------------|--------------------------------|
+| Standard-mode  | 10,000                    | 1000                           |
+| Fast-mode      | 2,500                     | 400                            |
+| Fast-mode Plus | 1,000                     | 200                            |
+
+#### t<sub>VD;DAT</sub> Data Valid Time
+#### t<sub>SU;DAT</sub> Data Setup Time
+* nominal should be > 140 ns to enable the BusRecorder to capture the SDA edge
+  and the SCL rising edge as separate events
+* the worst case will be at lest 2x the time required by the spec as there's no
+  reason to have a very tight time
+
+### ACKs and Spikes
+#### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
+Requirements are identical to those for t<sub>VD;DAT</sub>.
+
+#### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter
+* the glitch filters will be enabled in all modes
+* the SDA and SCL filters will be set to the same value
+* the glitch filters will be <= 10% of the nominal clock period
+* the maximum glitch filter for a 60 MHz clock is 250 nanoseconds. This limits
+  the size of the glitch filter for standard mode.
+
+| Mode           | Nominal Clock Period (ns) | Glitch Filter (ns) |
+|----------------|---------------------------|--------------------|
+| Standard-mode  | 10,000                    | 250                |
+| Fast-mode      | 2,500                     | 250                |
+| Fast-mode Plus | 1,000                     | 100                |
+
+## Slave Mode Timings
+Slave mode uses the same set of timing parameters for all I2C modes.
+This removes the need for the developer to specify the I2C bus mode.
+
+### Data Bits
 #### t<sub>HD;DAT</sub> Data Hold Time
 * the nominal value must be > the maximum t<sub>f</sub> * 0.603 to avoid breaking
   the spec when SCL falls slowing and SDA falls very fast
@@ -84,45 +177,36 @@ This removes the need for the developer to specify the bus mode.
 #### t<sub>SU;DAT</sub> Data Setup Time
 * should be > 140 ns to enable the BusRecorder to capture the SDA edge and
   the SCL rising edge as separate events
+* I2C Specification must be met with the shortest possible clock low period,
+  t<sub>LOW</sub> not just the clock low period set for the Teensy master mode
 
-### LPI2C Functional Clock Frequency and PRESCALE
-#### Background
-In most cases, the `i.MX RT1062` register settings are multiplied by
-the LPI2C functional clock period and  (2 ^ PRESCALE) to give a time in
-nanoseconds. (PRESCALE is not use for filters).
+### ACKs and Spikes
+#### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
+Requirements are identical to those for t<sub>VD;DAT</sub>.
 
-A higher LPI2C functional clock frequency gives finer control of I2C timing.
-A lower frequency gives a greater maximum range for these values.
-
-#### Decision
-Set the clock to 60 MHz in all cases. This is the fastest possible clock
-speed. This decision gives the best precision for Fast-mode Plus (1 MHz).
-
-Set PRESCALE separately for Standard, Fast and Fast-Mode Plus. PRESCALE is set
-to the lowest value that can achieve the required timing values. This maximises
-the precision of each I2C timing value.
-
-## Target Values for I2C Timing Parameters
-
-## i.MX RT1062 Register Settings Used
+#### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter
+* the glitch filters will be enabled in all modes
+* the SDA and SCL filters will be set to the same value
+* set the glitch filters to 100 nanoseconds as this is 10% of the nominal
+  Fast-mode Plus clock period
 
 ~~~~~~~~~~~~~~~~~
-## SCL Clock Frequency
-### f<sub>SCL</sub> SCL Clock Frequency
-### t<sub>LOW</sub> LOW Period of the SCL Clock
-### t<sub>HIGH</sub> HIGH Period of the SCL Clock
+### SCL Clock Frequency
+#### f<sub>SCL</sub> SCL Clock Frequency
+#### t<sub>LOW</sub> LOW Period of the SCL Clock
+#### t<sub>HIGH</sub> HIGH Period of the SCL Clock
 
-## Start and Stop Conditions
-### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
-### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
-### t<sub>SU;STO</sub> Setup Time for STOP Condition
-### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
+### Start and Stop Conditions
+#### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
+#### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
+#### t<sub>SU;STO</sub> Setup Time for STOP Condition
+#### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
 
-## Data Bits
-### t<sub>SU;DAT</sub> Data Setup Time
-### t<sub>HD;DAT</sub> Data Hold Time
-### t<sub>VD;DAT</sub> Data Valid Time
+### Data Bits
+#### t<sub>SU;DAT</sub> Data Setup Time
+#### t<sub>HD;DAT</sub> Data Hold Time
+#### t<sub>VD;DAT</sub> Data Valid Time
 
-## ACKs and Spikes
-### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
-### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter
+### ACKs and Spikes
+#### t<sub>VD;ACK</sub> Data Valid Acknowledge Time
+#### t<sub>SP</sub> Pulse Width of Spikes that must be Suppressed by the Input Filter

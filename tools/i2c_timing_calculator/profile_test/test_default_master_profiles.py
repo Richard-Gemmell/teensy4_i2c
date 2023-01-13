@@ -7,14 +7,14 @@ from i2c_timing_calculator.teensy_config import TeensyConfig, Parameter
 
 standard_mode_design = I2CSpecification(
     # output_fall_time=Range(0, 250),
-    spike_width=Range(0, UNLIMITED),  # Not applicable for standard mode
+    spike_width=Range(250, 251),
     frequency=Range(90_000, 100_000),
     # start_hold_time=Range(4_000, UNLIMITED),
     scl_low_time=Range(4_850, UNLIMITED),
     scl_high_time=Range(4_150, UNLIMITED),
     start_setup_time=Range(4_700, UNLIMITED),
-    data_hold_time=Range(0, UNLIMITED),
-    data_setup_time=Range(250, UNLIMITED),
+    data_hold_time=Range(1000, 1100),
+    data_setup_time=Range(2000, UNLIMITED),
     # rise_time=Range(0, 1_000),
     # fall_time=Range(0, 300),
     # stop_setup_time=Range(4_000, UNLIMITED),
@@ -24,14 +24,14 @@ standard_mode_design = I2CSpecification(
 
 fast_mode_design = I2CSpecification(
     # output_fall_time=Range(12, 250),
-    spike_width=Range(50, UNLIMITED),
+    spike_width=Range(250, 251),
     frequency=Range(360_000, 400_000),
     # start_hold_time=Range(600, UNLIMITED),
     scl_low_time=Range(1_400, UNLIMITED),
     scl_high_time=Range(700, UNLIMITED),
     start_setup_time=Range(600, UNLIMITED),
-    data_hold_time=Range(0, UNLIMITED),
-    data_setup_time=Range(100, UNLIMITED),
+    data_hold_time=Range(390, 430),
+    data_setup_time=Range(700, UNLIMITED),
     # rise_time=Range(0, 300),
     # fall_time=Range(12, 300),
     # stop_setup_time=Range(600, UNLIMITED),
@@ -41,14 +41,14 @@ fast_mode_design = I2CSpecification(
 
 fast_mode_plus_design = I2CSpecification(
     # output_fall_time=Range(12,120),
-    spike_width=Range(50, UNLIMITED),
+    spike_width=Range(100, 100),
     frequency=Range(900_000, 1_000_000),
     # start_hold_time=Range(260,UNLIMITED),
     scl_low_time=Range(600, UNLIMITED),
     scl_high_time=Range(310, UNLIMITED),
     start_setup_time=Range(260, UNLIMITED),
-    data_hold_time=Range(0, UNLIMITED),
-    data_setup_time=Range(50, UNLIMITED),
+    data_hold_time=Range(200, 225),
+    data_setup_time=Range(250, UNLIMITED),
     # rise_time=Range(0,120),
     # fall_time=Range(12,120),
     # stop_setup_time=Range(260,UNLIMITED),
@@ -58,39 +58,39 @@ fast_mode_plus_design = I2CSpecification(
 
 
 class TestDefaultMasterProfiles(TestCase):
+    fall_time = 8   # The master controls the fall time. We don't need to worry about high fall times.
     bus_recorder_resolution = 140
     frequency = 60
 
     standard_mode: TeensyConfig = TeensyConfig(
         name="100 kHz - Standard-mode",
+        # scl_risetime=30, sda_risetime=30,
         scl_risetime=1100, sda_risetime=1100,
-        falltime=8, max_fall=300, max_rise=1100,
+        falltime=fall_time, max_fall=fall_time, max_rise=1100,
         frequency=frequency, prescale=3,
-        datavd=16, sethold=39, busidle=4,
-        filtscl=3, filtsda=3,
-        clkhi=36, clklo=37)
+        datavd=7, sethold=39, busidle=4,
+        filtscl=15, filtsda=15,
+        clkhi=34, clklo=37)
 
     fast_mode: TeensyConfig = TeensyConfig(
         name="400 kHz - Fast-mode",
-        # scl_risetime=20, sda_risetime=330,
-        # falltime=8, max_fall=300, max_rise=330,
+        # scl_risetime=30, sda_risetime=30,
         scl_risetime=330, sda_risetime=330,
-        falltime=8, max_fall=300, max_rise=330,
+        falltime=fall_time, max_fall=fall_time, max_rise=330,
         frequency=frequency, prescale=1,
-        datavd=15, sethold=32, busidle=4,
-        filtscl=3, filtsda=3,
-        clkhi=29, clklo=42)
+        datavd=11, sethold=32, busidle=4,
+        filtscl=15, filtsda=15,
+        clkhi=23, clklo=42)
 
     fast_mode_plus: TeensyConfig = TeensyConfig(
         name="1 MHz - Fast-mode Plus",
-        # scl_risetime=10, sda_risetime=132,
-        # falltime=8, max_fall=120, max_rise=132,
+        # scl_risetime=30, sda_risetime=30,
         scl_risetime=132, sda_risetime=132,
-        falltime=4, max_fall=120, max_rise=132,
+        falltime=fall_time, max_fall=fall_time, max_rise=132,
         frequency=frequency, prescale=0,
-        datavd=10, sethold=25, busidle=3,
-        filtscl=3, filtsda=3,
-        clkhi=17, clklo=36)
+        datavd=12, sethold=25, busidle=3,
+        filtscl=6, filtsda=6,
+        clkhi=14, clklo=36)
 
     def test_clock_low(self):
         def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
@@ -110,39 +110,43 @@ class TestDefaultMasterProfiles(TestCase):
             self.assert_in_range(config.clock_frequency().worst_case, design.frequency)
         self.for_all_modes("tHIGH", test)
 
-    # def test_spike_filter(self):
-    #     def test(config: TeensyConfig, spec: I2CSpecification):
-    #         # Meets I2C Specification
-    #         self.assert_in_range(config.scl_glitch_filter(), spec.spike_width)
-    #         self.assert_in_range(config.sda_glitch_filter(), spec.spike_width)
-    #         # Meets design requirement
-    #         design_spike_width = 100
-    #         self.assertGreaterEqual(config.scl_glitch_filter(), design_spike_width)
-    #         self.assertGreaterEqual(config.sda_glitch_filter(), design_spike_width)
-    #     self.for_all_modes("tSP", test)
-    #
-    # def test_data_hold_time(self):
-    #     def test(config: TeensyConfig, spec: I2CSpecification):
-    #         # The worst case is the same whether SDA rises or falls
-    #         worst_case = config.data_hold(False, True).worst_case
-    #         nominal = config.data_hold(False, True).nominal
-    #         # Meets I2C Specification
-    #         self.assert_in_range(worst_case, spec.data_hold_time)
-    #         # BusRecorder will record edges separately
-    #         self.assertGreaterEqual(nominal, self.bus_recorder_resolution)
-    #     self.for_all_modes("tHD;DAT", test)
-    #
-    # def test_data_setup_time(self):
-    #     def test(config: TeensyConfig, spec: I2CSpecification):
-    #         # Test with the shortest possible clock low time to get the worst case
-    #         self.assertLessEqual(config.clock_low().worst_case, spec.scl_low_time.min * 1.05)
-    #         # Meets I2C Specification
-    #         self.assert_in_range(config.data_setup(False, True).worst_case, spec.data_setup_time)
-    #         self.assert_in_range(config.data_setup(False, False).worst_case, spec.data_setup_time)
-    #         # BusRecorder will record edges separately
-    #         self.assertGreaterEqual(config.data_setup(False, True).worst_case, self.bus_recorder_resolution)
-    #         self.assertGreaterEqual(config.data_setup(False, False).worst_case, self.bus_recorder_resolution)
-    #     self.for_all_modes("tSU;DAT", test)
+    def test_spike_filter(self):
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            # Meets I2C Specification
+            self.assert_in_range(config.scl_glitch_filter(), spec.spike_width)
+            self.assert_in_range(config.sda_glitch_filter(), spec.spike_width)
+            # Meets design requirement
+            self.assert_in_range(config.scl_glitch_filter(), design.spike_width)
+            self.assert_in_range(config.sda_glitch_filter(), design.spike_width)
+        self.for_all_modes("tSP", test)
+
+    def test_data_hold_time(self):
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            # BusRecorder will record edges separately
+            nominal = config.data_hold(master=True, falling=True).nominal
+            self.assertGreaterEqual(nominal, self.bus_recorder_resolution)
+            # The worst case is the same whether SDA rises or falls
+            worst_case = config.data_hold(master=True, falling=True).worst_case
+            # Meets I2C Specification
+            self.assert_in_range(worst_case, spec.data_hold_time)
+            # Meets design requirement
+            self.assert_in_range(worst_case, design.data_hold_time)
+        self.for_all_modes("tHD;DAT", test)
+
+    def test_data_setup_time(self):
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            rising_worst_case = config.data_setup(master=True, falling=True).worst_case
+            falling_worst_case = config.data_setup(master=True, falling=False).worst_case
+            # Meets I2C Specification
+            self.assert_in_range(rising_worst_case, spec.data_setup_time)
+            self.assert_in_range(falling_worst_case, spec.data_setup_time)
+            # Meets design requirement
+            self.assert_in_range(rising_worst_case, design.data_setup_time)
+            self.assert_in_range(falling_worst_case, design.data_setup_time)
+            # BusRecorder will record edges separately
+            self.assertGreaterEqual(rising_worst_case, self.bus_recorder_resolution)
+            self.assertGreaterEqual(falling_worst_case, self.bus_recorder_resolution)
+        self.for_all_modes("tSU;DAT", test)
 
     def test_log_nominal_times(self):
         def print_parameter(description, parameter: Parameter):
@@ -154,9 +158,12 @@ class TestDefaultMasterProfiles(TestCase):
             print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
             print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
             print_parameter(f"SCL Clock Frequency (fSCL)", config.clock_frequency())
-            # print_parameter(f"Data Hold Time (tHD:DAT) - Slave 1->0", config.data_hold(master=False, falling=True))
-            # print_parameter(f"Data Valid Time (tVD:DAT) - Slave 1->0", config.data_valid(master=False, falling=True))
-            # print_parameter(f"Data Setup Time (tSU:DAT) - Slave 1->0", config.data_setup(master=False, falling=True))
+            print_parameter(f"Data Hold Time (tHD:DAT) - Master 1->0", config.data_hold(master=True, falling=True))
+            print_parameter(f"Data Hold Time (tHD:DAT) - Master 0->1", config.data_hold(master=True, falling=False))
+            # print_parameter(f"Data Valid Time (tVD:DAT) - Master 1->0", config.data_valid(master=FaTruese, falling=True))
+            print_parameter(f"Data Setup Time (tSU:DAT) - Master 1->0", config.data_setup(master=True, falling=True))
+            print_parameter(f"Data Setup Time (tSU:DAT) - Master 0->1", config.data_setup(master=True, falling=False))
+            print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
             print()
 
         self.for_all_modes("log times", test)

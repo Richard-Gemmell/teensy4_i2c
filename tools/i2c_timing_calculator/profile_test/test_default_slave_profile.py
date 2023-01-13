@@ -87,9 +87,12 @@ class TestDefaultSlaveProfile(TestCase):
 
         def test(config: TeensyConfig, spec: I2CSpecification):
             print(config.name)
+            print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
+            print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
             print_parameter(f"Data Hold Time (tHD:DAT) - Slave 1->0", config.data_hold(master=False, falling=True))
             # print_parameter(f"Data Valid Time (tVD:DAT) - Slave 1->0", config.data_valid(master=False, falling=True))
             print_parameter(f"Data Setup Time (tSU:DAT) - Slave 1->0", config.data_setup(master=False, falling=True))
+            print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
             print()
 
         self.for_all_modes("log times", test)

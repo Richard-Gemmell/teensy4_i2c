@@ -36,13 +36,13 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 90'000, .max = 100'050},
+            .frequency = {.min = 99'950, .max = 100'050},
             .start_hold_time = {.min = 0, .max = 0},
             .scl_low_time = {.min = 5'030, .max = 5'130},
             .scl_high_time = {.min = 4'840, .max = 4'940},
             .start_setup_time = {.min = 0, .max = 0},
-            .data_hold_time = {.min = 170, .max = 1'000'000}, // Min determined by Slave. Max determined by Master.
-            .data_setup_time = {.min = 1, .max = 4'900}, // Min determined by Master. Max determined by Slave.
+            .data_hold_time = {.min = 170, .max = 1'100}, // Min determined by Slave. Max determined by Master.
+            .data_setup_time = {.min = 3'950, .max = 4'900}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
@@ -55,13 +55,13 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 360'000, .max = 400'000},
+            .frequency = {.min = 393'000, .max = 400'000},
             .start_hold_time = {.min = 0, .max = 0},
             .scl_low_time = {.min = 1390, .max = 1470},
             .scl_high_time = {.min = 1040, .max = 1120},
             .start_setup_time = {.min = 0, .max = 0},
-            .data_hold_time = {.min = 170, .max = 1'000'000}, // Min determined by Slave. Max determined by Master.
-            .data_setup_time = {.min = 1, .max = 1'250}, // Min determined by Master. Max determined by Slave.
+            .data_hold_time = {.min = 170, .max = 420}, // Min determined by Slave. Max determined by Master.
+            .data_setup_time = {.min = 980, .max = 1'250}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
@@ -74,13 +74,13 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 900'000, .max = 1'000'000},
+            .frequency = {.min = 972'000, .max = 1'000'000},
             .start_hold_time = {.min = 0, .max = 0},
-            .scl_low_time = {.min = 600, .max = 660},
+            .scl_low_time = {.min = 580, .max = 660},
             .scl_high_time = {.min = 340, .max = 400},
             .start_setup_time = {.min = 0, .max = 0},
-            .data_hold_time = {.min = 170, .max = 1'000'000}, // Min determined by Slave. Max determined by Master.
-            .data_setup_time = {.min = 1, .max = 450}, // Min determined by Master. Max determined by Slave.
+            .data_hold_time = {.min = 170, .max = 240}, // Min determined by Slave. Max determined by Master.
+            .data_setup_time = {.min = 350, .max = 450}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
@@ -193,6 +193,30 @@ public:
         TEST_ASSERT_TRUE(bus_free_time.meets_specification(parameters.times.bus_free_time));
     }
 
+    // Checks tHD;DAT - data hold time
+    static void data_hold_time_read() {
+        // Check tHD;DAT when the slave controls SDA to send data to the master
+        // WHEN the master reads data from the slave
+        auto analysis = analyse_read_transaction();
+
+        // THEN the data hold time meets the I2C Specification
+        auto data_hold_time = analysis.data_hold_time;
+        log_value("Data hold time (tHD;DAT)", parameters.times.data_hold_time, data_hold_time);
+        TEST_ASSERT_TRUE(data_hold_time.meets_specification(parameters.times.data_hold_time));
+    }
+
+    // Checks tHD;DAT - data hold time
+    static void data_hold_time_write() {
+        // Check tHD;DAT when the master has full control of SDA
+        // WHEN the master writes to the slave
+        auto analysis = analyse_write_transaction();
+
+        // THEN the data hold time meets the I2C Specification
+        auto data_hold_time = analysis.data_hold_time;
+        log_value("Data hold time (tHD;DAT)", parameters.times.data_hold_time, data_hold_time);
+        TEST_ASSERT_TRUE(data_hold_time.meets_specification(parameters.times.data_hold_time));
+    }
+
     // Checks tSU;DAT - data setup time
     // WARNING: The setup data time is a side effect of the data hold time and the SCL low time.
     // It's tested here just to make sure nothing changed by accident.
@@ -223,30 +247,6 @@ public:
         TEST_ASSERT_TRUE(data_setup_time.meets_specification(parameters.times.data_setup_time));
     }
 
-    // Checks tHD;DAT - data hold time
-    static void data_hold_time_read() {
-        // Check tHD;DAT when the slave controls SDA to send data to the master
-        // WHEN the master reads data from the slave
-        auto analysis = analyse_read_transaction();
-
-        // THEN the data hold time meets the I2C Specification
-        auto data_hold_time = analysis.data_hold_time;
-        log_value("Data hold time (tHD;DAT)", parameters.times.data_hold_time, data_hold_time);
-        TEST_ASSERT_TRUE(data_hold_time.meets_specification(parameters.times.data_hold_time));
-    }
-
-    // Checks tHD;DAT - data hold time
-    static void data_hold_time_write() {
-        // Check tHD;DAT when the master has full control of SDA
-        // WHEN the master writes to the slave
-        auto analysis = analyse_write_transaction();
-
-        // THEN the data hold time meets the I2C Specification
-        auto data_hold_time = analysis.data_hold_time;
-        log_value("Data hold time (tHD;DAT)", parameters.times.data_hold_time, data_hold_time);
-        TEST_ASSERT_TRUE(data_hold_time.meets_specification(parameters.times.data_hold_time));
-    }
-
     static void test_suite(const char* message) {
         Serial.println(message);
         master = &Master;
@@ -258,20 +258,20 @@ public:
         RUN_TEST(clock_low_time);
         RUN_TEST(master_clock_frequency);
         RUN_TEST(bus_free_time);
-        RUN_TEST(setup_data_time_read);
-        RUN_TEST(setup_data_time_write);
         RUN_TEST(data_hold_time_read);
         RUN_TEST(data_hold_time_write);
+        RUN_TEST(setup_data_time_read);
+        RUN_TEST(setup_data_time_write);
     }
 
     static void log_value(const char* msg, common::i2c_specification::TimeRange expected, const analysis::DurationStatistics& actual) {
-//        return;
+        return;
         if(expected.max == UINT32_MAX) {
             Serial.printf("%s. Expected %u+. Actual ", msg, expected.min, expected.max);
         } else {
             Serial.printf("%s. Expected %u-%u. Actual ", msg, expected.min, expected.max);
         }
-        Serial.println(actual);
+        Serial.print(actual);
     }
 
     void test() final {

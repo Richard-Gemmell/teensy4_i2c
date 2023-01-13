@@ -84,29 +84,26 @@ const I2CSlaveConfiguration DefaultSlaveConfiguration = {
 };
 #else
 const I2CMasterConfiguration DefaultStandardModeMasterConfiguration = {
-    // Multiply by old value by 0.625
     .PRESCALE = 3,
-    .CLKHI = 36, .CLKLO = 37,
-    .DATAVD = 16, .SETHOLD = 39,
-    .FILTSDA = 3, .FILTSCL = 3,
+    .CLKHI = 34, .CLKLO = 37,
+    .DATAVD = 7, .SETHOLD = 39,
+    .FILTSDA = 15, .FILTSCL = 15,
     .BUSIDLE = 4, .PINLOW = CLOCK_STRETCH_TIMEOUT * 15 / (2 * 256) + 1
 };
 
 const I2CMasterConfiguration DefaultFastModeMasterConfiguration = {
-    // Multiply by old value by 1.25
     .PRESCALE = 1,
-    .CLKHI = 29, .CLKLO = 42,
-    .DATAVD = 15, .SETHOLD = 32,
-    .FILTSDA = 3, .FILTSCL = 3,
+    .CLKHI = 23, .CLKLO = 42,
+    .DATAVD = 11, .SETHOLD = 32,
+    .FILTSDA = 15, .FILTSCL = 15,
     .BUSIDLE = 4, .PINLOW = CLOCK_STRETCH_TIMEOUT * 30 / 256 + 1
 };
 
 const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
-    // Multiply by old value by 2.5
     .PRESCALE = 0,
-    .CLKHI = 17, .CLKLO = 36,
-    .DATAVD = 10, .SETHOLD = 25,
-    .FILTSDA = 3, .FILTSCL = 3,
+    .CLKHI = 14, .CLKLO = 36,
+    .DATAVD = 12, .SETHOLD = 25,
+    .FILTSDA = 6, .FILTSCL = 6,
     .BUSIDLE = 3, .PINLOW = CLOCK_STRETCH_TIMEOUT * 60 / 256 + 1
 };
 

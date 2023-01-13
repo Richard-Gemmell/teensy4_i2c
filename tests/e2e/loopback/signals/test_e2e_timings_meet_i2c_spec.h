@@ -183,7 +183,6 @@ public:
 
     // Checks tSU;DAT - data setup time
     static void setup_data_time_read() {
-        TEST_IGNORE_MESSAGE("Current timings fail intermittently");    // TODO: Should be fixed when I change DATAVD for other reasons
         // Check tSU;DAT when the slave controls SDA to send data to the master
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
@@ -232,7 +231,6 @@ public:
 
     // Checks tVD;DAT - data valid time
     static void data_valid_time_read() {
-        TEST_IGNORE_MESSAGE("Current timings do not meet the spec");    // TODO: Fix driver
         // Check tVD;DAT when the slave controls SDA to send data to the master
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
@@ -245,7 +243,6 @@ public:
 
     // Checks tVD;DAT - data valid time
     static void data_valid_time_write() {
-        TEST_IGNORE_MESSAGE("Current timings do not meet the spec");    // TODO: Fix driver
         // Check tVD;DAT when the master has full control of SDA
         // WHEN the master writes to the slave
         auto analysis = analyse_write_transaction();
