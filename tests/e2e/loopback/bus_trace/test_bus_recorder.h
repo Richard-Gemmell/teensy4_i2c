@@ -31,7 +31,6 @@ public:
     // Records an I2C trace and compares it to values measured with
     // an oscilloscope
     static void test_i2c_timings() {
-        TEST_IGNORE_MESSAGE("Ignore while timings are changing");    // TODO: Enable when new timings are set.
         Loopback::enable_pullup(Loopback::PIN_SCL_FASTEST);
         Loopback::enable_pullup(Loopback::PIN_SDA_FASTEST);
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
@@ -63,19 +62,20 @@ public:
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, compare);
         TEST_ASSERT_EQUAL_UINT8(BYTE_A, rx);
 
-        const int expected_num_measurements = 47;
-        // Entries where both lines change have an apostrophe like this 4'69
+        const int expected_num_measurements = 53;
+        // Entries where both lines change have an apostrophe like this 4'69. (if any)
         uint32_t measurements[expected_num_measurements] = {
-                0, 0, 456, 214, 248,
-                535, 210, 255, 536, 216, // 9
-                256, 536, 210, 256, 534,
-                468, 536, 214, 248, 536, // 19
-                466, 536, 462, 536, 4'69,
-                536, 464, 5'34, 468, 5'24, // 29
-                476, 5'28, 472, 536, 472,
-                5'38, 472, 528, 472, 536, // 39
-                464, 5'28, 472, 536, 208,
-                258, 584
+                0, 0, 333, 238, 392,
+                390, 220, 408, 388, 236, // 9
+                390, 390, 224, 406, 390,
+                630, 390, 236, 390, 390, // 19
+                630, 390, 630, 390, 206,
+                422, 390, 624, 390, 220, // 29
+                404, 390, 206, 424, 390,
+                220, 410, 390, 626, 390, // 39
+                206, 424, 390, 630, 390,
+                630, 390, 220, 408, 390, // 49
+                224, 406, 492
         };
         uint32_t allowed_error = 15;    // Error measuring gaps with a scope is < 10 nanos
         bool failed = false;
