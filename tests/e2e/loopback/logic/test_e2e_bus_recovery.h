@@ -21,7 +21,7 @@ public:
     const static uint8_t BYTE_A = 0x58; // 0101 1000
     const static uint8_t BYTE_B = 0xA7; // 1010 0111
     const static uint8_t ADDRESS = 0x53;// 0101 0011
-    const static uint32_t FREQUENCY = 400'000;
+    static uint32_t frequency;
     static I2CMaster* master;
     static I2CSlave* slave;
 
@@ -38,6 +38,7 @@ public:
         // is idle when both lines are high irrespective of the value
         // of BUSIDLE. Section `47.3.1.2 Master operations` implies that
         // BUSIDLE must be > 0 for this to work.
+        // Confirmed Jan 2023 that this test fails if BUSIDLE == 0
         common::hal::TeensyPin sda(PIN_SNIFF_SDA, OUTPUT_OPENDRAIN);
         sda.set();
         common::hal::TeensyPin scl(PIN_SNIFF_SCL, OUTPUT_OPENDRAIN);
@@ -49,7 +50,7 @@ public:
         uint8_t rx_buffer[] = {0x00, 0x00};
 
         // WHEN the bus idle time has expired
-        trace_i2c_transaction(master, FREQUENCY, slave, ADDRESS, trace, [&rx_buffer, &sda, &scl](){
+        trace_i2c_transaction(master, frequency, slave, ADDRESS, trace, [&rx_buffer, &sda, &scl](){
             // GIVEN another master stopped transmitting without sending a STOP
             // Simulate a START
             delayNanoseconds(1000);
@@ -75,6 +76,16 @@ public:
     }
 
     void test() final {
+        Serial.println("100 kHz");
+        frequency = 100'000;
+        RUN_TEST(bus_becomes_idle_if_another_master_stops_responding);
+
+        Serial.println("400 kHz");
+        frequency = 400'000;
+        RUN_TEST(bus_becomes_idle_if_another_master_stops_responding);
+
+        Serial.println("1 MHz");
+        frequency = 1'000'000;
         RUN_TEST(bus_becomes_idle_if_another_master_stops_responding);
     }
 
@@ -82,6 +93,7 @@ public:
 };
 
 // Define statics
+uint32_t e2e::loopback::logic::BusRecoveryTest::frequency;
 I2CMaster* e2e::loopback::logic::BusRecoveryTest::master;
 I2CSlave* e2e::loopback::logic::BusRecoveryTest::slave;
 

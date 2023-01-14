@@ -88,7 +88,7 @@ const I2CMasterConfiguration DefaultStandardModeMasterConfiguration = {
     .CLKHI = 34, .CLKLO = 37,
     .DATAVD = 7, .SETHOLD = 39,
     .FILTSDA = 15, .FILTSCL = 15,
-    .BUSIDLE = 4, .PINLOW = CLOCK_STRETCH_TIMEOUT * 15 / (2 * 256) + 1
+    .BUSIDLE = 9, .PINLOW = CLOCK_STRETCH_TIMEOUT * 15 / (2 * 256) + 1
 };
 
 const I2CMasterConfiguration DefaultFastModeMasterConfiguration = {
@@ -96,7 +96,7 @@ const I2CMasterConfiguration DefaultFastModeMasterConfiguration = {
     .CLKHI = 23, .CLKLO = 42,
     .DATAVD = 11, .SETHOLD = 32,
     .FILTSDA = 15, .FILTSCL = 15,
-    .BUSIDLE = 4, .PINLOW = CLOCK_STRETCH_TIMEOUT * 30 / 256 + 1
+    .BUSIDLE = 1, .PINLOW = CLOCK_STRETCH_TIMEOUT * 30 / 256 + 1
 };
 
 const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
@@ -104,7 +104,7 @@ const I2CMasterConfiguration DefaultFastModePlusMasterConfiguration = {
     .CLKHI = 14, .CLKLO = 36,
     .DATAVD = 12, .SETHOLD = 25,
     .FILTSDA = 6, .FILTSCL = 6,
-    .BUSIDLE = 3, .PINLOW = CLOCK_STRETCH_TIMEOUT * 60 / 256 + 1
+    .BUSIDLE = 1, .PINLOW = CLOCK_STRETCH_TIMEOUT * 60 / 256 + 1
 };
 
 const I2CSlaveConfiguration DefaultSlaveConfiguration = {

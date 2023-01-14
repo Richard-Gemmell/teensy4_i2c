@@ -18,7 +18,7 @@ standard_mode_design = I2CSpecification(
     # rise_time=Range(0, 1_000),
     # fall_time=Range(0, 300),
     # stop_setup_time=Range(4_000, UNLIMITED),
-    # bus_free_time=Range(4_700, UNLIMITED),
+    bus_free_time=Range(4_700, 7050),
     data_valid_time=Range(0, 3_450),
 )
 
@@ -35,24 +35,24 @@ fast_mode_design = I2CSpecification(
     # rise_time=Range(0, 300),
     # fall_time=Range(12, 300),
     # stop_setup_time=Range(600, UNLIMITED),
-    # bus_free_time=Range(1_300, UNLIMITED),
+    bus_free_time=Range(1_625, 2_275),
     data_valid_time=Range(0, 900),
 )
 
 fast_mode_plus_design = I2CSpecification(
-    # output_fall_time=Range(12,120),
+    # output_fall_time=Range(12, 120),
     spike_width=Range(100, 100),
     frequency=Range(900_000, 1_000_000),
-    # start_hold_time=Range(260,UNLIMITED),
+    # start_hold_time=Range(260, UNLIMITED),
     scl_low_time=Range(600, UNLIMITED),
     scl_high_time=Range(310, UNLIMITED),
     start_setup_time=Range(260, UNLIMITED),
     data_hold_time=Range(200, 225),
     data_setup_time=Range(250, UNLIMITED),
-    # rise_time=Range(0,120),
-    # fall_time=Range(12,120),
-    # stop_setup_time=Range(260,UNLIMITED),
-    # bus_free_time=Range(500,UNLIMITED),
+    # rise_time=Range(0, 120),
+    # fall_time=Range(12, 120),
+    # stop_setup_time=Range(260, UNLIMITED),
+    bus_free_time=Range(625, 1500),
     data_valid_time=Range(0, 450),
 )
 
@@ -67,8 +67,9 @@ class TestDefaultMasterProfiles(TestCase):
         # scl_risetime=30, sda_risetime=30,
         scl_risetime=1100, sda_risetime=1100,
         falltime=fall_time, max_fall=fall_time, max_rise=1100,
+        # falltime=fall_time, max_fall=fall_time, max_rise=999,
         frequency=frequency, prescale=3,
-        datavd=7, sethold=39, busidle=4,
+        datavd=7, sethold=39, busidle=9,
         filtscl=15, filtsda=15,
         clkhi=34, clklo=37)
 
@@ -78,7 +79,7 @@ class TestDefaultMasterProfiles(TestCase):
         scl_risetime=330, sda_risetime=330,
         falltime=fall_time, max_fall=fall_time, max_rise=330,
         frequency=frequency, prescale=1,
-        datavd=11, sethold=32, busidle=4,
+        datavd=11, sethold=32, busidle=1,
         filtscl=15, filtsda=15,
         clkhi=23, clklo=42)
 
@@ -88,7 +89,7 @@ class TestDefaultMasterProfiles(TestCase):
         scl_risetime=132, sda_risetime=132,
         falltime=fall_time, max_fall=fall_time, max_rise=132,
         frequency=frequency, prescale=0,
-        datavd=12, sethold=25, busidle=3,
+        datavd=12, sethold=25, busidle=1,
         filtscl=6, filtsda=6,
         clkhi=14, clklo=36)
 
@@ -148,6 +149,16 @@ class TestDefaultMasterProfiles(TestCase):
             self.assertGreaterEqual(falling_worst_case, self.bus_recorder_resolution)
         self.for_all_modes("tSU;DAT", test)
 
+    def test_bus_free_time(self):
+        # The model doesn't give very good estimates for Fast-mode or Fast-mode Plus
+        # WARNING: The Teensy changes behaviour when the SDA rise time > 1000 nanos
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            # Meets I2C Specification
+            self.assert_in_range(config.bus_free().worst_case, spec.bus_free_time)
+            # Meets design requirement
+            self.assert_in_range(config.bus_free().worst_case, design.bus_free_time)
+        self.for_all_modes("tBUF", test)
+
     def test_log_nominal_times(self):
         def print_parameter(description, parameter: Parameter):
             print(
@@ -158,12 +169,12 @@ class TestDefaultMasterProfiles(TestCase):
             print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
             print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
             print_parameter(f"SCL Clock Frequency (fSCL)", config.clock_frequency())
-            print_parameter(f"Data Hold Time (tHD:DAT) - Master 1->0", config.data_hold(master=True, falling=True))
-            print_parameter(f"Data Hold Time (tHD:DAT) - Master 0->1", config.data_hold(master=True, falling=False))
-            # print_parameter(f"Data Valid Time (tVD:DAT) - Master 1->0", config.data_valid(master=FaTruese, falling=True))
-            print_parameter(f"Data Setup Time (tSU:DAT) - Master 1->0", config.data_setup(master=True, falling=True))
-            print_parameter(f"Data Setup Time (tSU:DAT) - Master 0->1", config.data_setup(master=True, falling=False))
-            print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
+            # print_parameter(f"Data Hold Time (tHD:DAT) - Master 1->0", config.data_hold(master=True, falling=True))
+            # print_parameter(f"Data Hold Time (tHD:DAT) - Master 0->1", config.data_hold(master=True, falling=False))
+            # print_parameter(f"Data Setup Time (tSU:DAT) - Master 1->0", config.data_setup(master=True, falling=True))
+            # print_parameter(f"Data Setup Time (tSU:DAT) - Master 0->1", config.data_setup(master=True, falling=False))
+            # print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
+            print_parameter(f"Bus Free Time (tBUF)", config.bus_free())
             print()
 
         self.for_all_modes("log times", test)

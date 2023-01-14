@@ -118,7 +118,24 @@ them different.
 #### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
 #### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
 #### t<sub>SU;STO</sub> Setup Time for STOP Condition
+
 #### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
+I'm not aware of any reason to make the bus free time significantly longer than
+the minimum required by the I2C Specification. As such, I chose to make it
+slightly larger than the minimum in the worst case to ensure that the
+specification is met.
+
+The bus free time is affected by the clock low period. This can make the bus free
+time quite large at higher clock speeds. This is acceptable.
+
+BUSIDLE must be > 0 to ensure that the `i.MX RT1062` recovers if another device
+fails to end a transaction but leaves the bus free. See `BusRecoveryTest`.
+
+* BUSIDLE must be > 0
+* value will be at least 25% larger than the minimum required for the worst case scenario
+* value will be no larger than required
+* I won't reduce the clock low time (t<sub>LOW</sub>) in order to reduce the bus
+  free time
 
 ### Data Bits
 #### t<sub>HD;DAT</sub> Data Hold Time
@@ -137,6 +154,9 @@ times are very arbitrary.
 | Fast-mode Plus | 1,000                     | 200                            |
 
 #### t<sub>VD;DAT</sub> Data Valid Time
+Data valid time is constrained by the data hold time (t<sub>HD;DAT</sub>) and
+the data setup time (t<sub>SU;DAT</sub>). There is no need to design it directly.
+
 #### t<sub>SU;DAT</sub> Data Setup Time
 * nominal should be > 140 ns to enable the BusRecorder to capture the SDA edge
   and the SCL rising edge as separate events

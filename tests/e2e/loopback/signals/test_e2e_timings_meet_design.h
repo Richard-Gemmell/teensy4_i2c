@@ -46,7 +46,7 @@ public:
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
-            .bus_free_time = {.min = 0, .max = 0},
+            .bus_free_time = {.min = 7'250, .max = 7'450},
             .data_valid_time = {.min = 0, .max = 0},
         }
     };
@@ -65,7 +65,7 @@ public:
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
-            .bus_free_time = {.min = 0, .max = 0},
+            .bus_free_time = {.min = 2'300, .max = 2'400},
             .data_valid_time = {.min = 0, .max = 0},
         }
     };
@@ -84,7 +84,7 @@ public:
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 0, .max = 0},
-            .bus_free_time = {.min = 0, .max = 0},
+            .bus_free_time = {.min = 1'450, .max = 1'550},
             .data_valid_time = {.min = 0, .max = 0},
         }
     };
@@ -183,7 +183,6 @@ public:
 
     // Checks tBUF - bus free time between a STOP and START condition
     static void bus_free_time() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_repeated_read_transaction(true);
 
