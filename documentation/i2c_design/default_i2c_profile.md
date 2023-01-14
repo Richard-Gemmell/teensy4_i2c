@@ -102,7 +102,6 @@ them different.
 
 ## Master Mode Timings
 
-
 ### SCL Clock Frequency
 #### f<sub>SCL</sub> SCL Clock Frequency
 * the clock frequency must meet the I2C with the [minimum rise and fall times](#supported-i2c-modes) 
@@ -115,9 +114,23 @@ them different.
 * no additional requirements
 
 ### Start and Stop Conditions
+All 3 START and STOP condition times depend on SETHOLD, so they need to be
+tuned together.
+
+There's no reason I know of to make these times significantly longer than
+the specification. Keeping them short reduces latency for an I2C message.
+
 #### t<sub>SU;STA</sub> Setup Time for a Repeated START Condition
+* All times will be between 120% and 150% of the minimum value in the
+  I2C Specification for the worst case.
+
 #### t<sub>HD;STA</sub> Hold Time for a START or Repeated START Condition
+* All times will be between 120% and 150% of the minimum value in the
+  I2C Specification for the worst case.
+
 #### t<sub>SU;STO</sub> Setup Time for STOP Condition
+* All times will be between 120% and 150% of the minimum value in the
+  I2C Specification for the worst case.
 
 #### t<sub>BUF</sub> Minimum Bus Free Time Between a STOP and START Condition
 I'm not aware of any reason to make the bus free time significantly longer than

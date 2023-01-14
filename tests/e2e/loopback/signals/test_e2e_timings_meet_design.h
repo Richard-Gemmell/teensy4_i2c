@@ -37,15 +37,15 @@ public:
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
             .frequency = {.min = 99'950, .max = 100'050},
-            .start_hold_time = {.min = 0, .max = 0},
+            .start_hold_time = {.min = 5'950, .max = 6'050},
             .scl_low_time = {.min = 5'030, .max = 5'130},
             .scl_high_time = {.min = 4'840, .max = 4'940},
-            .start_setup_time = {.min = 0, .max = 0},
+            .start_setup_time = {.min = 6'175, .max = 6'275},
             .data_hold_time = {.min = 170, .max = 1'100}, // Min determined by Slave. Max determined by Master.
             .data_setup_time = {.min = 3'950, .max = 4'900}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
-            .stop_setup_time = {.min = 0, .max = 0},
+            .stop_setup_time = {.min = 6'200, .max = 6'275},
             .bus_free_time = {.min = 7'250, .max = 7'450},
             .data_valid_time = {.min = 0, .max = 0},
         }
@@ -56,15 +56,15 @@ public:
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
             .frequency = {.min = 393'000, .max = 400'000},
-            .start_hold_time = {.min = 0, .max = 0},
+            .start_hold_time = {.min = 700, .max = 750},
             .scl_low_time = {.min = 1390, .max = 1470},
             .scl_high_time = {.min = 1040, .max = 1120},
-            .start_setup_time = {.min = 0, .max = 0},
+            .start_setup_time = {.min = 950, .max = 1025},
             .data_hold_time = {.min = 170, .max = 420}, // Min determined by Slave. Max determined by Master.
             .data_setup_time = {.min = 980, .max = 1'250}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
-            .stop_setup_time = {.min = 0, .max = 0},
+            .stop_setup_time = {.min = 975, .max = 1025},
             .bus_free_time = {.min = 2'300, .max = 2'400},
             .data_valid_time = {.min = 0, .max = 0},
         }
@@ -75,15 +75,15 @@ public:
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
             .frequency = {.min = 972'000, .max = 1'000'000},
-            .start_hold_time = {.min = 0, .max = 0},
+            .start_hold_time = {.min = 300, .max = 350},
             .scl_low_time = {.min = 580, .max = 660},
             .scl_high_time = {.min = 340, .max = 400},
-            .start_setup_time = {.min = 0, .max = 0},
+            .start_setup_time = {.min = 425, .max = 475},
             .data_hold_time = {.min = 170, .max = 240}, // Min determined by Slave. Max determined by Master.
             .data_setup_time = {.min = 350, .max = 450}, // Min determined by Master. Max determined by Slave.
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
-            .stop_setup_time = {.min = 0, .max = 0},
+            .stop_setup_time = {.min = 425, .max = 475},
             .bus_free_time = {.min = 1'450, .max = 1'550},
             .data_valid_time = {.min = 0, .max = 0},
         }
@@ -113,7 +113,6 @@ public:
 
     // Checks tHD;STA - the startup hold time after a normal start bit
     static void start_hold_time() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
 
@@ -125,7 +124,6 @@ public:
 
     // Checks tSU;STA - the startup hold time after a repeated start bit
     static void setup_time_for_repeated_start() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_repeated_read_transaction();
 
@@ -137,7 +135,6 @@ public:
 
     // Checks tSU;STO - the setup time for STOP condition
     static void stop_setup_time() {
-        TEST_IGNORE_MESSAGE("Not designed yet");    // TODO: Design and set expected value
         // WHEN the master reads data from the slave
         auto analysis = analyse_read_transaction();
 

@@ -9,15 +9,15 @@ standard_mode_design = I2CSpecification(
     # output_fall_time=Range(0, 250),
     spike_width=Range(250, 251),
     frequency=Range(90_000, 100_000),
-    # start_hold_time=Range(4_000, UNLIMITED),
+    start_hold_time=Range(4_800, 6_000),
     scl_low_time=Range(4_850, UNLIMITED),
     scl_high_time=Range(4_150, UNLIMITED),
-    start_setup_time=Range(4_700, UNLIMITED),
+    start_setup_time=Range(5_640, 7_050),
     data_hold_time=Range(1000, 1100),
     data_setup_time=Range(2000, UNLIMITED),
     # rise_time=Range(0, 1_000),
     # fall_time=Range(0, 300),
-    # stop_setup_time=Range(4_000, UNLIMITED),
+    stop_setup_time=Range(4_800, 6_000),
     bus_free_time=Range(4_700, 7050),
     data_valid_time=Range(0, 3_450),
 )
@@ -26,15 +26,15 @@ fast_mode_design = I2CSpecification(
     # output_fall_time=Range(12, 250),
     spike_width=Range(250, 251),
     frequency=Range(360_000, 400_000),
-    # start_hold_time=Range(600, UNLIMITED),
+    start_hold_time=Range(720, 900),
     scl_low_time=Range(1_400, UNLIMITED),
     scl_high_time=Range(700, UNLIMITED),
-    start_setup_time=Range(600, UNLIMITED),
+    start_setup_time=Range(720, 900),
     data_hold_time=Range(390, 430),
     data_setup_time=Range(700, UNLIMITED),
     # rise_time=Range(0, 300),
     # fall_time=Range(12, 300),
-    # stop_setup_time=Range(600, UNLIMITED),
+    stop_setup_time=Range(720, 900),
     bus_free_time=Range(1_625, 2_275),
     data_valid_time=Range(0, 900),
 )
@@ -43,15 +43,15 @@ fast_mode_plus_design = I2CSpecification(
     # output_fall_time=Range(12, 120),
     spike_width=Range(100, 100),
     frequency=Range(900_000, 1_000_000),
-    # start_hold_time=Range(260, UNLIMITED),
+    start_hold_time=Range(320, 390),
     scl_low_time=Range(600, UNLIMITED),
     scl_high_time=Range(310, UNLIMITED),
-    start_setup_time=Range(260, UNLIMITED),
+    start_setup_time=Range(320, 400),
     data_hold_time=Range(200, 225),
     data_setup_time=Range(250, UNLIMITED),
     # rise_time=Range(0, 120),
     # fall_time=Range(12, 120),
-    # stop_setup_time=Range(260, UNLIMITED),
+    stop_setup_time=Range(320, 400),
     bus_free_time=Range(625, 1500),
     data_valid_time=Range(0, 450),
 )
@@ -69,7 +69,7 @@ class TestDefaultMasterProfiles(TestCase):
         falltime=fall_time, max_fall=fall_time, max_rise=1100,
         # falltime=fall_time, max_fall=fall_time, max_rise=999,
         frequency=frequency, prescale=3,
-        datavd=7, sethold=39, busidle=9,
+        datavd=7, sethold=44, busidle=9,
         filtscl=15, filtsda=15,
         clkhi=34, clklo=37)
 
@@ -79,7 +79,7 @@ class TestDefaultMasterProfiles(TestCase):
         scl_risetime=330, sda_risetime=330,
         falltime=fall_time, max_fall=fall_time, max_rise=330,
         frequency=frequency, prescale=1,
-        datavd=11, sethold=32, busidle=1,
+        datavd=11, sethold=21, busidle=1,
         filtscl=15, filtsda=15,
         clkhi=23, clklo=42)
 
@@ -89,7 +89,7 @@ class TestDefaultMasterProfiles(TestCase):
         scl_risetime=132, sda_risetime=132,
         falltime=fall_time, max_fall=fall_time, max_rise=132,
         frequency=frequency, prescale=0,
-        datavd=12, sethold=25, busidle=1,
+        datavd=12, sethold=19, busidle=1,
         filtscl=6, filtsda=6,
         clkhi=14, clklo=36)
 
@@ -159,6 +159,30 @@ class TestDefaultMasterProfiles(TestCase):
             self.assert_in_range(config.bus_free().worst_case, design.bus_free_time)
         self.for_all_modes("tBUF", test)
 
+    def test_start_setup_time(self):
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            # Meets I2C Specification
+            self.assert_in_range(config.setup_repeated_start().worst_case, spec.start_setup_time)
+            # Meets design requirement
+            self.assert_in_range(config.setup_repeated_start().worst_case, design.start_setup_time)
+        self.for_all_modes("tSU;STA", test)
+
+    def test_start_hold_time(self):
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            # Meets I2C Specification
+            self.assert_in_range(config.start_hold().worst_case, spec.start_hold_time)
+            # Meets design requirement
+            self.assert_in_range(config.start_hold().worst_case, design.start_hold_time)
+        self.for_all_modes("tHD;STA", test)
+
+    def test_setup_stop_time(self):
+        def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
+            # Meets I2C Specification
+            self.assert_in_range(config.stop_setup().worst_case, spec.stop_setup_time)
+            # Meets design requirement
+            self.assert_in_range(config.stop_setup().worst_case, design.stop_setup_time)
+        self.for_all_modes("tSU;STO", test)
+
     def test_log_nominal_times(self):
         def print_parameter(description, parameter: Parameter):
             print(
@@ -166,15 +190,18 @@ class TestDefaultMasterProfiles(TestCase):
 
         def test(config: TeensyConfig, spec: I2CSpecification, design: I2CSpecification):
             print(config.name)
-            print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
-            print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
-            print_parameter(f"SCL Clock Frequency (fSCL)", config.clock_frequency())
+            # print_parameter(f"Clock Low Time (tLOW)", config.clock_low())
+            # print_parameter(f"Clock High Time (tHIGH)", config.clock_high())
+            # print_parameter(f"SCL Clock Frequency (fSCL)", config.clock_frequency())
             # print_parameter(f"Data Hold Time (tHD:DAT) - Master 1->0", config.data_hold(master=True, falling=True))
             # print_parameter(f"Data Hold Time (tHD:DAT) - Master 0->1", config.data_hold(master=True, falling=False))
             # print_parameter(f"Data Setup Time (tSU:DAT) - Master 1->0", config.data_setup(master=True, falling=True))
             # print_parameter(f"Data Setup Time (tSU:DAT) - Master 0->1", config.data_setup(master=True, falling=False))
             # print(f"Glitch filters. SDA: {config.sda_glitch_filter():.0f} nanos. SCL: {config.scl_glitch_filter():.0f} nanos")
-            print_parameter(f"Bus Free Time (tBUF)", config.bus_free())
+            print_parameter(f"START Hold Time (tHD:STA)", config.start_hold())
+            print_parameter("Setup Repeated START (tSU:STA)", config.setup_repeated_start())
+            print_parameter("STOP Setup Time (tSU:STO)", config.stop_setup())
+            # print_parameter(f"Bus Free Time (tBUF)", config.bus_free())
             print()
 
         self.for_all_modes("log times", test)
