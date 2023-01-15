@@ -2,12 +2,16 @@
 #include <Arduino.h>
 #include "utils/test_suite.h"
 
+//#define INA_260_ATTACHED 1
+#define LOOPBACK_TEST_HARNESS 1
+
 // Unit Tests
 //#include "example/example.h"
 #include "unit/test_i2c_device.h"
 #include "unit/test_i2c_register_slave.h"
 
-// End-to-End Tests
+// End-to-End Loopback Tests
+#ifdef LOOPBACK_TEST_HARNESS
 #include "e2e/loopback/bus_trace/test_bus_recorder.h"
 #include "e2e/loopback/driver_config/test_pullup_config.h"
 #include "e2e/loopback/driver_config/test_pullup_config_wire.h"
@@ -17,6 +21,10 @@
 #include "e2e/loopback/signals/test_e2e_timings_meet_i2c_spec.h"
 #include "e2e/loopback/signals/test_e2e_rise_times.h"
 #include "e2e/loopback/wire/test_e2e_driver_wire.h"
+#endif
+
+// End-to-End Other Device Tests
+#include "e2e/other_devices/ina_260.h"
 
 void test(TestSuite* suite);
 
@@ -24,9 +32,8 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
+//    test(new e2e::loopback::bus_trace_tests::BusRecorderTest());
 //    test(new e2e::loopback::signals::RiseTimeTest());
-    test(new e2e::loopback::signals::TimingsMeetDesignTest());
-//    test(new e2e::loopback::signals::TimingsMeetI2CSpecificationTest());
 //    test(new e2e::loopback::logic::BasicMessagesTest());
     return false;
 }
@@ -42,8 +49,9 @@ void run_all_tests() {
 
     // Full Stack Tests
     // These tests require working hardware
-    Serial.println("Run Full Stack (E2E) Tests");
-    Serial.println("--------------------");
+#ifdef LOOPBACK_TEST_HARNESS
+    Serial.println("Run Full Stack (E2E) Loopback Tests");
+    Serial.println("-----------------------------------");
     test(new e2e::loopback::bus_trace_tests::BusRecorderTest());
     test(new e2e::loopback::driver_config::PullupConfigTest());
     test(new e2e::loopback::driver_config::PullupConfigWireTest());
@@ -53,6 +61,14 @@ void run_all_tests() {
     test(new e2e::loopback::signals::TimingsMeetI2CSpecificationTest());
     test(new e2e::loopback::signals::RiseTimeTest());
     test(new e2e::loopback::wire::DriverWireTest());
+#endif
+
+    // These tests require other devices to be connected to the Teensy
+    Serial.println("Run Full Stack (E2E) Tests with Other Devices");
+    Serial.println("---------------------------------------------");
+#ifdef INA_260_ATTACHED
+    test(new e2e::other_devices::Ina260EndToEndTest());
+#endif
 }
 
 TestSuite* test_suite;
