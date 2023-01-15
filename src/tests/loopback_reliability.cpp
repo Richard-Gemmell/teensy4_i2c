@@ -67,7 +67,7 @@ void log_failure_count() {
     Serial.println("Master:");
     log_line("  writes succeeded ", master_write_success_count, master_write_fail_count);
     log_line("  writes failed    ", master_write_fail_count, master_write_success_count);
-    log_line("  reads suceeded   ", master_read_success_count, master_read_fail_count);
+    log_line("  reads succeeded  ", master_read_success_count, master_read_fail_count);
     log_line("  reads failed     ", master_read_fail_count, master_read_success_count);
     log_line("  bad read bytes   ", master_read_fail_count, master_good_read_data_count);
     Serial.print("  timeouts:        ");
