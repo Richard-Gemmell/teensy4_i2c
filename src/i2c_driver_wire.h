@@ -96,7 +96,7 @@ public:
     // a transmission from a master.
     //
     // WARNING: This method is called inside the driver's interrupt
-    // service routing so it must be very, very fast. In particular,
+    // service routine, so it must be very, very fast. In particular,
     // you should avoid doing any IO in the callback.
     inline void onReceive(void (* function)(int len)) {
         on_receive = function;

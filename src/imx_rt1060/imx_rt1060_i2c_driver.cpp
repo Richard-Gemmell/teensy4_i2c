@@ -210,6 +210,7 @@ void IMX_RT1060_I2CMaster::begin(uint32_t frequency) {
     // Set FIFO watermarks. Determines when the RDF and TDF interrupts happen
     port->MFCR = LPI2C_MFCR_RXWATER(0) | LPI2C_MFCR_TXWATER(0);
     set_clock(frequency);
+
     // Setup interrupt service routine.
     attachInterruptVector(config.irq, isr);
     port->MIER = LPI2C_MIER_RDIE | LPI2C_MIER_SDIE | LPI2C_MIER_NDIE | LPI2C_MIER_ALIE | LPI2C_MIER_FEIE | LPI2C_MIER_PLTIE;
@@ -530,13 +531,13 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
     // Clock Hold Time. Sets the minimum clock hold time when clock stretching
     port->SCFGR2 = port->SCFGR2 | LPI2C_SCFGR2_CLKHOLD(timings.CLKHOLD);
 
+    // Enable clock stretching and set address
+    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
+
     // Set up interrupts
     attachInterruptVector(config.irq, isr);
     port->SIER = (LPI2C_SIER_RSIE | LPI2C_SIER_SDIE | LPI2C_SIER_TDIE | LPI2C_SIER_RDIE);
     NVIC_ENABLE_IRQ(config.irq);
-
-    // Enable clock stretching and set address
-    port->SCFGR1 = (address_config | LPI2C_SCFGR1_TXDSTALL | LPI2C_SCFGR1_RXSTALL);
 
     // Enable Slave Mode
     port->SCR = LPI2C_SCR_SEN | LPI2C_SCR_FILTEN;
