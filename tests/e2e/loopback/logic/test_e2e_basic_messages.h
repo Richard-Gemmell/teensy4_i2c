@@ -60,6 +60,7 @@ public:
 
         // THEN the slave writes all bytes correctly
         // AND the master ACKS intermediate bytes but NACKs the final byte
+        // AND the master received the data successfully
         bus_trace::BusTrace expected_trace(MAX_EVENTS);
         bus_trace::BusTraceBuilder builder(expected_trace, bus_trace::BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
         builder.bus_initially_idle().start_bit()
@@ -96,7 +97,8 @@ public:
         });
 
         // THEN the master writes all bytes correctly.
-        // AND the slaves ACKS every byte.
+        // AND the slave ACKS every byte
+        // AND the slave received the data successfully
         bus_trace::BusEvent expected_events[MAX_EVENTS];
         bus_trace::BusTrace expected_trace(expected_events, MAX_EVENTS);
         bus_trace::BusTraceBuilder builder(expected_trace, bus_trace::BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
