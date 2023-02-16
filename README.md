@@ -8,8 +8,7 @@ microcontroller with an ARM Corex-M7 core.
 This library can be used as a drop in replacement for the Wire library
 in [Teensyduino](https://www.pjrc.com/teensy/td_download.html). It has
 native APIs that are more flexible than Wire and simpler to use in
-some cases. The primary reason for creating this library was to add
-support for Slave mode.
+some cases.
 
 The driver implementations, IMX_RT1060_I2CMaster and IMX_RT1060_I2CSlave, have
 relatively few dependencies on Arduino or the main Teensy libraries. This means
@@ -17,7 +16,7 @@ that it should be possible to port them to other devices based on the NXP i.MXRT
 series of MPUs.
 
 ## Features
-* Supports all features that are required by the I2C specification
+* Supports all features that are required by the I2C Specification
 for master, multi-master and slave devices.
 * Optional drop in replacement for the Wire library in i2c_driver_wire.h
 * Master Mode
@@ -29,8 +28,9 @@ for master, multi-master and slave devices.
 * Clock stretching in Slave Mode
 * Non-blocking API for Master Mode and Slave Mode
 * Comprehensive error handling
-* Can tune the Teensy's electrical configuration for you application
+* Can tune the Teensy's electrical configuration for your application
 * A single slave can handle multiple I2C addresses
+* Glitch filters and line hysteresis in all modes
 
 ## Version 2
 Version 2 is currently a work in progress. It's available on the `dev` branch.
@@ -108,29 +108,30 @@ This table lists the objects that you should use to handle each I2C port.
 | 2    | SCL2(24), SDA2(25) | Master2 or Slave2       | Wire2             |
 
 ## Pull Up Resistors
-The I2C protocol uses open drain pins to pull signal voltages low and
-pull up resistors to pull voltages back up again. This library enables
-the Teensy's 22 kΩ internal pull up resistor by default. Many sensors
-that support I2C often have internal pullups as well. These may
-provide enough resistance for your application.
+The I2C protocol uses open drain pins. The pins can pull signal voltages low,
+but they cannot pull them high. The system relies on pull up resistors to
+do this.
 
-If you don't have any internal pullups or the internal resistors aren't
-big enough for your application then you'll need to use external pullups.
-I recommend 2.2 kΩ or 1 kΩ.
+This library enables the Teensy's 22 kΩ internal pull up resistor by default.
+Many breakout boards with I2C have internal pullups as well.
+
+These internal pullups may or may not be sufficient for your application. It
+depends entirely on the bus capacitance. The more devices you connect to the bus
+and the longer the wires, the higher the bus capacitance. The only way to be
+sure is to measure the rise times for your circuit.
+
+See this [I2C Underneath article](https://github.com/Richard-Gemmell/i2c-underneath/blob/main/documentation/i2c_setup/pull_up_resistors.md)
+for information about measuring and tuning rise times.
 
 ## Common Problems
 Here are some of the common problems that will can break the I2C
 connection or just make it very unreliable.
-* the slave and the master must share a common ground
+* make sure your wiring has good connections at all times
 * you may need external pullup resistors (see above)
+* the slave and the master must share a common ground
 * if you're upgrading your project from a Teensy 3 with 5V IO to a Teensy 4,
 and you already have 4.7 kΩ pullup resistors then you may need to swap them
 to 2.2 kΩ. This is because the Teensy 4 IO pins run at 3.3V.
-* you may need to tune the Teensy's pad configuration to match the
-I2C pin driver impedance to match your I2C wiring impedance. Depending
-on which API you use you'll need to call setPadControlConfiguration() or
-set_pad_control_configuration(). There are examples in raw_configure_pad.ino
-and configure_pad.ino.
 * make sure the master and the slave agree on how many bytes to
 send and what order they're in. Data alignment, padding and endianness
 may cause issues.
@@ -142,16 +143,25 @@ message. (A partial read bug).
 
 ## Data Sheets and References
 * https://www.i2c-bus.org/
-* https://www.pjrc.com/teensy/IMXRT1060RM_rev2.pdf
 * [I2C Specification Rev. 6](documentation/references/UM10204.v6.pdf)
+* [i.MX RT1062 Datasheet v3](https://www.pjrc.com/teensy/IMXRT1060RM_rev3.pdf)
 * https://www.nxp.com/docs/en/application-note/AN5078.pdf
 * https://www.nxp.com/docs/en/application-note/AN10216.pdf
+* [I2C Underneath](https://github.com/Richard-Gemmell/i2c-underneath) I2C tools etc
+
+## Project Documents and Tools
+* [I2C Timing on the i.MX RT1062 (Teensy 4)](documentation/i2c_design/i2c_timing_analysis.md)
+* [Pin Configuration](documentation/i2c_design/pin_configuration.md)
+* [I2C Configuration Design for This Driver](documentation/i2c_design/default_i2c_profile.md)
+* [I2C Timing Calculator](tools/i2c_timing_calculator/i2c_timing_calculator.py)
+* [I2C Scope Simulator](tools/scope_simulator/make_timing_design_plots.py)
 
 ## Not Tested
 I haven't been able to test some features because of hardware and time
 restrictions. These features *should* work but don't be surprised if
 they don't. Please contact me if you encounter any problems.
 * Multi-master configurations
+* Clock stretching
 
 ## Not Implemented
 The following features are supported by the NXP i.MXRT 1062 processor but
@@ -197,10 +207,16 @@ of projects
   and `setInternalPullups()` instead.
 
 ### Changes
+* glitch filters are now enabled in Slave mode making slave devices more
+  resistant to electrical noise
+* adjusted signal timings so driver is compliant with I2C Specification
+  over the full range of allowed rise times
 * you can now enable or disable the internal pullup resistors with
   `set_internal_pullups()` or `setInternalPullups()`
 * reduced pin drive strength which significantly reduced voltage
   undershoot spikes on falling clock edges
-* adjusted start hold time (tHD;STA) for master as it didn't meet the I2C
-  spec at 100kHz and was a bit slow at 400kHz and 1MHz
 * tested port 2 (pins 24 & 25) on both Teensy 4.1 and Teensy 4.0
+* [analysed and documented](documentation/i2c_design/i2c_timing_analysis.md) I2C timing
+  registers to find out what they _really_ do (as opposed to what the datasheet claims!)
+* created a [simulator](tools/i2c_timing_calculator/i2c_timing_calculator.py)
+  to predict the effect of changing I2C configuration registers
