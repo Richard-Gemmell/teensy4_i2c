@@ -16,10 +16,12 @@ namespace other_devices {
 class Ina260EndToEndTest : public TestSuite {
 // The slave is an INA 260 current sensor
     static const uint16_t slave_address = 0x40;
+    static const uint8_t config_register = 0x00;
     static const uint8_t manufacturer_id_register = 0xFE;
     static const uint8_t die_id_register = 0xFF;
     static uint32_t frequency;
     static I2CMaster& master;
+    static I2CDevice ina260;
 
 public:
     void setUp() final {
@@ -30,48 +32,39 @@ public:
         master.end();
     }
 
-    static bool finished_ok() {
-        elapsedMillis timeout;
-        while (timeout < 3) {
-            if (master.finished()){
-                break;
-            }
-        }
-        return master.finished() && !master.has_error();
-    }
-
-    static uint16_t get_int_from_buffer(uint8_t rx_buffer[2]) {
-        uint16_t result = ((uint16_t)rx_buffer[0] << 8U) + ((uint16_t)rx_buffer[1]);
-        return result;
-    }
-
-    static uint16_t read_register(uint8_t reg_num) {
-        uint8_t rx_buffer[2] = {0, 0};
-
-        // Send register number to read
-        master.write_async(slave_address, (uint8_t*)&reg_num, sizeof(uint8_t), false);
-        if (finished_ok()) {
-            // Read the data
-            master.read_async(slave_address, rx_buffer, sizeof(rx_buffer), true);
-            if (finished_ok()) {
-                return get_int_from_buffer(rx_buffer);
-            }
-        }
-        return 0;
-    }
-
     static void test_can_read_manufacturer_id() {
         // Read the Manufacturer ID
-        uint16_t value = read_register(manufacturer_id_register);
+        uint16_t value;
+        ina260.read(manufacturer_id_register, &value, true);
 
-        TEST_ASSERT_EQUAL(0x5449, value);
+        TEST_ASSERT_EQUAL_HEX16(0x5449, value);
     }
 
     static void test_can_read_die_id() {
         // Read the Die ID
-        uint16_t value = read_register(die_id_register);
+        uint16_t value;
+        ina260.read(die_id_register, &value, true);
 
-        TEST_ASSERT_EQUAL(0x2270, value);
+        TEST_ASSERT_EQUAL_HEX16(0x2270, value);
+    }
+
+    static void test_can_write_config() {
+        // WHEN we change the configuration
+        uint16_t config;
+        const uint16_t new_config = 0x6126;
+        ina260.write(config_register, new_config, true);
+
+        // THEN the device returns the new configuration
+        ina260.read(config_register, &config, true);
+        TEST_ASSERT_EQUAL_HEX16(new_config, config);
+
+        // WHEN we change the configuration back to the default
+        const uint16_t default_config = 0x6127;
+        ina260.write(config_register, default_config, true);
+
+        // THEN the device returns the original configuration
+        ina260.read(config_register, &config, true);
+        TEST_ASSERT_EQUAL_HEX16(default_config, config);
     }
 
     void test() final {
@@ -79,16 +72,19 @@ public:
         frequency = 100 * 1000U;
         RUN_TEST(test_can_read_manufacturer_id);
         RUN_TEST(test_can_read_die_id);
+        RUN_TEST(test_can_write_config);
 
         Serial.println("400 kHz");
         frequency = 400 * 1000U;
         RUN_TEST(test_can_read_manufacturer_id);
         RUN_TEST(test_can_read_die_id);
+        RUN_TEST(test_can_write_config);
 
         Serial.println("1 MHz");
         frequency = 1000 * 1000U;
         RUN_TEST(test_can_read_manufacturer_id);
         RUN_TEST(test_can_read_die_id);
+        RUN_TEST(test_can_write_config);
     }
 
     Ina260EndToEndTest() : TestSuite(__FILE__) {};
@@ -96,6 +92,7 @@ public:
 
 // Define statics
 I2CMaster& Ina260EndToEndTest::master = Master;
+I2CDevice Ina260EndToEndTest::ina260 = I2CDevice(Ina260EndToEndTest::master, Ina260EndToEndTest::slave_address, _BIG_ENDIAN);;
 uint32_t Ina260EndToEndTest::frequency;
 }
 }

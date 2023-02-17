@@ -629,7 +629,7 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
                 port->STDR = tx_buffer.read();
             } else {
                 port->STDR = DUMMY_BYTE;
-                // WARNING: We're always asked for one more byte then
+                // WARNING: We're always asked for one more byte than
                 // the master actually requested. Use trailing_byte_sent
                 // to work out whether the master actually asked for too much data.
                 if (!trailing_byte_sent) {
