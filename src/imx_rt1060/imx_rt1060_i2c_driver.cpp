@@ -112,7 +112,22 @@ const I2CSlaveConfiguration DefaultSlaveConfiguration = {
 };
 #endif
 
-// NXP document the pad configuration in AN5078.pdf Rev 0.
+// Slave Receiver NACKs
+//
+// The I2C Specification in section "3.1.6 Acknowledge (ACK) and Not Acknowledge (NACK)"
+// says a receiver may send NACK if "the receiver cannot receive any more data bytes".
+// The i.MX RT1062 I2C hardware automatically ACKs all received bytes in slave mode
+// by default. This means that the slave appears to have an infinitely large buffer
+// from the master's point of view. This mirrors the slave behaviour for transmitting
+// where the slave _must_ provide bytes as long as the master demands them.
+// I suspect that it's fairly common for slave devices to act this way. (RJG Feb 2023)
+//
+// It is possible to handle ACK and NACK in the driver software. See the datasheet
+// documentation for TXNACK and SCFGR1[ACKSTALL].
+
+// Pad Configuration Values
+//
+// NXP documents the pad configuration in AN5078.pdf Rev 0.
 // https://www.nxp.com/docs/en/application-note/AN5078.pdf
 //
 // Enable Open Drain - See AN5078.pdf sections 5.2
@@ -510,6 +525,9 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
 
     initialise_common(config, pad_control_config, pullup_config);
 
+    // Clear previous error
+    _error = I2CError::ok;
+
     // Set the Slave Address
     port->SAMR = samr;
 
@@ -600,13 +618,13 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
         if (rx_buffer.initialised()) {
             if (!rx_buffer.write(data)) {
                 // The buffer is already full.
+                // Don't NACK. Just swallow the byte. See "Slave Receiver NACKs" above.
                 _error = I2CError::buffer_overflow;
-                // TODO: The spec says we should send NACK but how?
             }
         } else {
             // We are not interested in reading anything.
-            // TODO: The spec says we should send NACK but how?
-            // Clear previous status and error
+            // Don't NACK. Just swallow the byte. See "Slave Receiver NACKs" above.
+            _error = I2CError::buffer_overflow;
             state = State::idle;
         }
     }
@@ -640,10 +658,9 @@ void IMX_RT1060_I2CSlave::_interrupt_service_routine() {
             }
         } else {
             // We don't have any data to send.
-            // TODO: The spec says we should send NACK but how?
-            // Just send a dummy value for now.
+            // Just send a dummy value instead.
             port->STDR = DUMMY_BYTE;
-            _error = I2CError::buffer_underflow;  // Clear previous status
+            _error = I2CError::buffer_underflow;
         }
     }
 

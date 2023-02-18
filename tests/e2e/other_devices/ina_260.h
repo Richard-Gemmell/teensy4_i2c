@@ -92,7 +92,7 @@ public:
 
 // Define statics
 I2CMaster& Ina260EndToEndTest::master = Master;
-I2CDevice Ina260EndToEndTest::ina260 = I2CDevice(Ina260EndToEndTest::master, Ina260EndToEndTest::slave_address, _BIG_ENDIAN);;
+I2CDevice Ina260EndToEndTest::ina260(Ina260EndToEndTest::master, Ina260EndToEndTest::slave_address, _BIG_ENDIAN);
 uint32_t Ina260EndToEndTest::frequency;
 }
 }

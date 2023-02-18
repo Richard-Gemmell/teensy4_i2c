@@ -163,7 +163,7 @@ public:
     // Determines which data will be sent to the master the next time
     // it reads from us.
     // The master will receive up to 'size' bytes from us. If it demands
-    // more data it will be sent 0xFF until it ends the request.
+    // more data it will be sent 0x00 until it ends the request.
     virtual void set_transmit_buffer(const uint8_t* buffer, size_t size) = 0;
 
     // Determines where to put data we receive from the master
@@ -171,6 +171,9 @@ public:
     // The master can send up to 'size' bytes of data to us. Extra bytes
     // will be dropped. The 'after_receive' callback receives the actual number
     // of bytes received in the 'length' argument.
+    //
+    // Note that the slave does not send NACK when the buffer is full.
+    // It just ignores the extra data.
     virtual void set_receive_buffer(uint8_t* buffer, size_t size) = 0;
 };
 
