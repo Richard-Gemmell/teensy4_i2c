@@ -176,17 +176,6 @@ public:
 
     void stop_listening() override;
 
-    // Call this to reset the slave when it ignores a new I2C transaction
-    // because it's stuck waiting for the master to acknowledge a transmit.
-    // (SBF flag is high and no interrupts are triggered.)
-    void reset() {
-        // Clear the slave's buffers and reset the internal state
-        port->SCR = (LPI2C_SCR_RRF | LPI2C_SCR_RTF);
-        state = State::idle;
-        _error = I2CError::ok;
-        port->SCR = LPI2C_SCR_SEN;
-    }
-
     void after_receive(std::function<void(size_t length, uint16_t address)> callback) override;
 
     void before_transmit(std::function<void(uint16_t address)> callback) override;
