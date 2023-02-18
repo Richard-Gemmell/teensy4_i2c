@@ -17,6 +17,7 @@
 #include "e2e/loopback/driver_config/test_pullup_config_wire.h"
 #include "e2e/loopback/logic/test_e2e_basic_messages.h"
 #include "e2e/loopback/logic/test_e2e_bus_recovery.h"
+#include "e2e/loopback/logic/test_e2e_slave_logic.h"
 #include "e2e/loopback/signals/test_e2e_timings_meet_design.h"
 #include "e2e/loopback/signals/test_e2e_timings_meet_i2c_spec.h"
 #include "e2e/loopback/signals/test_e2e_rise_times.h"
@@ -32,9 +33,8 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
-//    test(new e2e::loopback::bus_trace_tests::BusRecorderTest());
-//    test(new e2e::loopback::signals::RiseTimeTest());
 //    test(new e2e::loopback::logic::BasicMessagesTest());
+    test(new e2e::loopback::logic::SlaveLogicTest());
     return false;
 }
 
@@ -57,6 +57,7 @@ void run_all_tests() {
     test(new e2e::loopback::driver_config::PullupConfigWireTest());
     test(new e2e::loopback::logic::BasicMessagesTest());
     test(new e2e::loopback::logic::BusRecoveryTest());
+    test(new e2e::loopback::logic::SlaveLogicTest());
     test(new e2e::loopback::signals::TimingsMeetDesignTest());
     test(new e2e::loopback::signals::TimingsMeetI2CSpecificationTest());
     test(new e2e::loopback::signals::RiseTimeTest());

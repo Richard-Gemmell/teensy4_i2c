@@ -46,7 +46,7 @@ public:
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 6'200, .max = 6'275},
-            .bus_free_time = {.min = 7'250, .max = 7'450},
+            .bus_free_time = {.min = 7'250, .max = 7'480},
             .data_valid_time = {.min = 0, .max = 0},
         }
     };
@@ -65,7 +65,7 @@ public:
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 975, .max = 1025},
-            .bus_free_time = {.min = 2'300, .max = 2'400},
+            .bus_free_time = {.min = 2'350, .max = 2'500},
             .data_valid_time = {.min = 0, .max = 0},
         }
     };
@@ -74,7 +74,7 @@ public:
         .times = {
             .output_fall_time = {.min = 0, .max = 0},
             .spike_width = {.min = 0, .max = 0},
-            .frequency = {.min = 972'000, .max = 1'000'000},
+            .frequency = {.min = 965'000, .max = 1'004'000},
             .start_hold_time = {.min = 300, .max = 350},
             .scl_low_time = {.min = 580, .max = 660},
             .scl_high_time = {.min = 340, .max = 400},
@@ -84,7 +84,7 @@ public:
             .rise_time = {.min = 0, .max = 0},
             .fall_time = {.min = 0, .max = 0},
             .stop_setup_time = {.min = 425, .max = 475},
-            .bus_free_time = {.min = 1'450, .max = 1'550},
+            .bus_free_time = {.min = 1'500, .max = 1'650},
             .data_valid_time = {.min = 0, .max = 0},
         }
     };

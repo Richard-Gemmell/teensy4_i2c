@@ -137,16 +137,16 @@ public:
     // in the range from 'first_address' to 'last_address' inclusive.
     virtual void listen_range(uint8_t first_address, uint8_t last_address) = 0;
 
+    // Detach from the bus. The slave will no longer be visible to the master.
+    // Does nothing unless the slave is listening.
+    virtual void stop_listening() = 0;
+
     // Sets a callback to be called by the ISR each time
     // the slave receives a block of data from the master.
     // 'length' is the number of bytes that were received by the slave
     // 'address' is the address that the master called. This is only
     // useful when the slave is listening on multiple addresses.
     virtual void after_receive(std::function<void(size_t length, uint16_t address)> callback) = 0;
-
-    // Detach from the bus. The slave will no longer be visible to the master.
-    // Does nothing unless the slave is listening.
-    virtual void stop_listening() = 0;
 
     // Sets a callback to be called by the ISR just before
     // the slave transmits a block of data to the master.

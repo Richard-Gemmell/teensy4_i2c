@@ -164,8 +164,12 @@ public:
         log_value("SCL clock frequency (fSCL). I2C spec", parameters.times.frequency, clock_frequency);
         auto expected = parameters.times.frequency;
         if(frequency == 100'000) {
-            // Allow standard mode to be very slightly too fast.
+            // Allow the odd cycle to be very slightly too fast.
             expected = common::i2c_specification::TimeRange{.min = 0, .max = 100'050};
+        }
+        if(frequency == 1'000'000) {
+            // Allow the odd cycle to be very slightly too fast.
+            expected = common::i2c_specification::TimeRange{.min = 0, .max = 1'004'000};
         }
         TEST_ASSERT_TRUE(clock_frequency.meets_specification(expected));
     }

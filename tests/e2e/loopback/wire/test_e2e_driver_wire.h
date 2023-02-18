@@ -62,7 +62,6 @@ public:
         uint8_t byte1 = read_byte(master, slave_address);
 
         // WHEN we call end()
-        delayMicroseconds(500); // WTF?? The call to read_byte() returns 0 without this pause.
         wire_slave.end();
 
         // THEN end() removes the 'before_transmit' callback
@@ -90,10 +89,6 @@ public:
             callback_count++;
         });
         write_byte(master, slave_address);
-        // WARNING: write_byte() doesn't trigger the callback without this pause
-        // which means that the test will always pass
-        // WHY??
-        delayMicroseconds(500);
 
         // WHEN we call end()
         wire_slave.end();
@@ -101,10 +96,6 @@ public:
         // THEN end() removes the 'after_receive' callback
         slave.listen(slave_address);
         write_byte(master, slave_address);
-        // WARNING: write_byte() doesn't trigger the callback without this pause
-        // which means that the test will always pass
-        // WHY??
-        delayMicroseconds(500);
         master.end();
         TEST_ASSERT_EQUAL(1, callback_count);
     }

@@ -237,7 +237,8 @@ void IMX_RT1060_I2CMaster::end() {
 }
 
 inline bool IMX_RT1060_I2CMaster::finished() {
-    return state >= State::idle;
+    return state == State::transfer_complete ||
+        (state >= State::idle && !(port->MSR & LPI2C_MSR_MBF));
 }
 
 size_t IMX_RT1060_I2CMaster::get_bytes_transferred() {
@@ -525,7 +526,7 @@ void IMX_RT1060_I2CSlave::listen(uint32_t samr, uint32_t address_config) {
 
     initialise_common(config, pad_control_config, pullup_config);
 
-    // Clear previous error
+    // Clear previous state
     _error = I2CError::ok;
 
     // Set the Slave Address
