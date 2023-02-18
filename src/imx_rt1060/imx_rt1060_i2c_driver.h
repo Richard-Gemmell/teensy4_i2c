@@ -143,7 +143,7 @@ private:
 
     IMXRT_LPI2C_Registers* const port;
     IMX_RT1060_I2CBase::Config& config;
-    I2CBuffer buff = I2CBuffer();
+    I2CBuffer buff;
     volatile State state = State::idle;
     volatile uint32_t ignore_tdf = false;       // True for a receive transfer
     volatile bool stop_on_completion = false;   // True if the transmit transfer requires a stop.
@@ -161,11 +161,10 @@ extern IMX_RT1060_I2CMaster Master;     // Pins 19 and 18; SCL0 and SDA0
 extern IMX_RT1060_I2CMaster Master1;    // Pins 16 and 17; SCL1 and SDA1
 extern IMX_RT1060_I2CMaster Master2;    // Pins 24 and 25; SCL2 and SDA2
 
-class IMX_RT1060_I2CSlave : public I2CSlave
-{
+class IMX_RT1060_I2CSlave : public I2CSlave {
 public:
     IMX_RT1060_I2CSlave(IMXRT_LPI2C_Registers* port, IMX_RT1060_I2CBase::Config& config, void (* isr)())
-            : port(port), config(config), isr(isr) {
+        : port(port), config(config), isr(isr) {
     }
 
     void listen(uint8_t address) override;
@@ -205,8 +204,8 @@ private:
     volatile State state = State::idle;
     volatile uint16_t address_called = 0;
 
-    I2CBuffer rx_buffer = I2CBuffer();
-    I2CBuffer tx_buffer = I2CBuffer();
+    I2CBuffer rx_buffer;
+    I2CBuffer tx_buffer;
     bool trailing_byte_sent = false;
 
     void (* isr)();

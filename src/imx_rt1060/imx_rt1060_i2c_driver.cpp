@@ -741,7 +741,7 @@ IMX_RT1060_I2CBase::Config i2c4_config = {
 
 static void master_isr();
 
-IMX_RT1060_I2CMaster Master = IMX_RT1060_I2CMaster(&LPI2C1, i2c1_config, master_isr);
+IMX_RT1060_I2CMaster Master(&LPI2C1, i2c1_config, master_isr);
 
 static void master_isr() {
     Master._interrupt_service_routine();
@@ -749,7 +749,7 @@ static void master_isr() {
 
 static void master1_isr();
 
-IMX_RT1060_I2CMaster Master1 = IMX_RT1060_I2CMaster(&LPI2C3, i2c3_config, master1_isr);
+IMX_RT1060_I2CMaster Master1(&LPI2C3, i2c3_config, master1_isr);
 
 static void master1_isr() {
     Master1._interrupt_service_routine();
@@ -757,7 +757,7 @@ static void master1_isr() {
 
 static void master2_isr();
 
-IMX_RT1060_I2CMaster Master2 = IMX_RT1060_I2CMaster(&LPI2C4, i2c4_config, master2_isr);
+IMX_RT1060_I2CMaster Master2(&LPI2C4, i2c4_config, master2_isr);
 
 static void master2_isr() {
     Master2._interrupt_service_routine();
@@ -765,7 +765,7 @@ static void master2_isr() {
 
 static void slave_isr();
 
-IMX_RT1060_I2CSlave Slave = IMX_RT1060_I2CSlave(&LPI2C1, i2c1_config, slave_isr);
+IMX_RT1060_I2CSlave Slave(&LPI2C1, i2c1_config, slave_isr);
 
 static void slave_isr() {
     Slave._interrupt_service_routine();
@@ -773,7 +773,7 @@ static void slave_isr() {
 
 static void slave1_isr();
 
-IMX_RT1060_I2CSlave Slave1 = IMX_RT1060_I2CSlave(&LPI2C3, i2c3_config, slave1_isr);
+IMX_RT1060_I2CSlave Slave1(&LPI2C3, i2c3_config, slave1_isr);
 
 static void slave1_isr() {
     Slave1._interrupt_service_routine();
@@ -781,7 +781,7 @@ static void slave1_isr() {
 
 static void slave2_isr();
 
-IMX_RT1060_I2CSlave Slave2 = IMX_RT1060_I2CSlave(&LPI2C4, i2c4_config, slave2_isr);
+IMX_RT1060_I2CSlave Slave2(&LPI2C4, i2c4_config, slave2_isr);
 
 static void slave2_isr() {
     Slave2._interrupt_service_routine();
