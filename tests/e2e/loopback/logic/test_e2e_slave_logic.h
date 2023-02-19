@@ -19,6 +19,7 @@ namespace logic {
 class SlaveLogicTest : public LoopbackTestBase {
 public:
     const static uint32_t FREQUENCY = 100'000;
+    const static uint8_t ADDRESS_2 = 0x7F;
     static uint8_t EMPTY_BUFFER[0];
     static I2CMaster& master;
     static I2CSlave& slave;
@@ -36,9 +37,9 @@ public:
         finish(master);
     }
 
-    static uint8_t read_1_byte() {
+    static uint8_t read_1_byte(uint8_t address = ADDRESS) {
         uint8_t rx_buffer = 0;
-        master.read_async(ADDRESS, (uint8_t*)&rx_buffer, sizeof(rx_buffer), true);
+        master.read_async(address, (uint8_t*)&rx_buffer, sizeof(rx_buffer), true);
         finish(master);
         return rx_buffer;
     }
@@ -111,6 +112,47 @@ public:
         TEST_ASSERT_EQUAL(I2CError::ok, slave.error());
         TEST_ASSERT_FALSE(slave.has_error());
         TEST_ASSERT_EQUAL(I2CError::address_nak, master.error());
+    }
+
+    static void can_listen_to_2_addresses() {
+        // WHEN the slave is listening to 2 addresses
+        const uint8_t tx_buffer = 0xCC;
+        slave.set_transmit_buffer(&tx_buffer, sizeof(tx_buffer));
+        const uint8_t address1 = 0x20;
+        const uint8_t address2 = 0x31;
+        slave.listen(address2, address1);
+
+        // THEN the master can read data from the first address
+        TEST_ASSERT_EQUAL(0xCC, read_1_byte(address1));
+        // AND the master can read the same value from the second address
+        TEST_ASSERT_EQUAL(0xCC, read_1_byte(address2));
+    }
+
+    static void can_listen_to_a_range_of_addresses() {
+        // WHEN the slave is listening to 2 addresses
+        const uint8_t tx_buffer = 0xDF;
+        slave.set_transmit_buffer(&tx_buffer, sizeof(tx_buffer));
+        const uint8_t address1 = 0x20;
+        const uint8_t address2 = 0x22;
+        slave.listen_range(address1, address2);
+
+        // THEN the slave is not listening before the first address
+        read_1_byte(address1 - 1);
+        TEST_ASSERT_EQUAL(I2CError::address_nak, master.error());
+        TEST_ASSERT_FALSE(slave.has_error());
+        // AND the master can read data from the first address
+        TEST_ASSERT_EQUAL(0xDF, read_1_byte(0x20));
+        TEST_ASSERT_FALSE(slave.has_error());
+        // AND the master can read the same value from the second address
+        TEST_ASSERT_EQUAL(0xDF, read_1_byte(0x21));
+        TEST_ASSERT_FALSE(slave.has_error());
+        // AND the master can read the same value from the last address
+        TEST_ASSERT_EQUAL(0xDF, read_1_byte(0x22));
+        TEST_ASSERT_FALSE(slave.has_error());
+        // AND the slave is not listening after the last address
+        read_1_byte(address2 + 1);
+        TEST_ASSERT_EQUAL(I2CError::address_nak, master.error());
+        TEST_ASSERT_FALSE(slave.has_error());
     }
 
     static void stop_listening_does_not_reset_receive_buffer() {
@@ -294,7 +336,7 @@ public:
     }
 
     static void can_transmit_repeatedly() {
-        // GIVEN the slave has transmitted the contents of it's buffer already
+        // GIVEN the slave has transmitted the contents of its buffer already
         slave.listen(ADDRESS);
         const uint8_t tx_buffer = 0xCF;
         slave.set_transmit_buffer(&tx_buffer, sizeof(tx_buffer));
@@ -331,16 +373,110 @@ public:
         TEST_ASSERT_FALSE(master.has_error());
     }
 
+    static void after_receive_callback_is_called() {
+        // GIVEN the slave is ready to transmit and listening to 2 addresses
+        uint8_t rx_buffer[] = {0, 0, 0, 0, 0, 0};
+        slave.set_receive_buffer(rx_buffer, sizeof(rx_buffer));
+        size_t actual_length;
+        uint16_t actual_address;
+        slave.after_receive([&actual_length, &actual_address](size_t length, uint16_t address) {
+            actual_length = length;
+            actual_address = address;
+        });
+        slave.listen(ADDRESS_2, ADDRESS);
+
+        // WHEN the master transmits a message to one address
+        uint32_t message1 = 0xAABBCCDD;
+        master.write_async(ADDRESS_2, (uint8_t*)(&message1), sizeof(message1), true);
+        finish(master);
+
+        // THEN the callback was called with the correct values
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+        TEST_ASSERT_EQUAL(4, actual_length);
+        TEST_ASSERT_EQUAL(ADDRESS_2, actual_address);
+
+        // WHEN the master transmits a message to the other address
+        uint8_t message2 = 0xFF;
+        master.write_async(ADDRESS, &message2, sizeof(message2), true);
+        finish(master);
+
+        // THEN the callback was called with the correct values
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+        TEST_ASSERT_EQUAL(1, actual_length);
+        TEST_ASSERT_EQUAL(ADDRESS, actual_address);
+    }
+
+    static void before_transmit_callback_is_called() {
+        // GIVEN the slave is ready to transmit and listening to a range of addresses
+        const uint8_t tx_buffer = 0xCC;
+        slave.set_transmit_buffer(&tx_buffer, sizeof(tx_buffer));
+        slave.listen_range(ADDRESS, ADDRESS_2);
+        uint8_t actual_address;
+        slave.before_transmit([&actual_address](uint16_t address) {
+            actual_address = address;
+        });
+
+        // WHEN the master receives a message from the slave
+        uint8_t rx_buffer = 0;
+        master.read_async(ADDRESS + 5, &rx_buffer, sizeof(rx_buffer), true);
+        finish(master);
+
+        // THEN the callback was called with the correct values
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+        TEST_ASSERT_EQUAL(ADDRESS + 5, actual_address);
+    }
+
+    static void can_set_transmit_buffer_in_before_transmit_callback() {
+        // GIVEN the slave is listening
+        slave.listen(ADDRESS);
+        slave.before_transmit([](uint16_t address) {
+            const uint8_t tx_buffer[] = {0xCC, 0xEE};
+            slave.set_transmit_buffer(tx_buffer, sizeof(tx_buffer));
+        });
+
+        // WHEN the master receives a message from the slave
+        uint8_t rx_buffer[] = {0, 0};
+        master.read_async(ADDRESS, rx_buffer, sizeof(rx_buffer), true);
+        finish(master);
+
+        // THEN the callback was called with the correct values
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+        TEST_ASSERT_EQUAL(0xCC, rx_buffer[0]);
+        TEST_ASSERT_EQUAL(0xEE, rx_buffer[1]);
+    }
+
+    static void after_transmit_callback_is_called() {
+        // GIVEN the slave is ready to transmit and listening to 2 addresses
+        const uint8_t tx_buffer = 0xCC;
+        slave.set_transmit_buffer(&tx_buffer, sizeof(tx_buffer));
+        slave.listen_range(ADDRESS, ADDRESS_2);
+        uint8_t actual_address = 0;
+        slave.after_transmit([&actual_address](uint16_t address) {
+            actual_address = address;
+        });
+
+        // WHEN the master receives a message from the slave
+        uint8_t rx_buffer = 0;
+        master.read_async(ADDRESS + 5, &rx_buffer, sizeof(rx_buffer), true);
+        finish(master);
+
+        // THEN the callback was called with the correct values
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+        TEST_ASSERT_EQUAL(ADDRESS + 5, actual_address);
+    }
+
     void test() final {
-//        RUN_TEST(stop_listening_does_not_reset_transmit_buffer);
-//        return;
         RUN_TEST(ignores_receive_request_if_not_listening);
         RUN_TEST(ignores_transmit_request_if_not_listening);
-//        // listen
-//        // listen 2
-//        // listen range
         RUN_TEST(ignores_receive_request_after_stop_listening);
         RUN_TEST(ignores_transmit_request_after_stop_listening);
+        RUN_TEST(can_listen_to_2_addresses);
+        RUN_TEST(can_listen_to_a_range_of_addresses);
         RUN_TEST(stop_listening_does_not_reset_receive_buffer);
         RUN_TEST(stop_listening_does_not_reset_transmit_buffer);
         RUN_TEST(master_reads_before_slave_sets_transmit_buffer);
@@ -354,9 +490,11 @@ public:
         RUN_TEST(successful_receive_resets_error);
         RUN_TEST(can_transmit_repeatedly);
         RUN_TEST(can_receive_repeatedly);
-        // after_receive
-        // before_transmit
-        // after_transmit
+        RUN_TEST(after_receive_callback_is_called);
+        RUN_TEST(after_receive_callback_is_called);
+        RUN_TEST(before_transmit_callback_is_called);
+        RUN_TEST(can_set_transmit_buffer_in_before_transmit_callback);
+        RUN_TEST(after_transmit_callback_is_called);
         // successive receives with different buffers
         // successive transmits with different buffers
     }
