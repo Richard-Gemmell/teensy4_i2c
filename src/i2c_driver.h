@@ -146,18 +146,24 @@ public:
     // 'length' is the number of bytes that were received by the slave
     // 'address' is the address that the master called. This is only
     // useful when the slave is listening on multiple addresses.
+    //
+    // Set 'callback' to 'nullptr' to remove the previous callback.
     virtual void after_receive(std::function<void(size_t length, uint16_t address)> callback) = 0;
 
     // Sets a callback to be called by the ISR just before
     // the slave transmits a block of data to the master.
     // 'address' is the address that the master called. This is only
     // useful when the slave is listening on multiple addresses.
+    //
+    // Set 'callback' to 'nullptr' to remove the previous callback.
     virtual void before_transmit(std::function<void(uint16_t address)> callback) = 0;
 
     // Sets a callback to be called by the ISR each time the slave
     // has sent a block of data to the master.
     // 'address' is the address that the master called. This is only
     // useful when the slave is listening on multiple addresses.
+    //
+    // Set 'callback' to 'nullptr' to remove the previous callback.
     virtual void after_transmit(std::function<void(uint16_t address)> callback) = 0;
 
     // Determines which data will be sent to the master the next time

@@ -29,6 +29,9 @@ public:
         // Reset slave buffers. This isn't done by any slave methods.
         slave.set_receive_buffer(EMPTY_BUFFER, 0);
         slave.set_transmit_buffer(EMPTY_BUFFER, 0);
+        slave.before_transmit(nullptr);
+        slave.after_transmit(nullptr);
+        slave.after_receive(nullptr);
         master.begin(FREQUENCY);
     }
 
@@ -470,6 +473,46 @@ public:
         TEST_ASSERT_EQUAL(ADDRESS + 5, actual_address);
     }
 
+    static void can_change_transmit_buffer_between_transactions() {
+        // GIVEN the master has received a message from the slave
+        const uint8_t tx_buffer = 0xCC;
+        slave.set_transmit_buffer(&tx_buffer, sizeof(tx_buffer));
+        slave.listen(ADDRESS);
+        uint8_t first_value = read_1_byte();
+        TEST_ASSERT_EQUAL_HEX8(0xCC, first_value);
+
+        // WHEN the slave changes the buffer
+        const uint8_t tx_buffer_2 = 0x18;
+        slave.set_transmit_buffer(&tx_buffer_2, sizeof(tx_buffer_2));
+
+        // THEN the master receives the new value
+        uint8_t second_value = read_1_byte();
+        TEST_ASSERT_EQUAL_HEX8(0x18, second_value);
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+    }
+
+    static void can_change_receive_buffer_between_transactions() {
+        // GIVEN the master has already sent a message to the slave
+        slave.listen(ADDRESS);
+        uint8_t first_buffer = 0;
+        slave.set_receive_buffer(&first_buffer, sizeof(first_buffer));
+        write_1_byte(0x23);
+        TEST_ASSERT_EQUAL_HEX8(0x23, first_buffer);
+
+        // WHEN the slave changes the buffer
+        uint8_t second_buffer[] = {0, 0};
+        slave.set_receive_buffer(second_buffer, sizeof(second_buffer));
+
+        // THEN the master writes to the new buffer not the old one
+        write_1_byte(0x03);
+        TEST_ASSERT_EQUAL_HEX8(0x23, first_buffer);
+        TEST_ASSERT_EQUAL_HEX8(0x03, second_buffer[0]);
+        TEST_ASSERT_EQUAL_HEX8(0x00, second_buffer[1]);
+        TEST_ASSERT_FALSE(master.has_error());
+        TEST_ASSERT_FALSE(slave.has_error());
+    }
+
     void test() final {
         RUN_TEST(ignores_receive_request_if_not_listening);
         RUN_TEST(ignores_transmit_request_if_not_listening);
@@ -495,8 +538,8 @@ public:
         RUN_TEST(before_transmit_callback_is_called);
         RUN_TEST(can_set_transmit_buffer_in_before_transmit_callback);
         RUN_TEST(after_transmit_callback_is_called);
-        // successive receives with different buffers
-        // successive transmits with different buffers
+        RUN_TEST(can_change_transmit_buffer_between_transactions);
+        RUN_TEST(can_change_receive_buffer_between_transactions);
     }
 
     SlaveLogicTest() : LoopbackTestBase(__FILE__) {};
