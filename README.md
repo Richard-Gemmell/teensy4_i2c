@@ -178,29 +178,20 @@ Please contact me if you need any of these features.
 * Master reading more than 256 bytes in a single transfer
 
 ## Version History
-| Version  | Release Date       | Comment                                                                                                         |
-|----------|--------------------|-----------------------------------------------------------------------------------------------------------------|
-| v2-alpha | ??                 | Added automated test suite. Tuned electrical settings and timings. See below for details.                       |
-| v1.1.0   | 12th Aug 2020      | I2C slave can now have many I2C addresses.                                                                      |
-| v1.0.1   | 11th Aug 2020      | Adjusted timings to improve responsiveness.                                                                     |
-| v1.0.0   | 19th May 2020      | Promoted v0.9.5 to 1.0 as it seems stable.                                                                      |
-| v0.9.5   | 19th May 2020      | Improved pad control configuration to reduce errors from noise. (Changed default config from 0xF0B0 to 0x1F830) |
-| v0.9.4   | 15th May 2020      | Added function overloads to I2CDriverWire to avoid ambiguous calls from existing code.                          |
-| v0.9.3   | 17th February 2020 | I2CDriverWire::requestFrom() now reports correct number of bytes.                                               |
-| v0.9.2   | 9th January 2020   | Can now probe for active slaves.                                                                                |
-| v0.9.1   | 7th January 2020   | Fixed bug in i2c_driver_wire.h                                                                                  |
-| v0.9.0   | 7th November 2019  | Initial Version                                                                                                 |
+| Version       | Release Date       | Comment                                                                                                         |
+|---------------|--------------------|-----------------------------------------------------------------------------------------------------------------|
+| v2.0.0-beta.1 | 19th Feb 2023      | Added automated test suite. Tuned electrical settings and timings. See below for details.                       |
+| v1.1.0        | 12th Aug 2020      | I2C slave can now have many I2C addresses.                                                                      |
+| v1.0.1        | 11th Aug 2020      | Adjusted timings to improve responsiveness.                                                                     |
+| v1.0.0        | 19th May 2020      | Promoted v0.9.5 to 1.0 as it seems stable.                                                                      |
+| v0.9.5        | 19th May 2020      | Improved pad control configuration to reduce errors from noise. (Changed default config from 0xF0B0 to 0x1F830) |
+| v0.9.4        | 15th May 2020      | Added function overloads to I2CDriverWire to avoid ambiguous calls from existing code.                          |
+| v0.9.3        | 17th February 2020 | I2CDriverWire::requestFrom() now reports correct number of bytes.                                               |
+| v0.9.2        | 9th January 2020   | Can now probe for active slaves.                                                                                |
+| v0.9.1        | 7th January 2020   | Fixed bug in i2c_driver_wire.h                                                                                  |
+| v0.9.0        | 7th November 2019  | Initial Version                                                                                                 |
 
 ## Version 2
-### Work
-* deep dive review of electrical behaviour to ensure the driver conforms
-to the I2C specification
-* adjust signal timings to make the driver work well in a wider variety
-of projects
-* introduce an automated test suite to make it easier to make changes
-  without breaking existing behaviour
-* create dedicated circuit boards to provide tunable pullups and a reliable setup
-
 ### Breaking Changes
 * `set_pad_control_configuration()` and `setPadControlConfiguration()` no
   longer control the internal pullup resistors. Use `set_internal_pullups()`
@@ -209,8 +200,10 @@ of projects
 ### Changes
 * glitch filters are now enabled in Slave mode making slave devices more
   resistant to electrical noise
-* adjusted signal timings so driver is compliant with I2C Specification
-  over the full range of allowed rise times
+* significantly adjusted signal timings so driver is compliant with
+  I2C Specification over the full range of allowed rise times
+* fixed bug which caused I2CMaster::finished() to return true before STOP
+  was sent to slave.
 * you can now enable or disable the internal pullup resistors with
   `set_internal_pullups()` or `setInternalPullups()`
 * reduced pin drive strength which significantly reduced voltage
@@ -220,3 +213,9 @@ of projects
   registers to find out what they _really_ do (as opposed to what the datasheet claims!)
 * created a [simulator](tools/i2c_timing_calculator/i2c_timing_calculator.py)
   to predict the effect of changing I2C configuration registers
+* created dedicated circuit board to provide tunable pullups and a reliable setup
+* created automated tests to check I2C signal timings
+* created automated tests of I2CSlave behaviour
+
+### Remaining Work (not likely before 2024)
+* add more automated tests for I2CMaster behaviour
