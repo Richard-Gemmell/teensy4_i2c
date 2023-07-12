@@ -4,7 +4,7 @@
 // Fragments of this code copied from WireIMXRT.cpp © Paul Stoffregen.
 // Please support the Teensy project at pjrc.com.
 
-//#define DEBUG_I2C // Uncomment to enable debug tools
+#define DEBUG_I2C // Uncomment to enable debug tools
 #ifdef DEBUG_I2C
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
@@ -289,8 +289,14 @@ void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t n
 // Do not call this method directly
 void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     uint32_t msr = port->MSR;
+    uint32_t mcr = port->MCR;
+    uint32_t mcfgr0 = port->MCFGR0;	
+    uint32_t mcfgr1 = port->MCFGR1;	
+    uint32_t mcfgr2 = port->MCFGR2;	
+    uint32_t mcfgr3 = port->MCFGR3;	
+	
     #ifdef DEBUG_I2C
-    Serial.print("ISR: enter: ");
+    Serial.printf("ISR: %lu enter: msr:0x%08x  mcr: 0x%08x   mcfgr0: 0x%08x   mcfgr1: 0x%08x   mcfgr2: 0x%08x   mcfgr3: 0x%08x   \n\r",millis(), msr, mcr, mcfgr0, mcfgr1, mcfgr2, mcfgr3);
     log_master_status_register(msr);
     #endif
 
@@ -298,8 +304,14 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
         if (msr & LPI2C_MSR_NDF) {
             port->MSR = LPI2C_MSR_NDF;
             if (state == State::starting) {
+				#ifdef DEBUG_I2C
+				Serial.println("Master: Address NAK");
+				#endif
                 _error = I2CError::address_nak;
             } else {
+				#ifdef DEBUG_I2C
+				Serial.println("Master: Data NAK");
+				#endif
                 _error = I2CError::data_nak;
             }
         }
@@ -313,8 +325,15 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
         if (msr & LPI2C_MSR_FEF) {
             port->MSR = LPI2C_MSR_FEF;
             if (!has_error()) {
+				#ifdef DEBUG_I2C
+				Serial.println("Master: Fifo error");
+				#endif
                 _error = I2CError::master_fifo_error;
             }
+            // else FEF was triggered by another error. Ignore it.
+			#ifdef DEBUG_I2C
+			else Serial.printf("Master: other error: msr:0x%08x",msr);
+			#endif
             // else FEF was triggered by another error. Ignore it.
         }
         if (msr & LPI2C_MSR_PLTF) {
@@ -325,6 +344,9 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             _error = I2CError::master_pin_low_timeout;
         }
         if (state != State::stopping) {
+            #ifdef DEBUG_I2C
+            Serial.println("Master: forced stopping (PLTF)");
+            #endif
             state = State::stopping;
             abort_transaction_async();
         }
@@ -332,12 +354,19 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     }
 
     if (msr & LPI2C_MSR_SDF) {
+        #ifdef DEBUG_I2C
+        Serial.println("Master: Stopping for TDF");
+        #endif
+
         port->MIER &= ~LPI2C_MIER_TDIE; // We don't want to handle TDF if we can avoid it.
         state = State::stopped;
         port->MSR = LPI2C_MSR_SDF;
     }
 
     if (msr & LPI2C_MSR_RDF) {
+        #ifdef DEBUG_I2C
+        Serial.println("Master: RDF");
+        #endif
         if (ignore_tdf) {
             if (buff.not_started_reading()) {
                 _error = I2CError::ok;
@@ -358,12 +387,18 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             }
         } else {
             // This is a write transaction. We shouldn't have got a read.
+			#ifdef DEBUG_I2C
+			Serial.println("Master: Unexpected read during a write");
+			#endif
             state = State::stopping;
             abort_transaction_async();
         }
     }
 
     if (!ignore_tdf && (msr & LPI2C_MSR_TDF)) {
+		#ifdef DEBUG_I2C
+		Serial.println("Master: Not ignore TDF & TDF");
+		#endif
         if (buff.not_started_writing()) {
             _error = I2CError::ok;
             state = State::transferring;
@@ -380,7 +415,13 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
                 if (stop_on_completion) {
                     state = State::stopping;
                     port->MTDR = LPI2C_MTDR_CMD_STOP;
+					#ifdef DEBUG_I2C
+					Serial.println("Master: write complete, stopping");
+					#endif
                 } else {
+					#ifdef DEBUG_I2C
+					Serial.println("Master: Write complete, setting transfer_complete");
+					#endif
                     state = State::transfer_complete;
                 }
                 port->MCR &= ~LPI2C_MCR_MEN;    // Avoids triggering PLTF if we didn't send a STOP
@@ -475,6 +516,13 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
         #endif
         port->MTDR = LPI2C_MTDR_CMD_STOP;
     }
+    #ifdef DEBUG_I2C
+    else {
+		Serial.printf("%s - %ul Lost bus, msr: 0x%08x",__func__,millis(), msr);
+	}
+    #endif
+        port->MTDR = LPI2C_MTDR_CMD_STOP;
+	
 }
 
 // Supports 100 kHz, 400 kHz and 1 MHz modes.

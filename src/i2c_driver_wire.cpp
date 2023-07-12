@@ -118,13 +118,19 @@ void I2CDriverWire::before_transmit(uint16_t address) {
 }
 
 void I2CDriverWire::finish() {
-    elapsedMillis timeout;
-    while (timeout < timeout_millis) {
+    elapsedMicros timeout;
+    while (timeout < timeout_micros) {
         if (master.finished()) {
             return;
         }
     }
-    Serial.println("Timed out waiting for transfer to finish.");
+	timeout_flag = true;
+//    Serial.println("Timed out waiting for transfer to finish.");
+	
+	// Reset the bus
+	if (reset_on_timeout) {
+//		Serial.println("resetting the bus not supported yet!");
+	}
 }
 
 void I2CDriverWire::on_receive_wrapper(size_t num_bytes, uint16_t address) {
