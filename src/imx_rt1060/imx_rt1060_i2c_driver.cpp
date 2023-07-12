@@ -445,6 +445,20 @@ inline void IMX_RT1060_I2CMaster::clear_all_msr_flags() {
                   LPI2C_MSR_EPF | LPI2C_MSR_RDF | LPI2C_MSR_TDF);
 }
 
+
+void IMX_RT1060_I2CMaster::reset() {
+	stop(port,config.irq);
+	// Now do 9 simulated clock cycles (@ 100Khz) to clear everything out
+	for (int i=0; i<9; i++) {
+		digitalWrite(config.scl_pin, 0);
+		delayMicroseconds(5);
+		digitalWrite(config.sc_pin,1);
+		delayMicroseconds(5);
+	}
+	begin(saveFrequency);
+}
+
+
 bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
     if (!finished()) {
         // We haven't completed the previous transaction yet
@@ -528,6 +542,7 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 // Supports 100 kHz, 400 kHz and 1 MHz modes.
 void IMX_RT1060_I2CMaster::set_clock(uint32_t frequency) {
     I2CMasterConfiguration timings;
+	savedFrequency = frequency;
     if (frequency < 400'000) {
         // Use Standard Mode - up to 100 kHz
         timings = DefaultStandardModeMasterConfiguration;

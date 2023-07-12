@@ -124,6 +124,8 @@ public:
 
     void read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) override;
 
+	void reset(void);		// Does a 9 cycle reset to unblock a stuck i2cLine
+
     // DO NOT call this method directly.
     void _interrupt_service_routine();
 
@@ -155,6 +157,7 @@ private:
     uint8_t tx_fifo_count();
     uint8_t rx_fifo_count();
     void clear_all_msr_flags();
+	uint32_t	savedFrequency;
 };
 
 extern IMX_RT1060_I2CMaster Master;     // Pins 19 and 18; SCL0 and SDA0
