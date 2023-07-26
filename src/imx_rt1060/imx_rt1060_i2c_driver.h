@@ -129,6 +129,8 @@ public:
     // DO NOT call this method directly.
     void _interrupt_service_routine();
 
+    IMXRT_LPI2C_Registers* const port;
+
 private:
     enum class State {
         // Busy states
@@ -143,7 +145,7 @@ private:
         stopped             // Transaction has finished. STOP sent.
     };
 
-    IMXRT_LPI2C_Registers* const port;
+//    IMXRT_LPI2C_Registers* const port;
     IMX_RT1060_I2CBase::Config& config;
     I2CBuffer buff;
     volatile State state = State::idle;

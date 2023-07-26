@@ -129,7 +129,7 @@ void I2CDriverWire::finish() {
 	
 	// Reset the bus
 	if (reset_on_timeout) {
-//		Serial.println("resetting the bus not supported yet!");
+		reset();
 	}
 }
 

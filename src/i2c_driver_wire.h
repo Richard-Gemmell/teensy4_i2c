@@ -98,18 +98,18 @@ public:
 
     int peek() override;
 
-	void Wire.setWireTimeout(uint32_t timeout, bool reset_on_timout) {
+	void setWireTimeout(uint32_t timeout, bool reset_on_timout) {
 								timeout_micros = timeout;
 								reset_on_timeout = reset_on_timout;
-								if (reset_on_timeout) {
-									//		Serial.println("resetting the bus not supported yet!");
-								};};
+								};
 
-	void Wire.setWireTimeout(void) {timeout_micros = default_timeout_micros; 
-								reset_on_timeout = default_reset_on_timeout;);
-	bool getWireTimeoutFlag(void) {return timeout_flag;);
+	void setWireTimeout(void) {timeout_micros = default_timeout_micros; 
+								reset_on_timeout = default_reset_on_timeout;};
+	bool getWireTimeoutFlag(void) {return timeout_flag;};
 	void clearWireTimeoutFlag(void) {timeout_flag = false;};
 
+	void reset(void) {master.reset();};
+	
     // Registers a function to be called when a slave device receives
     // a transmission from a master.
     //

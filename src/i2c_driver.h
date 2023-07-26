@@ -122,6 +122,8 @@ public:
     // Set 'send_stop' to false if are going to make another transfer.
     // Call finished() to see if the call has finished.
     virtual void read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) = 0;
+	
+	virtual void reset(void);
 };
 
 class I2CSlave : public I2CDriver {
