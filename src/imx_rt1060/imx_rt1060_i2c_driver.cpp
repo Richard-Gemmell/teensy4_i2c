@@ -252,7 +252,7 @@ size_t IMX_RT1060_I2CMaster::get_bytes_transferred() {
 
 void IMX_RT1060_I2CMaster::write_async(uint8_t address, const uint8_t* buffer, size_t num_bytes, bool send_stop) {
     #ifdef DEBUG_I2C
-    Serial.printf("%s: %lu Write_asynch addr:0x%02x  #Bytes: %d,  Stop: %d, tx_fifo: %d\n\r",__func__,micros(), address, num_bytes, send_stop, tx_fifo_count());
+    Serial.printf("%lu %s: Write_asynch addr:0x%02x  #Bytes: %d,  Stop: %d, tx_fifo: %d   ",micros(), __func__, address, num_bytes, send_stop, tx_fifo_count());
     log_master_status_register(port->MSR);
     #endif
 
@@ -279,7 +279,7 @@ void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t n
     }
 
     #ifdef DEBUG_I2C
-    Serial.printf("%s: %lu Read_asynch addr:0x%02x  #Bytes: %d,  Stop: %d, tx_fifo: %d\n\r",__func__,micros(), address, num_bytes, send_stop, tx_fifo_count());
+    Serial.printf("%lu %s: Read_asynch addr:0x%02x  #Bytes: %d,  Stop: %d, tx_fifo: %d  ",micros(), __func__, address, num_bytes, send_stop, tx_fifo_count());
     log_master_status_register(port->MSR);
     #endif
     if (!start(address, MASTER_READ)) {
@@ -294,7 +294,7 @@ void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t n
     }
 
     #ifdef DEBUG_I2C
-    Serial.printf("%s: %lu setting the read regs tx_fifo: %d\n\r",__func__,micros(), tx_fifo_count());
+    Serial.printf("%lu %s: setting the read regs tx_fifo: %d\n\r",micros(), __func__, tx_fifo_count());
     #endif
 
     buff.initialise(buffer, num_bytes);
@@ -315,7 +315,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     uint32_t mcfgr3 = port->MCFGR3;	
 	
     #ifdef DEBUG_I2C
-    Serial.printf("ISR: %lu enter: msr:0x%08x  mcr: 0x%08x   mcfgr0: 0x%08x   mcfgr1: 0x%08x   mcfgr2: 0x%08x   mcfgr3: 0x%08x   \n\r",micros(), msr, mcr, mcfgr0, mcfgr1, mcfgr2, mcfgr3);
+    Serial.printf("%lu ISR: enter: msr:0x%08x  mcr: 0x%08x  mfsr:0x%08x  mcfgr0: 0x%08x   mcfgr1: 0x%08x   mcfgr2: 0x%08x   mcfgr3: 0x%08x   ",micros(), msr, mcr, port->MFSR, mcfgr0, mcfgr1, mcfgr2, mcfgr3);
     log_master_status_register(msr);
     #endif
 
@@ -337,12 +337,12 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
 					port->MTDR = LPI2C_MTDR_CMD_STOP;
 				}
 				#ifdef DEBUG_I2C
-				Serial.printf("Master: %lu Address NAK\n\r",micros());
+				Serial.printf("%lu Master: Address NAK\n\r",micros());
 				#endif
 				return;
             } else {
 				#ifdef DEBUG_I2C
-				Serial.printf("Master: %lu Data NAK\n\r", micros());
+				Serial.printf("%lu Master: Data NAK\n\r", micros());
 				#endif
                 _error = I2CError::data_nak;
             }
@@ -354,25 +354,26 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             port->MSR = LPI2C_MSR_ALF;
             _error = I2CError::arbitration_lost;
             #ifdef DEBUG_I2C
-            Serial.printf("Master: %lu Arbitration lost\n\r",micros());
+            Serial.printf("%lu Master: Arbitration lost\n\r",micros());
             #endif
         }
         if (msr & LPI2C_MSR_FEF) {
             port->MSR = LPI2C_MSR_FEF | LPI2C_MSR_EPF;
             if (!has_error()) {
 				#ifdef DEBUG_I2C
-				Serial.printf("Master: %lu Fifo error", micros());
+				Serial.printf("%lu Master: Fifo error", micros());
 				#endif
                 _error = I2CError::master_fifo_error;
             }
             // else FEF was triggered by another error. Ignore it.
 			#ifdef DEBUG_I2C
-			else Serial.printf("Master: %lu other error: msr:0x%08x\n\r",micros(), msr);
+			else Serial.printf("%lu Master: other error: msr:0x%08x\n\r",micros(), msr);
 			#endif
+            abort_transaction_async();			
         }
         if (msr & LPI2C_MSR_PLTF) {
             #ifdef DEBUG_I2C
-            Serial.printf("Master: %lu Pin low timeout (PLTF)\n\r", micros());
+            Serial.printf("%lu Master: Pin low timeout (PLTF)\n\r", micros());
             #endif
  //           port->MSR = LPI2C_MSR_PLTF;
             _error = I2CError::master_pin_low_timeout;
@@ -381,7 +382,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
         }
         if (state != State::stopping) {
             #ifdef DEBUG_I2C
-            Serial.printf("Master: %lu forced stopping (PLTF)\n\r",micros());
+            Serial.printf("%lu Master: forced stopping (PLTF)\n\r",micros());
             #endif
             state = State::stopping;
             abort_transaction_async();
@@ -390,7 +391,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
 
     if (msr & LPI2C_MSR_SDF) {
         #ifdef DEBUG_I2C
-        Serial.printf("Master: %lu Stopping for SDF\n\r",micros());
+        Serial.printf("%lu Master: Stopping for SDF\n\r",micros());
         #endif
 
         port->MIER &= ~LPI2C_MIER_TDIE; // We don't want to handle TDF if we can avoid it.
@@ -401,7 +402,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
     if (msr & LPI2C_MSR_RDF) {
         #ifdef DEBUG_I2C
 		uint32_t mfsr = port->MFSR;
-        Serial.printf("Master: %lu RDF  TX: %u  RX: %u\n\r",micros(),mfsr & 0xff, (mfsr >>16) & 0xff);
+        Serial.printf("%lu Master: RDF  TX: %u  RX: %u\n\r",micros(),mfsr & 0xff, (mfsr >>16) & 0xff);
         #endif
         if (ignore_tdf) {
             if (buff.not_started_reading()) {
@@ -415,7 +416,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
             }
             if (buff.finished_reading()) {
 				#ifdef DEBUG_I2C
-				Serial.printf("Master: %lu finished reading tx_fifo: %d rx_fifo: %d\n\r",micros(),tx_fifo_count(),rx_fifo_count());
+				Serial.printf("%lu Master: finished reading tx_fifo: %d rx_fifo: %d\n\r",micros(),tx_fifo_count(),rx_fifo_count());
 				#endif
 				// Flush RX fifo if we have everything we are looking for
 				while (rx_fifo_count() > 0) {
@@ -431,7 +432,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
         } else {
             // This is a write transaction. We shouldn't have got a read.
 			#ifdef DEBUG_I2C
-			Serial.printf("Master: %lu Unexpected read during a write\n\r",micros());
+			Serial.printf("%lu Master: Unexpected read during a write\n\r",micros());
 			#endif
             state = State::stopping;
             abort_transaction_async();
@@ -440,7 +441,7 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
 
     if (!ignore_tdf && (msr & LPI2C_MSR_TDF)) {
 		#ifdef DEBUG_I2C
-		Serial.printf("Master: %lu Not ignore TDF & TDF\n\r", micros());
+		Serial.printf("%lu Master: Not ignore TDF & TDF\n\r", micros());
 		#endif
         if (buff.not_started_writing()) {
             _error = I2CError::ok;
@@ -459,11 +460,11 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
                     state = State::stopping;
                     port->MTDR = LPI2C_MTDR_CMD_STOP;
 					#ifdef DEBUG_I2C
-					Serial.printf("Master: %lu write complete, stopping\n\r", micros());
+					Serial.printf("%lu Master: write complete, stopping\n\r", micros());
 					#endif
                 } else {
 					#ifdef DEBUG_I2C
-					Serial.printf("Master: %lu Write complete, setting transfer_complete\n\r", micros());
+					Serial.printf("%lu Master: Write complete, setting transfer_complete\n\r", micros());
 					#endif
                     state = State::transfer_complete;
                 }
@@ -533,10 +534,7 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
     if (!finished()) {
         // We haven't completed the previous transaction yet
         #ifdef DEBUG_I2C
-        Serial.print("Master: Cannot start. Transaction still in progress. State: ");
-        Serial.print((int)state);
-        Serial.print(". Error code: ");
-        Serial.println((int)_error);
+        Serial.printf("%lu Master: Cannot start. Transaction still in progress. State: %d  Err Code: %d\n\r", micros(), (int)state, (int)_error);
         #endif
 
         abort_transaction_async();
@@ -555,14 +553,12 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
     if (tx_fifo_count() > 0 || rx_fifo_count() > 0) {
         // This should never happen.
         #ifdef DEBUG_I2C
-        Serial.print("Master: FIFOs not empty in start(). TX: ");
-        Serial.print(tx_fifo_count());
-        Serial.print(" RX: ");
-        Serial.println(rx_fifo_count());
+        Serial.printf("%lu Master: FIFOs not empty in start(). TX: %d  RX: %d\n\r", micros(), tx_fifo_count(), rx_fifo_count());
         #endif
-        _error = I2CError::master_fifos_not_empty;
-        abort_transaction_async();
-        return false;
+		port->MCR |= LPI2C_MCR_RRF & LPI2C_MCR_RTF;
+//        _error = I2CError::master_fifos_not_empty;
+//        abort_transaction_async();
+//        return false;
     }
 
     // Clear status flags
@@ -581,7 +577,7 @@ bool IMX_RT1060_I2CMaster::start(uint8_t address, uint32_t direction) {
 // When the master is trying to receive more bytes.
 void IMX_RT1060_I2CMaster::abort_transaction_async() {
     #ifdef DEBUG_I2C
-    Serial.println("Master: abort_transaction");
+    Serial.printf("%lu Master: abort_transaction  ",micros());
     log_master_status_register(port->MSR);
     #endif
 
@@ -597,8 +593,10 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
     uint32_t msr = port->MSR;
 	if (msr & LPI2C_MSR_PLTF) {
 		// Lost arbitration, need to do a reset
-		Serial.printf("%s - %ul Lost bus, msr: 0x%08x\n\r",__func__,millis(), msr);
-        port->MTDR = LPI2C_MTDR_CMD_STOP;
+        #ifdef DEBUG_I2C
+		Serial.printf("%lu %s: Lost bus, msr: 0x%08x\n\r",micros(),__func__, msr);
+        #endif
+//        port->MTDR = LPI2C_MTDR_CMD_STOP;
 		reset();
 	}
     else if ((msr & LPI2C_MSR_MBF) && !(msr & LPI2C_MSR_SDF)) {
@@ -609,12 +607,25 @@ void IMX_RT1060_I2CMaster::abort_transaction_async() {
 		// One more time Clear out any commands that haven't been sent
 		port->MCR |= LPI2C_MCR_RTF;
 		port->MCR |= LPI2C_MCR_RRF;
-        Serial.println("  ABRT: sending STOP");
+        #ifdef DEBUG_I2C
+        Serial.printf("  %lu ABRT: sending STOP\n\r",micros());
+        #endif
     }
+	else if (msr & LPI2C_MSR_FEF) {
+		// buffer under/overflow
+        #ifdef DEBUG_I2C
+		Serial.printf("%lu %s: Lost bus, msr: 0x%08x\n\r",micros(),__func__, msr);
+        #endif
+//        port->MTDR = LPI2C_MTDR_CMD_STOP;
+		reset();
+	}
+
 	else {
-		
-        port->MTDR = LPI2C_MTDR_CMD_STOP;
-        Serial.println("  ABRT: else sending STOP");
+//		
+//        port->MTDR = LPI2C_MTDR_CMD_STOP;
+        #ifdef DEBUG_I2C
+//        Serial.printf("  %lu ABRT: else sending STOP\n\r",micros());
+        #endif
 	}
 }
 
