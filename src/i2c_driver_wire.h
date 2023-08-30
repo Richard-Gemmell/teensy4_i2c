@@ -11,6 +11,8 @@
 #include "imx_rt1060/imx_rt1060_i2c_driver.h"
 #endif
 
+#define WIRE_HAS_TIMEOUT
+
 // An implementation of the Wire library as defined at
 //   https://www.arduino.cc/en/reference/wire
 // This header also defines TwoWire as an alias for I2CDriverWire
@@ -24,7 +26,11 @@ public:
     static const size_t tx_buffer_length = 32;
 
     // Time to wait for a read or write to complete in millis
-    static const uint32_t timeout_millis = 200;
+    static const uint32_t	default_timeout_micros = 200000;
+	static const bool		default_reset_on_timeout = false;
+	uint32_t	timeout_micros = default_timeout_micros;
+	bool		reset_on_timeout = default_reset_on_timeout;
+	bool		timeout_flag = false;
 
     // Indicates that there is no more data to read.
     static const int no_more_bytes = -1;
@@ -92,6 +98,18 @@ public:
 
     int peek() override;
 
+	void setWireTimeout(uint32_t timeout, bool reset_on_timout) {
+								timeout_micros = timeout;
+								reset_on_timeout = reset_on_timout;
+								};
+
+	void setWireTimeout(void) {timeout_micros = default_timeout_micros; 
+								reset_on_timeout = default_reset_on_timeout;};
+	bool getWireTimeoutFlag(void) {return timeout_flag;};
+	void clearWireTimeoutFlag(void) {timeout_flag = false;};
+
+	void reset(void) {master.reset();};
+	
     // Registers a function to be called when a slave device receives
     // a transmission from a master.
     //
