@@ -19,7 +19,7 @@
 #define NUM_FIFOS 4     // Number of Rx and Tx FIFOs available to master
 #define MASTER_READ 1   // Makes the address a read request
 #define MASTER_WRITE 0  // Makes the address a write request
-#define MAX_MASTER_READ_LENGTH 256  // Maximum number of bytes that can be read by a single Master read
+#define MAX_MASTER_READ_LENGTH 256  // Maximum number of bytes that can be read by a single Master read !!! must be ^2
 #define CLOCK_STRETCH_TIMEOUT 15000 // Timeout if a device stretches SCL this long, in microseconds
 
 // Debug tools
@@ -263,10 +263,13 @@ void IMX_RT1060_I2CMaster::write_async(uint8_t address, const uint8_t* buffer, s
 }
 
 void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
-    if (num_bytes > MAX_MASTER_READ_LENGTH) {
-        _error = I2CError::invalid_request;
-        return;
-    }
+
+    //-- multi-read management
+    // if (num_bytes > MAX_MASTER_READ_LENGTH) {
+    //     _error = I2CError::invalid_request;
+    //     return;
+    // }
+    //--
 
     if (!start(address, MASTER_READ)) {
         return;
@@ -279,11 +282,23 @@ void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t n
     }
 
     buff.initialise(buffer, num_bytes);
-    port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (num_bytes - 1);
 
-    if (send_stop) {
-        port->MTDR = LPI2C_MTDR_CMD_STOP;
+    //-- multi-read management
+    // get rx size, limited to HW max
+    size_t rx_size = MIN(num_bytes, MAX_MASTER_READ_LENGTH);
+
+    // first rx to fifo
+    port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (rx_size - 1);
+
+    // save 'stop on completion' choice
+    stop_on_completion_rx = send_stop;
+
+    // apply 'stop on completion' choice if this will be the only rx
+    if (stop_on_completion_rx) {
+        if(num_bytes <= MAX_MASTER_READ_LENGTH)
+            port->MTDR = LPI2C_MTDR_CMD_STOP;
     }
+    //--
 }
 
 // Do not call this method directly
@@ -344,7 +359,25 @@ void IMX_RT1060_I2CMaster::_interrupt_service_routine() {
                 state = State::transferring;
             }
             if (state == State::transferring) {
+
                 buff.write(port->MRDR);
+
+                //-- multi-read management
+                // on HW max boundaries
+                if(buff.get_bytes_transferred() % MAX_MASTER_READ_LENGTH == 0)
+                {
+                    // get next rx size, limited to HW max
+                    size_t rx_size = MIN(buff.get_bytes_to_transfer(), MAX_MASTER_READ_LENGTH);
+
+                    // add nex rx cmd to fifo if we need more rx bytes
+                    if(rx_size > 0)
+                        port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (rx_size - 1);
+
+                    // apply 'stop on completion' choice if this is the last rx
+                    if(rx_size < MAX_MASTER_READ_LENGTH && stop_on_completion_rx)
+                        port->MTDR = LPI2C_MTDR_CMD_STOP;
+                }
+                //--
             } else {
                 port->MCR |= LPI2C_MCR_RRF;
             }

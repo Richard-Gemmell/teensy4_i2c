@@ -9,6 +9,10 @@
 #include "imx_rt1060.h"
 #include "../i2c_driver.h"
 
+#ifndef NIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 // A read or write buffer.
 // You cannot use the same buffer for both reading and writing.
 // This class is an implementation detail of the driver and
@@ -72,6 +76,10 @@ public:
 
     inline bool has_data_available() {
         return next_index < size;
+    }
+
+    inline size_t get_bytes_to_transfer(){
+        return size - next_index;
     }
 
 private:
@@ -147,6 +155,10 @@ private:
     volatile State state = State::idle;
     volatile uint32_t ignore_tdf = false;       // True for a receive transfer
     volatile bool stop_on_completion = false;   // True if the transmit transfer requires a stop.
+
+    //--
+    volatile bool stop_on_completion_rx = false; // True if the receive transfer requires a stop.
+    //--
 
     void (* isr)();
     void set_clock(uint32_t frequency);

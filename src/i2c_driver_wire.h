@@ -20,8 +20,8 @@
 class I2CDriverWire : public Stream {
 public:
     // Size of RX and TX buffers. Feel free to change sizes if necessary.
-    static const size_t rx_buffer_length = 32;
-    static const size_t tx_buffer_length = 32;
+    static const size_t rx_buffer_length = 2048;  
+    static const size_t tx_buffer_length = 2048; 
 
     // Time to wait for a read or write to complete in millis
     static const uint32_t timeout_millis = 200;
@@ -82,7 +82,9 @@ public:
 
     size_t write(const uint8_t* data, size_t length) override;
 
-    uint8_t requestFrom(int address, int quantity, int stop = true);
+    //-- multi-read management
+    size_t requestFrom(int address, int quantity, int stop = true);
+    //uint8_t requestFrom(int address, int quantity, int stop = true);
 
     inline int available() override {
         return (int)(rx_bytes_available - rx_next_byte_to_read);
